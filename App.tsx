@@ -46,18 +46,18 @@ const Navigation = () => {
               <span className="material-symbols-outlined text-xl fill-1">stars</span>
             </div>
             <h1 className="font-extrabold text-sm tracking-tight leading-none uppercase">
-              Philippine<br/><span className="text-primary">JTV Association</span>
+              필리핀<br/><span className="text-primary">JTV 협회</span>
             </h1>
           </Link>
           <nav className="flex items-center gap-8">
-            <Link to="/" className={`text-sm font-bold transition-colors ${isActive('/') ? 'text-primary' : 'hover:text-primary'}`}>Home</Link>
-            <Link to="/venues" className={`text-sm font-bold transition-colors ${isActive('/venues') ? 'text-primary' : 'hover:text-primary'}`}>Venues</Link>
-            <Link to="/ccas" className={`text-sm font-bold transition-colors ${isActive('/ccas') ? 'text-primary' : 'hover:text-primary'}`}>CCA List</Link>
-            <Link to="/community" className={`text-sm font-bold transition-colors ${isActive('/community') ? 'text-primary' : 'hover:text-primary'}`}>Community</Link>
+            <Link to="/" className={`text-sm font-bold transition-colors ${isActive('/') ? 'text-primary' : 'hover:text-primary'}`}>홈</Link>
+            <Link to="/venues" className={`text-sm font-bold transition-colors ${isActive('/venues') ? 'text-primary' : 'hover:text-primary'}`}>업소 정보</Link>
+            <Link to="/ccas" className={`text-sm font-bold transition-colors ${isActive('/ccas') ? 'text-primary' : 'hover:text-primary'}`}>CCA 리스트</Link>
+            <Link to="/community" className={`text-sm font-bold transition-colors ${isActive('/community') ? 'text-primary' : 'hover:text-primary'}`}>커뮤니티</Link>
             <div className="flex gap-2">
-               <Link to="/admin" className="text-[10px] font-black bg-zinc-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">Owner</Link>
-               <Link to="/cca-portal" className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">CCA Portal</Link>
-               <Link to="/super-admin" className="text-[10px] font-black bg-red-500/10 text-red-600 px-3 py-1 rounded-full uppercase">Super Admin</Link>
+               <Link to="/admin" className="text-[10px] font-black bg-zinc-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">업주용</Link>
+               <Link to="/cca-portal" className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">CCA 전용</Link>
+               <Link to="/super-admin" className="text-[10px] font-black bg-red-500/10 text-red-600 px-3 py-1 rounded-full uppercase">관리자</Link>
             </div>
           </nav>
         </div>
@@ -66,19 +66,19 @@ const Navigation = () => {
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-950 border-t border-primary/10 px-4 py-2 z-50 md:hidden flex items-center justify-between">
         <Link to="/" className={`flex flex-1 flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-primary' : 'text-gray-400'}`}>
           <span className="material-symbols-outlined">home</span>
-          <span className="text-[10px] font-bold">Home</span>
+          <span className="text-[10px] font-bold">홈</span>
         </Link>
         <Link to="/venues" className={`flex flex-1 flex-col items-center gap-1 transition-colors ${isActive('/venues') ? 'text-primary' : 'text-gray-400'}`}>
           <span className="material-symbols-outlined">apartment</span>
-          <span className="text-[10px] font-bold">Venues</span>
+          <span className="text-[10px] font-bold">업소</span>
         </Link>
         <Link to="/ccas" className={`flex flex-1 flex-col items-center gap-1 transition-colors ${isActive('/ccas') ? 'text-primary' : 'text-gray-400'}`}>
           <span className="material-symbols-outlined">groups</span>
-          <span className="text-[10px] font-bold">CCAs</span>
+          <span className="text-[10px] font-bold">리스트</span>
         </Link>
-        <Link to="/super-admin" className="flex flex-1 flex-col items-center gap-1 text-red-500">
-          <span className="material-symbols-outlined font-black">lock</span>
-          <span className="text-[10px] font-bold">Control</span>
+        <Link to="/community" className={`flex flex-1 flex-col items-center gap-1 transition-colors ${isActive('/community') ? 'text-primary' : 'text-gray-400'}`}>
+          <span className="material-symbols-outlined">forum</span>
+          <span className="text-[10px] font-bold">커뮤니티</span>
         </Link>
       </nav>
     </>
@@ -144,10 +144,10 @@ const SuperAdminRoutes = () => (
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navItems = [
-    { path: '/admin', name: 'Dashboard', icon: 'dashboard' },
-    { path: '/admin/profile', name: 'Profile Settings', icon: 'storefront' },
-    { path: '/admin/reservations', name: 'Reservations', icon: 'calendar_month' },
-    { path: '/admin/ccas', name: 'Staff Management', icon: 'groups' },
+    { path: '/admin', name: '대시보드', icon: 'dashboard' },
+    { path: '/admin/profile', name: '업소 설정', icon: 'storefront' },
+    { path: '/admin/reservations', name: '예약 관리', icon: 'calendar_month' },
+    { path: '/admin/ccas', name: '스태프 관리', icon: 'groups' },
   ];
 
   return (
@@ -158,7 +158,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
              <span className="material-symbols-outlined font-black">shield_person</span>
           </div>
           <div>
-            <h2 className="font-black text-sm uppercase tracking-tighter">Owner Console</h2>
+            <h2 className="font-black text-sm uppercase tracking-tighter">업주용 콘솔</h2>
           </div>
         </div>
         <nav className="flex flex-col gap-2 flex-1">

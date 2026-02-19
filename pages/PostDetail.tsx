@@ -25,7 +25,7 @@ const PostDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-xs font-black uppercase tracking-widest text-primary animate-pulse">Fetching Content...</p>
+        <p className="text-xs font-black uppercase tracking-widest text-primary animate-pulse">콘텐츠를 불러오는 중...</p>
       </div>
     );
   }
@@ -34,9 +34,9 @@ const PostDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">error</span>
-        <h2 className="text-2xl font-black mb-2">Post Not Found</h2>
-        <p className="text-gray-500 mb-6">The article you are looking for might have been deleted.</p>
-        <button onClick={() => navigate('/community')} className="bg-primary px-8 py-3 rounded-xl font-black uppercase text-sm">Back to Community</button>
+        <h2 className="text-2xl font-black mb-2">게시글을 찾을 수 없습니다</h2>
+        <p className="text-gray-500 mb-6">존재하지 않거나 삭제된 게시글입니다.</p>
+        <button onClick={() => navigate('/community')} className="bg-primary px-8 py-3 rounded-xl font-black uppercase text-sm">커뮤니티로 돌아가기</button>
       </div>
     );
   }
@@ -50,7 +50,7 @@ const PostDetail: React.FC = () => {
                 <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
                    <span className="material-symbols-outlined text-2xl">arrow_back</span>
                 </button>
-                <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{post.board}</span>
+                <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">게시글 상세</span>
              </div>
              <div className="flex items-center gap-2">
                 <button className="size-10 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors"><span className="material-symbols-outlined">share</span></button>
@@ -70,13 +70,13 @@ const PostDetail: React.FC = () => {
                    </div>
                    <div>
                       <p className="font-extrabold text-lg">{post.author}</p>
-                      <p className="text-[10px] text-primary font-black uppercase tracking-tighter">Verified Member</p>
+                      <p className="text-[10px] text-primary font-black uppercase tracking-tighter">인증된 회원</p>
                    </div>
                 </div>
                 <div className="text-right text-xs text-gray-500 font-bold uppercase tracking-widest">
-                   <p>{post.date || 'Today'}</p>
+                   <p>{post.date || '오늘'}</p>
                    <p className="flex items-center justify-end gap-1 mt-1 opacity-60">
-                      <span className="material-symbols-outlined text-sm">visibility</span> {post.views} Views
+                      <span className="material-symbols-outlined text-sm">visibility</span> {post.views} 조회
                    </p>
                 </div>
              </div>
@@ -96,23 +96,23 @@ const PostDetail: React.FC = () => {
                 <div className="flex items-center gap-8">
                    <button className="flex items-center gap-2 text-primary font-black hover:scale-110 transition-transform">
                       <span className="material-symbols-outlined fill-1">thumb_up</span>
-                      <span>{post.likes}</span>
+                      <span>추천 {post.likes}</span>
                    </button>
                 </div>
                 <button className="flex items-center gap-3 bg-primary text-[#1b180d] px-8 py-3 rounded-full font-black shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all uppercase text-xs tracking-widest">
                    <span className="material-symbols-outlined text-xl">recommend</span>
-                   Recommend
+                   공감하기
                 </button>
              </div>
           </article>
 
-          {/* Comments Section (Static Placeholder) */}
+          {/* Comments Section */}
           <section className="px-6 py-12 space-y-10">
              <h3 className="text-2xl font-extrabold flex items-center gap-2">
-                Comments <span className="text-primary text-lg">(0)</span>
+                댓글 <span className="text-primary text-lg">(0)</span>
              </h3>
              <div className="py-10 text-center opacity-40">
-               <p className="font-bold text-sm uppercase tracking-widest">No comments yet. Be the first!</p>
+               <p className="font-bold text-sm uppercase tracking-widest">첫 번째 댓글을 남겨보세요!</p>
              </div>
           </section>
        </div>
@@ -123,7 +123,7 @@ const PostDetail: React.FC = () => {
              <div className="flex-1 flex items-center bg-gray-100 dark:bg-white/5 border border-primary/10 rounded-full px-6 py-3 focus-within:border-primary transition-all">
                 <textarea 
                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none max-h-32 min-h-[24px]" 
-                   placeholder="Share your thoughts..." 
+                   placeholder="댓글을 입력해주세요..." 
                    rows={1}
                    value={comment}
                    onChange={(e) => setComment(e.target.value)}

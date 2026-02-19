@@ -19,10 +19,10 @@ const Community: React.FC = () => {
   });
 
   const boards = [
-    { id: 'Free Board', name: 'Free Board', icon: 'forum', tag: 'Social' },
-    { id: 'Q&A Board', name: 'Q&A Board', icon: 'quiz', tag: 'Expert' },
-    { id: 'JTV Review', name: 'JTV Review', icon: 'reviews', tag: 'Venues' },
-    { id: 'CCA Review', name: 'CCA Review', icon: 'star_rate', tag: 'Service' }
+    { id: 'Free Board', name: '자유 게시판', icon: 'forum', tag: 'Social' },
+    { id: 'Q&A Board', name: '질문 게시판', icon: 'quiz', tag: 'Expert' },
+    { id: 'JTV Review', name: '업소 리뷰', icon: 'reviews', tag: 'Venues' },
+    { id: 'CCA Review', name: 'CCA 리뷰', icon: 'star_rate', tag: 'Service' }
   ];
 
   const fetchPosts = async () => {
@@ -38,21 +38,21 @@ const Community: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.content) return alert('Please fill in all fields');
+    if (!formData.title || !formData.content) return alert('모든 필드를 입력해주세요.');
 
     setIsSubmitting(true);
     const result = await apiService.createPost({
       ...formData,
-      author: 'Verified Guest', // Placeholder until auth is implemented
+      author: '익명 사용자', 
       authorAvatar: 'https://picsum.photos/100/100?random=99'
     });
 
     if (result) {
       setFormData({ title: '', board: 'Free Board', content: '', image: '' });
       setIsModalOpen(false);
-      fetchPosts(); // Refresh list
+      fetchPosts(); 
     } else {
-      alert('Failed to create post. Please try again.');
+      alert('게시글 등록에 실패했습니다. 다시 시도해주세요.');
     }
     setIsSubmitting(false);
   };
@@ -65,10 +65,10 @@ const Community: React.FC = () => {
              <div className="absolute inset-0 z-0 opacity-40 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{backgroundImage: "url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2000')"}}></div>
              <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/30 to-transparent z-10"></div>
              <div className="relative z-20 space-y-2">
-                <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">Philippine JTV Association</h2>
+                <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">필리핀 JTV 협회 커뮤니티</h2>
                 <div className="flex items-center gap-3">
                    <div className="h-0.5 w-12 bg-primary"></div>
-                   <p className="text-primary font-bold tracking-widest uppercase text-sm">Connecting Professionals & Enthusiasts</p>
+                   <p className="text-primary font-bold tracking-widest uppercase text-sm">정보 공유 및 소통의 장</p>
                 </div>
              </div>
           </div>
@@ -78,14 +78,14 @@ const Community: React.FC = () => {
        <section className="px-4 mt-8 space-y-8">
           <div className="flex items-center justify-between">
              <h3 className="text-2xl font-extrabold tracking-tight">
-               {activeBoard ? `${activeBoard}` : 'Community Boards'}
+               {activeBoard ? `${boards.find(b => b.id === activeBoard)?.name}` : '커뮤니티 게시판'}
              </h3>
              {activeBoard && (
                <button 
                 onClick={() => setActiveBoard(null)}
                 className="text-primary font-bold text-sm flex items-center gap-1"
                >
-                 Show All Boards <span className="material-symbols-outlined text-sm">close</span>
+                 전체 게시판 보기 <span className="material-symbols-outlined text-sm">close</span>
                </button>
              )}
           </div>
@@ -113,14 +113,14 @@ const Community: React.FC = () => {
        <section className="px-4 mt-12 space-y-8">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-extrabold tracking-tight">
-              {activeBoard ? `${activeBoard} Insights` : 'Latest Community Insights'}
+              {activeBoard ? `${boards.find(b => b.id === activeBoard)?.name} 최신글` : '전체 최신 게시글'}
             </h3>
           </div>
 
           {isLoading ? (
             <div className="py-20 flex flex-col items-center gap-4">
               <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Feed...</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">데이터를 불러오는 중입니다...</p>
             </div>
           ) : posts.length > 0 ? (
             <div className="space-y-6">
@@ -141,7 +141,7 @@ const Community: React.FC = () => {
                                   {post.author ? post.author.charAt(0) : 'A'}
                                 </div>
                                 <span className="text-xs font-black uppercase text-primary tracking-widest">{post.author}</span>
-                                <span className="text-[10px] text-gray-400 font-bold">• {post.board}</span>
+                                <span className="text-[10px] text-gray-400 font-bold">• {boards.find(b => b.id === post.board)?.name || post.board}</span>
                              </div>
                              <h4 className="text-2xl font-extrabold leading-tight group-hover:text-primary transition-colors">{post.title}</h4>
                              <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{post.content}</p>
@@ -162,7 +162,7 @@ const Community: React.FC = () => {
           ) : (
             <div className="py-20 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-dashed border-primary/20">
               <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">edit_note</span>
-              <p className="font-bold text-gray-400">No posts found in this board yet.</p>
+              <p className="font-bold text-gray-400">등록된 게시글이 없습니다.</p>
             </div>
           )}
        </section>
@@ -181,8 +181,8 @@ const Community: React.FC = () => {
              <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-primary/10">
                 <div className="bg-primary p-6 md:p-8 flex items-center justify-between text-[#1b180d]">
                    <div>
-                      <h4 className="text-2xl font-black tracking-tight">Create New Insight</h4>
-                      <p className="text-[10px] font-bold opacity-70 uppercase tracking-[0.2em]">Share your experience with the community</p>
+                      <h4 className="text-2xl font-black tracking-tight">새 게시글 작성</h4>
+                      <p className="text-[10px] font-bold opacity-70 uppercase tracking-[0.2em]">여러분의 소중한 경험과 정보를 공유해주세요</p>
                    </div>
                    <button onClick={() => setIsModalOpen(false)} className="size-12 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors">
                       <span className="material-symbols-outlined font-black">close</span>
@@ -192,7 +192,7 @@ const Community: React.FC = () => {
                 <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-6">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Board Category</label>
+                         <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">게시판 카테고리</label>
                          <select 
                             value={formData.board}
                             onChange={(e) => setFormData({...formData, board: e.target.value})}
@@ -202,10 +202,10 @@ const Community: React.FC = () => {
                          </select>
                       </div>
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Title</label>
+                         <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">제목</label>
                          <input 
                             type="text" 
-                            placeholder="Enter a catchy title..."
+                            placeholder="제목을 입력해주세요..."
                             value={formData.title}
                             onChange={(e) => setFormData({...formData, title: e.target.value})}
                             className="w-full bg-gray-50 dark:bg-white/5 border border-primary/10 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
@@ -214,9 +214,9 @@ const Community: React.FC = () => {
                    </div>
 
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Content</label>
+                      <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">내용</label>
                       <textarea 
-                         placeholder="What's on your mind? Share tips, reviews, or questions..."
+                         placeholder="나누고 싶은 이야기를 적어주세요..."
                          rows={6}
                          value={formData.content}
                          onChange={(e) => setFormData({...formData, content: e.target.value})}
@@ -225,7 +225,7 @@ const Community: React.FC = () => {
                    </div>
 
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Image URL (Optional)</label>
+                      <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">이미지 URL (선택)</label>
                       <div className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 border border-primary/10 rounded-2xl px-4 py-3">
                          <span className="material-symbols-outlined text-gray-400">image</span>
                          <input 
@@ -248,7 +248,7 @@ const Community: React.FC = () => {
                          ) : (
                             <>
                                <span className="material-symbols-outlined font-black">send</span>
-                               Publish Post
+                               게시글 등록하기
                             </>
                          )}
                       </button>
