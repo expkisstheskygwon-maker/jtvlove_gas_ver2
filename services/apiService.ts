@@ -1,10 +1,7 @@
-
 import { Venue, CCA, Post } from '../types';
 
 /**
  * Cloudflare Pages Functions와 통신하기 위한 API 서비스
- * 현재는 로컬 개발을 위해 constants.ts의 데이터를 폴백으로 사용하며,
- * 배포 후에는 실제 /api 엔드포인트에서 데이터를 가져옵니다.
  */
 
 const API_BASE = '/api';
@@ -37,14 +34,43 @@ export const apiService = {
   },
 
   // Posts
-  async getPosts(): Promise<Post[]> {
+  async getPosts(board?: string): Promise<Post[]> {
     try {
-      const response = await fetch(`${API_BASE}/posts`);
+      let url = `${API_BASE}/posts`;
+      if (board) url += `?board=${encodeURIComponent(board)}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch posts');
       return await response.json();
     } catch (error) {
       const { POSTS } = await import('../constants');
-      return POSTS;
+      return board ? POSTS.filter(p => p.board === board) : POSTS;
+    }
+  },
+
+  async getPostById(id: string): Promise<Post | null> {
+    try {
+      const response = await fetch(`${API_BASE}/posts?id=${id}`);
+      if (!response.ok) throw new Error('Failed to fetch post');
+      const data = await response.json();
+      return Array.isArray(data) ? data[0] : data;
+    } catch (error) {
+      const { POSTS } = await import('../constants');
+      return POSTS.find(p => p.id === id) || null;
+    }
+  },
+
+  async createPost(data: Partial<Post>): Promise<Post | null> {
+    try {
+      const response = await fetch(`${API_BASE}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to create post');
+      return await response.json();
+    } catch (error) {
+      console.error('Create post failed', error);
+      return null;
     }
   },
 
