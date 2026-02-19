@@ -41,37 +41,6 @@ const SuperSiteSettings: React.FC = () => {
              </div>
           </div>
 
-          {/* System & Repository Block */}
-          <div className="bg-zinc-900 p-10 rounded-[2.5rem] border border-white/5 space-y-8">
-             <div className="flex items-center gap-4">
-                <div className="size-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white"><span className="material-symbols-outlined">terminal</span></div>
-                <h3 className="text-xl font-black">System & Repository</h3>
-             </div>
-             <div className="space-y-4">
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">GitHub Repository URL</label>
-                   <div className="flex items-center gap-4 bg-black p-4 rounded-xl border border-purple-500/20">
-                      <span className="material-symbols-outlined text-gray-500">source</span>
-                      <input 
-                        type="text" 
-                        defaultValue="https://github.com/expkisstheskygwon-maker/jtvlove_gas_ver1.git" 
-                        className="bg-transparent border-none flex-1 text-sm font-bold focus:ring-0 text-purple-400" 
-                        readOnly
-                      />
-                   </div>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-black rounded-xl">
-                   <div className="flex items-center gap-3">
-                      <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-                      <span className="text-[10px] font-black uppercase">Auto-sync Status</span>
-                   </div>
-                   <span className="text-[10px] font-black text-green-500">CONNECTED</span>
-                </div>
-             </div>
-          </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Communication Block */}
           <div className="bg-zinc-900 p-10 rounded-[2.5rem] border border-white/5 space-y-8">
              <div className="flex items-center gap-4">
@@ -93,13 +62,14 @@ const SuperSiteSettings: React.FC = () => {
                 </div>
              </div>
           </div>
+       </div>
 
-          <div className="bg-zinc-900 p-10 rounded-[2.5rem] border border-white/5 space-y-8 flex flex-col justify-center">
-             <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Office HQ Address</label>
-                <textarea rows={2} className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 font-bold text-sm" />
-             </div>
+       <div className="bg-zinc-900 p-10 rounded-[2.5rem] border border-white/5 space-y-8">
+          <div className="flex items-center gap-4">
+             <div className="size-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-white"><span className="material-symbols-outlined">location_on</span></div>
+             <h3 className="text-xl font-black">Office HQ Address</h3>
           </div>
+          <textarea rows={2} className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 font-bold text-sm" placeholder="Enter physical address of the association..." />
        </div>
 
        <div className="bg-red-600 p-1 rounded-[2.5rem] shadow-[0_0_50px_rgba(220,38,38,0.2)]">

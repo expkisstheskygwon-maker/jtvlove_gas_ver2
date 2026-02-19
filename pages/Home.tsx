@@ -1,25 +1,57 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CCAS, VENUES } from '../constants';
+import { apiService } from '../services/apiService';
+import { CCA, Venue } from '../types';
 
 const Home: React.FC = () => {
+  const [ccas, setCCAs] = useState<CCA[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [currentCcaIndex, setCurrentCcaIndex] = useState(0);
   const [fade, setFade] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      const [fetchedCCAs, fetchedVenues] = await Promise.all([
+        apiService.getCCAs(),
+        apiService.getVenues()
+      ]);
+      setCCAs(fetchedCCAs);
+      setVenues(fetchedVenues);
+      setIsLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (ccas.length === 0) return;
+    
     const interval = setInterval(() => {
       setFade(false);
       setTimeout(() => {
-        setCurrentCcaIndex((prev) => (prev + 1) % CCAS.length);
+        setCurrentCcaIndex((prev) => (prev + 1) % ccas.length);
         setFade(true);
-      }, 500); // Wait for fade out before changing index
+      }, 500);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [ccas.length]);
 
-  const currentCca = CCAS[currentCcaIndex];
+  if (isLoading || ccas.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-dark text-primary">
+        <div className="flex flex-col items-center gap-4">
+           <div className="size-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+           <p className="font-black uppercase tracking-[0.3em] animate-pulse">Loading Luminous Night...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentCca = ccas[currentCcaIndex];
 
   return (
     <div className="animate-fade-in overflow-x-hidden">
@@ -44,7 +76,7 @@ const Home: React.FC = () => {
             </p>
             
             <div className="flex flex-wrap gap-2 py-2">
-              {currentCca.languages.map(lang => (
+              {currentCca.languages?.map(lang => (
                 <span key={lang} className="text-[10px] font-black border border-primary/20 px-3 py-1 rounded-full uppercase text-primary bg-primary/5">{lang} Speaker</span>
               ))}
             </div>
@@ -58,9 +90,8 @@ const Home: React.FC = () => {
             </Link>
           </div>
 
-          {/* Right Image Content (Rolling) */}
+          {/* Right Image Content */}
           <div className="md:w-1/2 relative h-[450px] md:h-[650px] w-full flex items-center justify-center">
-             {/* Glow effect background */}
              <div className="absolute inset-0 bg-primary/10 rounded-full blur-[100px] -z-10 scale-90 animate-pulse"></div>
              
              <div className={`relative h-full w-full flex items-center justify-center transition-all duration-1000 ${fade ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 rotate-2'}`}>
@@ -70,7 +101,6 @@ const Home: React.FC = () => {
                  className="h-full object-contain drop-shadow-[0_35px_35px_rgba(238,189,43,0.3)] pointer-events-none"
                />
                
-               {/* Floating Badges */}
                {fade && (
                  <div className="absolute top-1/4 -right-4 bg-white/90 dark:bg-zinc-800/90 backdrop-blur px-4 py-2 rounded-2xl shadow-xl border border-primary/20 animate-bounce">
                     <div className="flex items-center gap-2">
@@ -81,9 +111,8 @@ const Home: React.FC = () => {
                )}
              </div>
              
-             {/* Carousel Indicators */}
              <div className="absolute bottom-4 flex gap-2">
-                {CCAS.map((_, i) => (
+                {ccas.map((_, i) => (
                   <button 
                     key={i} 
                     onClick={() => setCurrentCcaIndex(i)}
@@ -95,7 +124,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured CCAs (Rest of the Page) */}
+      {/* Featured CCAs Section */}
       <section className="py-16 px-4 bg-background-light dark:bg-background-dark/50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-8 px-4">
@@ -108,12 +137,11 @@ const Home: React.FC = () => {
             </Link>
           </div>
           <div className="flex gap-6 overflow-x-auto hide-scrollbar pb-6 px-4 snap-x">
-            {CCAS.map(cca => (
+            {ccas.map(cca => (
               <Link to={`/ccas/${cca.id}`} key={cca.id} className="snap-start flex-shrink-0 w-64 group">
                 <div className="relative overflow-hidden rounded-xl aspect-[3/4] mb-3 border border-primary/5">
                   <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   {cca.isNew && <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-primary border border-primary/20">NEW</div>}
-                  {cca.isTopRated && <div className="absolute top-3 right-3 bg-primary text-white px-2 py-1 rounded text-[10px] font-bold">TOP 1</div>}
                 </div>
                 <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{cca.name}</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{cca.venueName} | Premium Class</p>
@@ -130,7 +158,7 @@ const Home: React.FC = () => {
             <span className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-4 block">Selection of the Month</span>
             <h2 className="text-4xl font-extrabold mb-8 font-display">BEST <span className="text-primary">JTV</span> LOUNGE</h2>
             <div className="space-y-8">
-              {VENUES.map(venue => (
+              {venues.map(venue => (
                 <Link to={`/venues/${venue.id}`} key={venue.id} className="block group border-l-2 border-white/10 pl-6 hover:border-primary transition-all">
                   <h4 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">{venue.name}</h4>
                   <p className="text-slate-400 text-sm leading-relaxed">{venue.description}</p>
@@ -139,34 +167,15 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="lg:w-2/3 h-[400px] md:h-[500px] flex gap-4">
-             <div className="flex-grow group relative overflow-hidden rounded-2xl">
-                <img src={VENUES[0].image} alt="Venue" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-8">
-                  <p className="font-bold text-2xl">{VENUES[0].name}</p>
-                  <p className="text-sm text-primary font-bold">{VENUES[0].region}</p>
-                </div>
-             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 bg-white dark:bg-background-dark/30 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl font-extrabold mb-12 font-display">Trusted By <span className="text-primary">Thousands</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             {[1,2,3].map(i => (
-               <div key={i} className="bg-background-light dark:bg-zinc-900/50 p-8 rounded-2xl border border-primary/5">
-                 <div className="flex justify-center text-primary mb-6">
-                    {Array(5).fill(0).map((_, j) => <span key={j} className="material-symbols-outlined fill-1 text-2xl">star</span>)}
-                 </div>
-                 <p className="italic text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
-                   "연합회를 통해 방문한 덕분에 바가지 요금 걱정 없이 정말 편안하게 즐겼습니다. CCA 분들도 너무 친절하고 시설도 최고였어요!"
-                 </p>
-                 <div className="font-bold">Member Name {i}</div>
-                 <div className="text-xs text-slate-400 uppercase tracking-widest mt-1">Regular Member</div>
+             {venues.length > 0 && (
+               <div className="flex-grow group relative overflow-hidden rounded-2xl">
+                  <img src={venues[0].image} alt="Venue" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-8">
+                    <p className="font-bold text-2xl">{venues[0].name}</p>
+                    <p className="text-sm text-primary font-bold">{venues[0].region}</p>
+                  </div>
                </div>
-             ))}
+             )}
           </div>
         </div>
       </section>

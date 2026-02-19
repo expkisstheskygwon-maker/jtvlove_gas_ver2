@@ -65,18 +65,17 @@ const SuperDashboard: React.FC = () => {
              </div>
           </div>
 
-          <div className="xl:col-span-4 bg-zinc-900 rounded-[2.5rem] p-8 border border-white/5 relative overflow-hidden">
+          <div className="xl:col-span-4 bg-zinc-900 rounded-[2.5rem] p-8 border border-white/5 relative overflow-hidden flex flex-col">
              <div className="absolute top-0 right-0 size-64 bg-red-600/5 rounded-full blur-[100px]"></div>
              <h3 className="text-xl font-black uppercase tracking-tight mb-8">System Health</h3>
-             <div className="space-y-8">
+             <div className="space-y-8 flex-1">
                 <div>
                    <div className="flex justify-between text-[10px] font-black uppercase mb-2"><span>Server Load</span><span className="text-green-500">Normal</span></div>
                    <div className="h-1 bg-zinc-800 rounded-full"><div className="h-full w-[24%] bg-green-500"></div></div>
                 </div>
                 <div>
-                   <div className="flex justify-between text-[10px] font-black uppercase mb-2"><span>Repo Sync</span><span className="text-purple-500">Verified</span></div>
-                   <div className="h-1 bg-zinc-800 rounded-full"><div className="h-full w-full bg-purple-500"></div></div>
-                   <p className="text-[8px] font-bold mt-1 text-purple-400">jtvlove_gas_ver1.git (Master)</p>
+                   <div className="flex justify-between text-[10px] font-black uppercase mb-2"><span>Network Latency</span><span className="text-blue-500">12ms</span></div>
+                   <div className="h-1 bg-zinc-800 rounded-full"><div className="h-full w-[15%] bg-blue-500"></div></div>
                 </div>
                 <div className="pt-4 space-y-4">
                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-white/5 pb-2">Global Settings Summary</p>
@@ -89,6 +88,11 @@ const SuperDashboard: React.FC = () => {
                       <div className="size-10 bg-zinc-800 rounded-full flex items-center justify-center text-[8px] font-black text-green-500">OFF</div>
                    </div>
                 </div>
+             </div>
+             
+             <div className="mt-8 p-4 bg-red-600/10 border border-red-500/20 rounded-2xl">
+                <p className="text-[9px] font-black text-red-500 uppercase mb-1">Security Status</p>
+                <p className="text-[11px] font-bold">Firewall Active. No breaches detected in last 24h.</p>
              </div>
           </div>
        </div>
