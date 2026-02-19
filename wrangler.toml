@@ -1,5 +1,4 @@
-
-# Cloudflare Pages Configuration
+name = "jtvlove-gas-ver2"
 pages_build_output_dir = "./dist"
 
 [[d1_databases]]
