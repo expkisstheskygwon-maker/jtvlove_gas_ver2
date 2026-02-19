@@ -1,3 +1,4 @@
+
 import { Venue, CCA, Post } from '../types';
 
 /**
@@ -82,5 +83,38 @@ export const apiService = {
       body: JSON.stringify(data),
     });
     return response.ok;
+  },
+
+  // Site Settings
+  async getSiteSettings(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/settings`);
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      return await response.json();
+    } catch (error) {
+      return {
+        site_name: 'Philippine JTV Association',
+        admin_phone: '0917-000-0000',
+        admin_email: 'admin@ph-jtv.org',
+        admin_sns: '@phjtv_official',
+        hq_address: 'Metro Manila, Philippines',
+        logo_url: '',
+        favicon_url: ''
+      };
+    }
+  },
+
+  async updateSiteSettings(data: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Update settings failed', error);
+      return false;
+    }
   }
 };

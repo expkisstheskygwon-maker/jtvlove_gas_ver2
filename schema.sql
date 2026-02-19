@@ -55,9 +55,20 @@ CREATE TABLE IF NOT EXISTS reservations (
   status TEXT DEFAULT 'pending'
 );
 
--- [초기 샘플 데이터 삽입]
--- 주의: 이미 데이터가 있는 경우 충돌을 피하기 위해 INSERT OR IGNORE 사용
+-- 5. Site Settings Table
+CREATE TABLE IF NOT EXISTS site_settings (
+  id TEXT PRIMARY KEY,
+  site_name TEXT,
+  admin_phone TEXT,
+  admin_email TEXT,
+  admin_sns TEXT,
+  hq_address TEXT,
+  logo_url TEXT,
+  favicon_url TEXT,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
+-- [초기 샘플 데이터 삽입]
 INSERT OR IGNORE INTO venues (id, name, region, rating, reviews_count, description, image, phone, address, tags, features)
 VALUES ('v1', 'Grand Palace JTV', 'Pasay', 4.9, 128, 'Experience the pinnacle of nightlife at Grand Palace JTV.', 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=2000', '0912-345-6789', 'Entertainment City, Pasay', '["Premium Service", "VIP Room"]', '["VIP Rooms", "Live Stage"]');
 
@@ -66,3 +77,6 @@ VALUES ('c1', 'Yumi Kim', 'v1', 4.9, 'https://images.unsplash.com/photo-15440053
 
 INSERT OR IGNORE INTO posts (id, board, title, author, content, views, likes)
 VALUES ('p1', 'Free Board', 'Welcome to the New Portal', 'Admin', 'This is the first post on our new Cloudflare D1 powered system.', 10, 5);
+
+INSERT OR IGNORE INTO site_settings (id, site_name, admin_phone, admin_email, admin_sns, hq_address, logo_url, favicon_url)
+VALUES ('global', 'Philippine JTV Association', '0917-000-0000', 'admin@ph-jtv.org', '@phjtv_official', 'Metro Manila, Philippines', '', '');
