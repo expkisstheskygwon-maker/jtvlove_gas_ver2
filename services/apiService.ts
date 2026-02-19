@@ -89,9 +89,13 @@ export const apiService = {
   async getSiteSettings(): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/settings`);
-      if (!response.ok) throw new Error('Failed to fetch settings');
+      if (!response.ok) {
+        throw new Error('Server returned error for settings');
+      }
       return await response.json();
     } catch (error) {
+      console.error("apiService.getSiteSettings Error:", error);
+      // 배포 환경에서 실제 API 호출이 실패할 경우 기본값 반환
       return {
         site_name: 'Philippine JTV Association',
         admin_phone: '0917-000-0000',
@@ -111,9 +115,16 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      return response.ok;
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Update failed server-side:", errorData);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
-      console.error('Update settings failed', error);
+      console.error('Update settings failed network-side:', error);
       return false;
     }
   }

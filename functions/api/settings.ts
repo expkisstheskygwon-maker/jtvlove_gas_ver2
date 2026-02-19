@@ -32,10 +32,19 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const body = await request.json();
       const { site_name, admin_phone, admin_email, admin_sns, hq_address, logo_url, favicon_url } = body;
 
+      // UPSERT logic: Insert if not exists, update if exists
       await env.DB.prepare(`
-        UPDATE site_settings 
-        SET site_name = ?, admin_phone = ?, admin_email = ?, admin_sns = ?, hq_address = ?, logo_url = ?, favicon_url = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = 'global'
+        INSERT INTO site_settings (id, site_name, admin_phone, admin_email, admin_sns, hq_address, logo_url, favicon_url, updated_at)
+        VALUES ('global', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(id) DO UPDATE SET
+          site_name = excluded.site_name,
+          admin_phone = excluded.admin_phone,
+          admin_email = excluded.admin_email,
+          admin_sns = excluded.admin_sns,
+          hq_address = excluded.hq_address,
+          logo_url = excluded.logo_url,
+          favicon_url = excluded.favicon_url,
+          updated_at = CURRENT_TIMESTAMP
       `).bind(
         site_name, admin_phone, admin_email, admin_sns, hq_address, logo_url, favicon_url
       ).run();
