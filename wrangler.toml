@@ -1,8 +1,8 @@
 
-name = "jtvlove-portal"
+# Cloudflare Pages Configuration
 pages_build_output_dir = "./dist"
 
 [[d1_databases]]
-binding = "DB" # API에서 접근할 때 사용할 이름
+binding = "DB"
 database_name = "jtvlove_db"
-database_id = "73639f8b-e7e0-4d31-a866-74041e5ff599" # 실제 생성된 ID로 업데이트됨
+database_id = "73639f8b-e7e0-4d31-a866-74041e5ff599"
