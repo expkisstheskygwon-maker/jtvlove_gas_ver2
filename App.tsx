@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
@@ -117,7 +116,7 @@ const App: React.FC = () => {
 const AdminLayoutRoutes = () => (
   <Routes>
     <Route path="/" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-    <Route path="/profile" element={<AdminLayout><AdminProfile /></AdminProfile>} />
+    <Route path="/profile" element={<AdminLayout><AdminProfile /></AdminLayout>} />
     <Route path="/reservations" element={<AdminLayout><AdminReservations /></AdminLayout>} />
     <Route path="/ccas" element={<AdminLayout><AdminCCAs /></AdminLayout>} />
   </Routes>
