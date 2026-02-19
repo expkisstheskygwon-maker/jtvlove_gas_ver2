@@ -178,5 +178,5 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     </div>
   );
 };
-
+/*수정*/
 export default App;
