@@ -7,6 +7,7 @@ import CCAList from './pages/CCAList';
 import CCAProfile from './pages/CCAProfile';
 import Community from './pages/Community';
 import PostDetail from './pages/PostDetail';
+import MyPage from './pages/MyPage';
 
 // Admin & Portal
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -54,6 +55,7 @@ const Navigation = () => {
             <Link to="/venues" className={`text-sm font-bold transition-colors ${isActive('/venues') ? 'text-primary' : 'hover:text-primary'}`}>업소 정보</Link>
             <Link to="/ccas" className={`text-sm font-bold transition-colors ${isActive('/ccas') ? 'text-primary' : 'hover:text-primary'}`}>CCA 리스트</Link>
             <Link to="/community" className={`text-sm font-bold transition-colors ${isActive('/community') ? 'text-primary' : 'hover:text-primary'}`}>커뮤니티</Link>
+            <Link to="/mypage" className={`text-sm font-bold transition-colors ${isActive('/mypage') ? 'text-primary' : 'hover:text-primary'}`}>마이페이지</Link>
             <div className="flex gap-2">
                <Link to="/admin" className="text-[10px] font-black bg-zinc-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">업주용</Link>
                <Link to="/cca-portal" className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">CCA 전용</Link>
@@ -80,6 +82,10 @@ const Navigation = () => {
           <span className="material-symbols-outlined">forum</span>
           <span className="text-[10px] font-bold">커뮤니티</span>
         </Link>
+        <Link to="/mypage" className={`flex flex-1 flex-col items-center gap-1 transition-colors ${isActive('/mypage') ? 'text-primary' : 'text-gray-400'}`}>
+          <span className="material-symbols-outlined">person</span>
+          <span className="text-[10px] font-bold">마이페이지</span>
+        </Link>
       </nav>
     </>
   );
@@ -98,6 +104,7 @@ const App: React.FC = () => {
           <Route path="/ccas/:id" element={<CCAProfile />} />
           <Route path="/community" element={<Community />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
+          <Route path="/mypage" element={<MyPage />} />
           
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayoutRoutes />} />
