@@ -21,7 +21,20 @@ export const onRequestGet = async (context: { env: Env }) => {
       "SELECT * FROM hero_sections ORDER BY display_order ASC"
     ).all();
     
-    return new Response(JSON.stringify(results || []), {
+    // Map snake_case to camelCase for the frontend
+    const mappedResults = (results || []).map((row: any) => ({
+      id: row.id,
+      badge1: row.badge1,
+      badge2: row.badge2,
+      title: row.title,
+      content: row.content,
+      buttonText: row.button_text,
+      buttonLink: row.button_link,
+      imageUrl: row.image_url,
+      displayOrder: row.display_order
+    }));
+    
+    return new Response(JSON.stringify(mappedResults), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
