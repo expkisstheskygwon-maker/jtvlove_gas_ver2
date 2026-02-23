@@ -1,45 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import { CCA, Venue } from '../types';
+import { CCA, Venue, HeroSection } from '../types';
 
 const Home: React.FC = () => {
   const [ccas, setCCAs] = useState<CCA[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [heroSections, setHeroSections] = useState<HeroSection[]>([]);
   const [currentCcaIndex, setCurrentCcaIndex] = useState(0);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [fade, setFade] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      const [fetchedCCAs, fetchedVenues] = await Promise.all([
-        apiService.getCCAs(),
-        apiService.getVenues()
-      ]);
-      setCCAs(fetchedCCAs);
-      setVenues(fetchedVenues);
-      setIsLoading(false);
+      try {
+        const [fetchedCCAs, fetchedVenues, fetchedHeros] = await Promise.all([
+          apiService.getCCAs(),
+          apiService.getVenues(),
+          apiService.getHeroSections()
+        ]);
+        setCCAs(fetchedCCAs);
+        setVenues(fetchedVenues);
+        setHeroSections(fetchedHeros);
+      } catch (error) {
+        console.error("Data load failed", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadData();
   }, []);
 
   useEffect(() => {
-    if (ccas.length === 0) return;
+    const totalSlides = heroSections.length > 0 ? heroSections.length : ccas.length;
+    if (totalSlides === 0) return;
     
     const interval = setInterval(() => {
       setFade(false);
       setTimeout(() => {
-        setCurrentCcaIndex((prev) => (prev + 1) % ccas.length);
+        if (heroSections.length > 0) {
+          setCurrentHeroIndex((prev) => (prev + 1) % heroSections.length);
+        } else {
+          setCurrentCcaIndex((prev) => (prev + 1) % ccas.length);
+        }
         setFade(true);
       }, 500);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [ccas.length]);
+  }, [ccas.length, heroSections.length]);
 
-  if (isLoading || ccas.length === 0) {
+  if (isLoading || (ccas.length === 0 && heroSections.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-dark text-primary">
         <div className="flex flex-col items-center gap-4">
@@ -50,41 +64,65 @@ const Home: React.FC = () => {
     );
   }
 
+  // Determine which hero content to show
+  const isCustomHero = heroSections.length > 0;
   const currentCca = ccas[currentCcaIndex];
+  const currentHero = heroSections[currentHeroIndex];
 
   return (
     <div className="animate-fade-in overflow-x-hidden">
       {/* Dynamic Hero Section */}
-      <section className="bg-white dark:bg-background-dark py-12 md:py-24 px-6 relative">
+      <section className="bg-white dark:bg-background-dark py-12 md:py-24 px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12">
           {/* Left Text Content */}
           <div className={`md:w-1/2 space-y-6 transition-all duration-700 ${fade ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             <div className="flex items-center gap-3">
-              <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-primary/20">
-                JTV 협회 인증 멤버
-              </span>
-              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{currentCca.venueName}</span>
+              {isCustomHero ? (
+                <>
+                  {currentHero.badge1 && (
+                    <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-primary/20">
+                      {currentHero.badge1}
+                    </span>
+                  )}
+                  {currentHero.badge2 && (
+                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{currentHero.badge2}</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-primary/20">
+                    JTV 협회 인증 멤버
+                  </span>
+                  <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{currentCca.venueName}</span>
+                </>
+              )}
             </div>
             
             <h2 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tighter">
-              인기 <span className="text-primary">{currentCca.name}</span>
+              {isCustomHero ? (
+                <div dangerouslySetInnerHTML={{ __html: currentHero.title.replace(/\n/g, '<br/>') }} />
+              ) : (
+                <>인기 <span className="text-primary">{currentCca.name}</span></>
+              )}
             </h2>
             
             <p className="text-slate-600 dark:text-slate-400 text-xl max-w-lg leading-relaxed italic font-medium">
-              "{currentCca.description}"
+              "{isCustomHero ? currentHero.content : currentCca.description}"
             </p>
             
-            <div className="flex flex-wrap gap-2 py-2">
-              {currentCca.languages?.map(lang => (
-                <span key={lang} className="text-[10px] font-black border border-primary/20 px-3 py-1 rounded-full uppercase text-primary bg-primary/5">{lang} 가능</span>
-              ))}
-            </div>
+            {!isCustomHero && (
+              <div className="flex flex-wrap gap-2 py-2">
+                {currentCca.languages?.map(lang => (
+                  <span key={lang} className="text-[10px] font-black border border-primary/20 px-3 py-1 rounded-full uppercase text-primary bg-primary/5">{lang} 가능</span>
+                ))}
+              </div>
+            )}
 
             <Link 
-              to={`/ccas/${currentCca.id}`} 
+              to={isCustomHero ? (currentHero.buttonLink || '/') : `/ccas/${currentCca.id}`} 
               className="inline-flex px-12 py-5 bg-primary text-[#1b180d] rounded-2xl font-black hover:shadow-2xl hover:scale-105 transition-all items-center gap-4 group text-lg shadow-xl shadow-primary/20"
             >
-              지명 요청하기 ({currentCca.name})
+              {isCustomHero ? currentHero.buttonText : `지명 요청하기 (${currentCca.name})`}
               <span className="material-symbols-outlined group-hover:translate-x-2 transition-transform font-black">arrow_forward</span>
             </Link>
           </div>
@@ -95,12 +133,12 @@ const Home: React.FC = () => {
              
              <div className={`relative h-full w-full flex items-center justify-center transition-all duration-1000 ${fade ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 rotate-2'}`}>
                <img 
-                 src={currentCca.image} 
-                 alt={currentCca.name} 
+                 src={isCustomHero ? currentHero.imageUrl : currentCca.image} 
+                 alt={isCustomHero ? currentHero.title : currentCca.name} 
                  className="h-full object-contain drop-shadow-[0_35px_35px_rgba(238,189,43,0.3)] pointer-events-none"
                />
                
-               {fade && (
+               {!isCustomHero && fade && (
                  <div className="absolute top-1/4 -right-4 bg-white/90 dark:bg-zinc-800/90 backdrop-blur px-4 py-2 rounded-2xl shadow-xl border border-primary/20 animate-bounce">
                     <div className="flex items-center gap-2">
                        <span className="material-symbols-outlined text-primary fill-1">verified</span>
@@ -111,11 +149,11 @@ const Home: React.FC = () => {
              </div>
              
              <div className="absolute bottom-4 flex gap-2">
-                {ccas.map((_, i) => (
+                {(isCustomHero ? heroSections : ccas).map((_, i) => (
                   <button 
                     key={i} 
-                    onClick={() => setCurrentCcaIndex(i)}
-                    className={`h-1.5 transition-all duration-500 rounded-full ${i === currentCcaIndex ? 'w-8 bg-primary shadow-lg shadow-primary/50' : 'w-2 bg-gray-300'}`}
+                    onClick={() => isCustomHero ? setCurrentHeroIndex(i) : setCurrentCcaIndex(i)}
+                    className={`h-1.5 transition-all duration-500 rounded-full ${i === (isCustomHero ? currentHeroIndex : currentCcaIndex) ? 'w-8 bg-primary shadow-lg shadow-primary/50' : 'w-2 bg-gray-300'}`}
                   ></button>
                 ))}
              </div>

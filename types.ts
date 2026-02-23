@@ -112,3 +112,15 @@ export interface MediaItem {
   commentsCount: number;
   date: string;
 }
+
+export interface HeroSection {
+  id: number;
+  badge1: string;
+  badge2: string;
+  title: string;
+  content: string;
+  buttonText: string;
+  buttonLink: string;
+  imageUrl: string;
+  displayOrder: number;
+}

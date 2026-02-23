@@ -28,6 +28,7 @@ import SuperSiteSettings from './pages/super/SuperSiteSettings';
 import SuperPartners from './pages/super/SuperPartners';
 import SuperCommunity from './pages/super/SuperCommunity';
 import SuperUsers from './pages/super/SuperUsers';
+import SuperHeroManager from './pages/super/SuperHeroManager';
 
 const Navigation = () => {
   const location = useLocation();
@@ -143,6 +144,7 @@ const SuperAdminRoutes = () => (
     <Route path="/" element={<SuperDashboard />} />
     <Route path="/site-settings" element={<SuperSiteSettings />} />
     <Route path="/partners" element={<SuperPartners />} />
+    <Route path="/hero" element={<SuperHeroManager />} />
     <Route path="/community" element={<SuperCommunity />} />
     <Route path="/users" element={<SuperUsers />} />
   </Routes>

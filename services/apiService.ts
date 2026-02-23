@@ -1,5 +1,5 @@
 
-import { Venue, CCA, Post } from '../types';
+import { Venue, CCA, Post, HeroSection } from '../types';
 
 /**
  * Cloudflare Pages Functions와 통신하기 위한 API 서비스
@@ -8,6 +8,32 @@ import { Venue, CCA, Post } from '../types';
 const API_BASE = '/api';
 
 export const apiService = {
+  // Hero Sections
+  async getHeroSections(): Promise<HeroSection[]> {
+    try {
+      const response = await fetch(`${API_BASE}/hero`);
+      if (!response.ok) throw new Error('Failed to fetch hero sections');
+      return await response.json();
+    } catch (error) {
+      console.error('getHeroSections error:', error);
+      return [];
+    }
+  },
+
+  async updateHeroSections(heroSections: HeroSection[]): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/hero`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ heroSections }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updateHeroSections error:', error);
+      return false;
+    }
+  },
+
   // Venues
   async getVenues(): Promise<Venue[]> {
     try {
