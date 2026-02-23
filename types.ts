@@ -35,6 +35,13 @@ export type CustomerGrade = 'VIP' | 'EXCELLENT' | 'GENERAL' | 'WARNING';
 export interface CCA {
   id: string;
   name: string;
+  nickname?: string;
+  realNameFirst?: string;
+  realNameMiddle?: string;
+  realNameLast?: string;
+  birthday?: string;
+  address?: string;
+  phone?: string;
   displayName?: string;
   age?: number;
   weight?: string;
@@ -69,7 +76,26 @@ export interface CCA {
   sns?: {
     instagram?: string;
     facebook?: string;
+    tiktok?: string;
+    twitter?: string;
+    threads?: string;
+    telegram?: string;
   };
+  experienceHistory?: CCAExperience[];
+  maritalStatus?: string;
+  childrenStatus?: string;
+  specialNotes?: string;
+  viewsCount?: number;
+  likesCount?: number;
+  postsCount?: number;
+}
+
+export interface CCAExperience {
+  joinDate: string;
+  leaveDate: string;
+  venueName: string;
+  venueType: 'JTV' | 'KTV' | 'BAR' | 'CASINO' | 'GOLF' | 'ETC';
+  grade: string;
 }
 
 export interface Reservation {

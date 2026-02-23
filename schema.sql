@@ -18,6 +18,13 @@ CREATE TABLE IF NOT EXISTS venues (
 CREATE TABLE IF NOT EXISTS ccas (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  nickname TEXT,
+  real_name_first TEXT,
+  real_name_middle TEXT,
+  real_name_last TEXT,
+  birthday TEXT,
+  address TEXT,
+  phone TEXT,
   venue_id TEXT NOT NULL,
   rating REAL DEFAULT 0,
   image TEXT,
@@ -28,6 +35,16 @@ CREATE TABLE IF NOT EXISTS ccas (
   status TEXT DEFAULT 'active',
   grade TEXT DEFAULT 'PRO',
   points INTEGER DEFAULT 0,
+  mbti TEXT,
+  sns_links TEXT, -- JSON string
+  experience_history TEXT, -- JSON string
+  marital_status TEXT,
+  children_status TEXT,
+  special_notes TEXT,
+  views_count INTEGER DEFAULT 0,
+  likes_count INTEGER DEFAULT 0,
+  posts_count INTEGER DEFAULT 0,
+  password TEXT,
   FOREIGN KEY (venue_id) REFERENCES venues(id)
 );
 

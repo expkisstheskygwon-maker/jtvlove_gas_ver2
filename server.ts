@@ -24,6 +24,30 @@ async function startServer() {
   };
 
   let heroSections: any[] = [];
+  let ccas: any[] = [
+    {
+      id: 'c1',
+      name: 'Yumi Kim',
+      nickname: 'Yumi',
+      venue_id: 'v1',
+      venueName: 'Grand Palace JTV',
+      rating: 4.9,
+      image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000',
+      experience: '4 Years',
+      languages: '["PH", "EN", "JP"]',
+      height: '165 cm',
+      description: '안녕하세요, 유미입니다. 우아하고 편안한 밤을 약속드립니다.',
+      status: 'active',
+      grade: 'ACE',
+      points: 1250,
+      mbti: 'ENFJ',
+      sns_links: JSON.stringify({ instagram: 'yumi_official', facebook: 'yumi.kim' }),
+      experience_history: JSON.stringify([]),
+      views_count: 1200,
+      likes_count: 450,
+      posts_count: 42
+    }
+  ];
 
   // API Routes
   app.get("/api/settings", (req, res) => {
@@ -45,6 +69,40 @@ async function startServer() {
       ...s,
       displayOrder: i
     }));
+    res.json({ success: true });
+  });
+
+  app.get("/api/ccas", (req, res) => {
+    res.json(ccas.map(c => ({
+      ...c,
+      languages: JSON.parse(c.languages || '[]'),
+      sns: JSON.parse(c.sns_links || '{}'),
+      experienceHistory: JSON.parse(c.experience_history || '[]')
+    })));
+  });
+
+  app.get("/api/ccas/:id", (req, res) => {
+    const cca = ccas.find(c => c.id === req.params.id);
+    if (!cca) return res.status(404).json({ error: "Not found" });
+    res.json({
+      ...cca,
+      languages: JSON.parse(cca.languages || '[]'),
+      sns: JSON.parse(cca.sns_links || '{}'),
+      experienceHistory: JSON.parse(cca.experience_history || '[]')
+    });
+  });
+
+  app.post("/api/ccas/:id", (req, res) => {
+    const index = ccas.findIndex(c => c.id === req.params.id);
+    if (index === -1) return res.status(404).json({ error: "Not found" });
+    
+    const body = req.body;
+    ccas[index] = {
+      ...ccas[index],
+      ...body,
+      sns_links: body.sns ? JSON.stringify(body.sns) : ccas[index].sns_links,
+      experience_history: body.experienceHistory ? JSON.stringify(body.experienceHistory) : ccas[index].experience_history
+    };
     res.json({ success: true });
   });
 
