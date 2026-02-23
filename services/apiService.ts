@@ -51,29 +51,26 @@ export const apiService = {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        return data.url;
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          if (data.url) return data.url;
+        }
       }
-      
-      // 2. 서버 업로드 실패 시 (또는 개발 환경) 클라이언트 측에서 Base64 변환 후 반환
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => {
-          console.error("FileReader error");
-          resolve(null);
-        };
-        reader.readAsDataURL(file);
-      });
     } catch (error) {
-      // 네트워크 에러 등 발생 시 클라이언트 측 변환 시도
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(file);
-      });
+      console.warn("Server upload failed, using client-side fallback");
     }
+    
+    // 2. 서버 업로드 실패 시 클라이언트 측에서 Base64 변환 후 반환
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => {
+        console.error("FileReader error");
+        resolve(null);
+      };
+      reader.readAsDataURL(file);
+    });
   },
 
   // Venues
