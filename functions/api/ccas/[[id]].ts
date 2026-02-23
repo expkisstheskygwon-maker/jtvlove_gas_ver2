@@ -11,9 +11,9 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   const { env, request, params } = context;
   const url = new URL(request.url);
   
-  // In [[id]].ts, params.id will be an array if using [[...id]] or a string if using [[id]]
-  // But for Cloudflare Pages, [[id]] means optional single segment.
-  const id = params.id;
+  // Robust ID extraction
+  const rawId = params.id;
+  const id = Array.isArray(rawId) ? String(rawId[0]) : (rawId ? String(rawId) : null);
 
   // GET: List or Single
   if (request.method === 'GET') {
@@ -42,7 +42,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           specialNotes: result.special_notes,
           viewsCount: result.views_count,
           likesCount: result.likes_count,
-          postsCount: result.posts_count
+          posts_count: result.posts_count
         }), {
           headers: { "Content-Type": "application/json" },
         });
@@ -93,7 +93,28 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         image, venueId
       } = body;
 
-      // Update including the 'name' field
+      // Force all values to primitives or null for D1 compatibility
+      const paramsList = [
+        name ? String(name) : null,
+        nickname ? String(nickname) : null,
+        realNameFirst ? String(realNameFirst) : null,
+        realNameMiddle ? String(realNameMiddle) : null,
+        realNameLast ? String(realNameLast) : null,
+        birthday ? String(birthday) : null,
+        address ? String(address) : null,
+        phone ? String(phone) : null,
+        mbti ? String(mbti) : null,
+        sns ? JSON.stringify(sns) : null,
+        experienceHistory ? JSON.stringify(experienceHistory) : null,
+        maritalStatus ? String(maritalStatus) : null,
+        childrenStatus ? String(childrenStatus) : null,
+        specialNotes ? String(specialNotes) : null,
+        image ? String(image) : null,
+        venueId ? String(venueId) : null,
+        password ? String(password) : null,
+        String(id) // The ID for WHERE clause
+      ];
+
       await env.DB.prepare(`
         UPDATE ccas SET
           name = COALESCE(?, name),
@@ -114,14 +135,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           venue_id = COALESCE(?, venue_id),
           password = COALESCE(?, password)
         WHERE id = ?
-      `).bind(
-        name || null, nickname || null, realNameFirst || null, realNameMiddle || null, realNameLast || null,
-        birthday || null, address || null, phone || null, mbti || null,
-        sns ? JSON.stringify(sns) : null, experienceHistory ? JSON.stringify(experienceHistory) : null,
-        maritalStatus || null, childrenStatus || null, specialNotes || null,
-        image || null, venueId || null, password || null,
-        id
-      ).run();
+      `).bind(...paramsList).run();
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { "Content-Type": "application/json" },
