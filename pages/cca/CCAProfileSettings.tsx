@@ -220,15 +220,33 @@ const CCAProfileSettings: React.FC = () => {
           <div className="space-y-2">
             <div className="flex flex-col md:flex-row items-center gap-4">
               {isEditMode ? (
-                <input 
-                  type="text" 
-                  value={formData.nickname || ''} 
-                  onChange={(e) => handleInputChange('nickname', e.target.value)}
-                  placeholder="Enter Nickname"
-                  className="text-3xl font-black bg-gray-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 w-full md:w-auto focus:ring-2 ring-primary/20"
-                />
+                <div className="flex flex-col gap-2 w-full md:w-auto">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Display Name (Nickname)</label>
+                    <input 
+                      type="text" 
+                      value={formData.nickname || ''} 
+                      onChange={(e) => handleInputChange('nickname', e.target.value)}
+                      placeholder="Enter Nickname"
+                      className="text-2xl font-black bg-gray-100 dark:bg-white/5 border-none rounded-xl px-4 py-2 w-full focus:ring-2 ring-primary/20"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Public Name</label>
+                    <input 
+                      type="text" 
+                      value={formData.name || ''} 
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      placeholder="Enter Public Name"
+                      className="text-lg font-bold bg-gray-100 dark:bg-white/5 border-none rounded-xl px-4 py-1 w-full focus:ring-2 ring-primary/20"
+                    />
+                  </div>
+                </div>
               ) : (
-                <h2 className="text-4xl font-black tracking-tight">{cca.nickname || cca.name}</h2>
+                <div className="flex flex-col items-center md:items-start">
+                  <h2 className="text-4xl font-black tracking-tight">{cca.nickname || cca.name}</h2>
+                  {cca.nickname && <p className="text-sm font-bold text-gray-400">({cca.name})</p>}
+                </div>
               )}
               <div className="flex gap-2">
                 <button 

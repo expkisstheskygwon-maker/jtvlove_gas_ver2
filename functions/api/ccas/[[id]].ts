@@ -1,22 +1,24 @@
 
 // Cloudflare worker types
 type D1Database = any;
-type PagesFunction<T> = any;
+type PagesFunction<T, P = any> = any;
 
 interface Env {
   DB: D1Database;
 }
 
 export const onRequest: PagesFunction<Env> = async (context: any) => {
-  const { env, request } = context;
+  const { env, request, params } = context;
   const url = new URL(request.url);
-  const pathParts = url.pathname.split('/');
-  const id = pathParts[pathParts.length - 1];
+  
+  // In [[id]].ts, params.id will be an array if using [[...id]] or a string if using [[id]]
+  // But for Cloudflare Pages, [[id]] means optional single segment.
+  const id = params.id;
 
   // GET: List or Single
   if (request.method === 'GET') {
     try {
-      if (id && id !== 'ccas') {
+      if (id) {
         const result = await env.DB.prepare(`
           SELECT c.*, v.name as venueName 
           FROM ccas c 
@@ -81,18 +83,20 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   }
 
   // POST: Update
-  if (request.method === 'POST' && id && id !== 'ccas') {
+  if (request.method === 'POST' && id) {
     try {
       const body = await request.json();
       const { 
-        nickname, realNameFirst, realNameMiddle, realNameLast, 
+        name, nickname, realNameFirst, realNameMiddle, realNameLast, 
         birthday, address, phone, mbti, sns, experienceHistory, 
         maritalStatus, childrenStatus, specialNotes, password,
         image, venueId
       } = body;
 
+      // Update including the 'name' field
       await env.DB.prepare(`
         UPDATE ccas SET
+          name = COALESCE(?, name),
           nickname = ?, real_name_first = ?, real_name_middle = ?, real_name_last = ?,
           birthday = ?, address = ?, phone = ?, mbti = ?, 
           sns_links = ?, experience_history = ?, 
@@ -100,7 +104,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           image = ?, venue_id = ?, password = COALESCE(?, password)
         WHERE id = ?
       `).bind(
-        nickname || null, realNameFirst || null, realNameMiddle || null, realNameLast || null,
+        name || null, nickname || null, realNameFirst || null, realNameMiddle || null, realNameLast || null,
         birthday || null, address || null, phone || null, mbti || null,
         sns ? JSON.stringify(sns) : null, experienceHistory ? JSON.stringify(experienceHistory) : null,
         maritalStatus || null, childrenStatus || null, specialNotes || null,

@@ -100,6 +100,7 @@ async function startServer() {
     ccas[index] = {
       ...ccas[index],
       ...body,
+      name: body.name || ccas[index].name,
       sns_links: body.sns ? JSON.stringify(body.sns) : ccas[index].sns_links,
       experience_history: body.experienceHistory ? JSON.stringify(body.experienceHistory) : ccas[index].experience_history
     };
