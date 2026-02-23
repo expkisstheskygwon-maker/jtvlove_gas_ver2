@@ -35,6 +35,7 @@ const CCAProfileSettings: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   
   // Form State
@@ -43,6 +44,7 @@ const CCAProfileSettings: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         // For demo/preview, we use 'c1' as the current CCA ID
         const currentCcaId = 'c1'; 
@@ -54,10 +56,13 @@ const CCAProfileSettings: React.FC = () => {
         if (ccaData) {
           setCca(ccaData);
           setFormData(ccaData);
+        } else {
+          setError("CCA 정보를 불러올 수 없습니다. DB에 해당 ID의 데이터가 있는지 확인해주세요.");
         }
         setVenues(venuesData);
       } catch (err) {
         console.error("Load failed", err);
+        setError("데이터 로딩 중 오류가 발생했습니다. DB 테이블이 생성되었는지 확인해주세요.");
       } finally {
         setIsLoading(false);
       }
@@ -154,13 +159,35 @@ const CCAProfileSettings: React.FC = () => {
     }
   };
 
-  if (isLoading || !cca) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4 text-center">
+        <div className="size-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center">
+          <span className="material-symbols-outlined text-4xl">error</span>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-xl font-black uppercase">Data Load Error</h3>
+          <p className="text-sm text-gray-500 font-medium">{error}</p>
+        </div>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-8 py-3 bg-primary text-[#1b180d] rounded-2xl text-xs font-black uppercase tracking-widest"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!cca) return null;
 
   const birthdayDate = formData.birthday ? new Date(formData.birthday) : new Date();
   const bDay = birthdayDate.getDate();
