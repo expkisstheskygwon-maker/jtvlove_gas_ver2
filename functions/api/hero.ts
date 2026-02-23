@@ -24,6 +24,7 @@ export const onRequestGet = async (context: { env: Env }) => {
     // Map snake_case to camelCase for the frontend
     const mappedResults = (results || []).map((row: any) => ({
       id: row.id,
+      ccaId: row.cca_id,
       badge1: row.badge1,
       badge2: row.badge2,
       title: row.title,
@@ -69,9 +70,10 @@ export const onRequestPost = async (context: { env: Env, request: Request }) => 
     if (limitedSections.length > 0) {
       const statements = limitedSections.map((section: any, index: number) => {
         return env.DB.prepare(`
-          INSERT INTO hero_sections (badge1, badge2, title, content, button_text, button_link, image_url, display_order)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO hero_sections (cca_id, badge1, badge2, title, content, button_text, button_link, image_url, display_order)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
+          section.ccaId || null,
           section.badge1 || '',
           section.badge2 || '',
           section.title || '',

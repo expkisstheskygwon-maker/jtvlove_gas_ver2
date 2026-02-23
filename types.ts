@@ -115,6 +115,7 @@ export interface MediaItem {
 
 export interface HeroSection {
   id: number;
+  ccaId?: string;
   badge1: string;
   badge2: string;
   title: string;

@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
 -- 6. Hero Sections Table
 CREATE TABLE IF NOT EXISTS hero_sections (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cca_id TEXT,
   badge1 TEXT,
   badge2 TEXT,
   title TEXT,
