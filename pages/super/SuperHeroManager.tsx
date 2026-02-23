@@ -226,7 +226,7 @@ const SuperHeroManager: React.FC = () => {
               {/* Right: Image Preview & Upload */}
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Custom Image (PNG/JPG)</label>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Custom Image (PNG/JPG - Max 700KB)</label>
                   <div className="flex flex-col gap-4">
                     <input 
                       type="file" 
