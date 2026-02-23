@@ -97,11 +97,22 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       await env.DB.prepare(`
         UPDATE ccas SET
           name = COALESCE(?, name),
-          nickname = ?, real_name_first = ?, real_name_middle = ?, real_name_last = ?,
-          birthday = ?, address = ?, phone = ?, mbti = ?, 
-          sns_links = ?, experience_history = ?, 
-          marital_status = ?, children_status = ?, special_notes = ?,
-          image = ?, venue_id = ?, password = COALESCE(?, password)
+          nickname = COALESCE(?, nickname),
+          real_name_first = COALESCE(?, real_name_first),
+          real_name_middle = COALESCE(?, real_name_middle),
+          real_name_last = COALESCE(?, real_name_last),
+          birthday = COALESCE(?, birthday),
+          address = COALESCE(?, address),
+          phone = COALESCE(?, phone),
+          mbti = COALESCE(?, mbti),
+          sns_links = COALESCE(?, sns_links),
+          experience_history = COALESCE(?, experience_history),
+          marital_status = COALESCE(?, marital_status),
+          children_status = COALESCE(?, children_status),
+          special_notes = COALESCE(?, special_notes),
+          image = COALESCE(?, image),
+          venue_id = COALESCE(?, venue_id),
+          password = COALESCE(?, password)
         WHERE id = ?
       `).bind(
         name || null, nickname || null, realNameFirst || null, realNameMiddle || null, realNameLast || null,

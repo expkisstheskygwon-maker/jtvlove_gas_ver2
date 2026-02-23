@@ -143,14 +143,14 @@ const CCAProfileSettings: React.FC = () => {
       const updateData = { ...formData };
       if (newPassword) (updateData as any).password = newPassword;
       
-      const success = await apiService.updateCCAProfile(cca.id, updateData);
-      if (success) {
+      const result = await apiService.updateCCAProfile(cca.id, updateData);
+      if (result.success) {
         setCca({ ...cca, ...formData });
         setIsEditMode(false);
         setNewPassword('');
         alert("Profile updated successfully!");
       } else {
-        alert("Failed to update profile.");
+        alert(`Failed to update profile: ${result.error || 'Unknown error'}`);
       }
     } catch (err) {
       console.error(err);

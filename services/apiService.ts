@@ -99,17 +99,23 @@ export const apiService = {
     }
   },
 
-  async updateCCAProfile(id: string, data: Partial<CCA> & { password?: string }): Promise<boolean> {
+  async updateCCAProfile(id: string, data: Partial<CCA> & { password?: string }): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/ccas/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      return response.ok;
-    } catch (error) {
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Server error' };
+      }
+      
+      return { success: true };
+    } catch (error: any) {
       console.error('updateCCAProfile error:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   },
 
