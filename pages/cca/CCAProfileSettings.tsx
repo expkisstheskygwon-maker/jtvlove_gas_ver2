@@ -587,6 +587,33 @@ const CCAProfileSettings: React.FC = () => {
                 </div>
               </div>
 
+              {/* Language Selection */}
+              <div className="md:col-span-2 space-y-4">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Language (가능 언어)</label>
+                <div className="flex flex-wrap gap-3">
+                  {['ENGLISH', 'KOREAN', 'JAPANESE', 'CHINESE', 'ETC'].map(lang => {
+                    const isSelected = (formData.languages || []).includes(lang);
+                    return (
+                      <button 
+                        key={lang}
+                        type="button"
+                        disabled={!isEditMode}
+                        onClick={() => {
+                          const current = formData.languages || [];
+                          const next = isSelected 
+                            ? current.filter(l => l !== lang)
+                            : [...current, lang];
+                          handleInputChange('languages', next);
+                        }}
+                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isSelected ? 'bg-primary text-[#1b180d] border-primary shadow-lg shadow-primary/20' : 'bg-gray-50 dark:bg-white/5 border-transparent text-gray-500'}`}
+                      >
+                        {lang}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Password Change */}
               {isEditMode && (
                 <div className="md:col-span-2 space-y-4 pt-4 border-t border-gray-100 dark:border-white/5">

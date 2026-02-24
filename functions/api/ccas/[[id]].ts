@@ -94,7 +94,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         name, nickname, realNameFirst, realNameMiddle, realNameLast, 
         birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory, 
         maritalStatus, childrenStatus, specialNotes, password,
-        image, venueId
+        image, venueId, languages
       } = body;
 
       // Force all values to primitives or null for D1 compatibility
@@ -118,6 +118,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         image ? String(image) : null,
         venueId ? String(venueId) : null,
         password ? String(password) : null,
+        languages ? JSON.stringify(languages) : null,
         String(id) // The ID for WHERE clause
       ];
 
@@ -141,7 +142,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           special_notes = COALESCE(?, special_notes),
           image = COALESCE(?, image),
           venue_id = COALESCE(?, venue_id),
-          password = COALESCE(?, password)
+          password = COALESCE(?, password),
+          languages = COALESCE(?, languages)
         WHERE id = ?
       `).bind(...paramsList).run();
 
