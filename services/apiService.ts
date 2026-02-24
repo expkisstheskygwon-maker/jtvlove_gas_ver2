@@ -1,5 +1,5 @@
 
-import { Venue, CCA, Post, HeroSection } from '../types';
+import { Venue, CCA, Post, HeroSection, MediaItem } from '../types';
 
 /**
  * Cloudflare Pages Functions와 통신하기 위한 API 서비스
@@ -168,6 +168,50 @@ export const apiService = {
       body: JSON.stringify(data),
     });
     return response.ok;
+  },
+
+  // Gallery
+  async getGallery(ccaId?: string): Promise<MediaItem[]> {
+    try {
+      let url = `${API_BASE}/gallery`;
+      if (ccaId) url += `?ccaId=${encodeURIComponent(ccaId)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch gallery');
+      return await response.json();
+    } catch (error) {
+      console.error('getGallery error:', error);
+      return [];
+    }
+  },
+
+  async createGalleryItem(data: { ccaId: string; type: 'photo' | 'video'; url: string; caption?: string }): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Server error' };
+      }
+      return await response.json();
+    } catch (error: any) {
+      console.error('createGalleryItem error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async deleteGalleryItem(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery/${id}`, {
+        method: 'DELETE',
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteGalleryItem error:', error);
+      return false;
+    }
   },
 
   // Site Settings

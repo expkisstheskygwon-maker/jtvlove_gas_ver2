@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS ccas (
   grade TEXT DEFAULT 'PRO',
   points INTEGER DEFAULT 0,
   mbti TEXT,
+  zodiac TEXT,
+  one_line_story TEXT,
   sns_links TEXT, -- JSON string
   experience_history TEXT, -- JSON string
   marital_status TEXT,
@@ -97,6 +99,20 @@ CREATE TABLE IF NOT EXISTS hero_sections (
   button_link TEXT,
   image_url TEXT,
   display_order INTEGER
+);
+
+-- 7. Gallery Table
+CREATE TABLE IF NOT EXISTS gallery (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  type TEXT NOT NULL, -- 'photo', 'video'
+  url TEXT NOT NULL,
+  caption TEXT,
+  likes INTEGER DEFAULT 0,
+  shares INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cca_id) REFERENCES ccas(id)
 );
 
 -- [초기 샘플 데이터 삽입]

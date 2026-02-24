@@ -49,7 +49,37 @@ async function startServer() {
     }
   ];
 
+  let gallery: any[] = [
+    { id: 'm1', ccaId: 'c1', type: 'photo', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800', caption: '오늘 밤도 화이팅! ✨ 우리 그랜드 팰리스에서 만나요.', likes: 124, shares: 12, commentsCount: 5, date: '2023.11.20' },
+    { id: 'm2', ccaId: 'c1', type: 'photo', url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=800', caption: '새로 장만한 드레스 👗 어때요? 피드백 환영!', likes: 98, shares: 5, commentsCount: 2, date: '2023.11.19' },
+  ];
+
   // API Routes
+  app.get("/api/gallery", (req, res) => {
+    const ccaId = req.query.ccaId;
+    let filtered = gallery;
+    if (ccaId) filtered = gallery.filter(g => g.ccaId === ccaId);
+    res.json(filtered);
+  });
+
+  app.post("/api/gallery", (req, res) => {
+    const newItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      ...req.body,
+      likes: 0,
+      shares: 0,
+      commentsCount: 0,
+      date: new Date().toISOString()
+    };
+    gallery.push(newItem);
+    res.json({ success: true, id: newItem.id });
+  });
+
+  app.delete("/api/gallery/:id", (req, res) => {
+    gallery = gallery.filter(g => g.id !== req.params.id);
+    res.json({ success: true });
+  });
+
   app.get("/api/settings", (req, res) => {
     res.json(siteSettings);
   });
