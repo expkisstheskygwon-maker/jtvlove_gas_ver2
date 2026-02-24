@@ -1,22 +1,148 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RESERVATIONS } from '../../constants';
+import { Reservation } from '../../types';
+import { apiService } from '../../services/apiService';
 
 const CCAMySchedule: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState('2023-11-20');
+  const [appointments, setAppointments] = useState<Reservation[]>(RESERVATIONS);
+  const [dayOffDates, setDayOffDates] = useState<Set<string>>(new Set());
+  const [soldOutDates, setSoldOutDates] = useState<Set<string>>(new Set(['2023-11-20']));
   
-  // Status Colors for Calendar (Simplified Logic)
-  const getDayStatus = (day: number) => {
-    if (day === 15) return 'bg-red-100 text-red-500'; // Holiday
-    if (day === 20) return 'bg-blue-100 text-blue-500'; // Sold Out
-    if (day === 22) return 'bg-yellow-100 text-yellow-600 line-through'; // Cancelled
-    return 'bg-transparent';
+  // Modal States
+  const [showDayDetailModal, setShowDayDetailModal] = useState(false);
+  const [showDayOffModal, setShowDayOffModal] = useState(false);
+  const [showAddAppointmentModal, setShowAddAppointmentModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
+  const [selectedRes, setSelectedRes] = useState<Reservation | null>(null);
+
+  // Holiday Modal Calendar State
+  const [viewDate, setViewDate] = useState(new Date(2023, 10, 1)); // Nov 2023
+  const [isSyncingHolidays, setIsSyncingHolidays] = useState(false);
+
+  const currentCcaId = 'c1';
+
+  useEffect(() => {
+    loadHolidays();
+  }, []);
+
+  const loadHolidays = async () => {
+    const dates = await apiService.getHolidays(currentCcaId);
+    setDayOffDates(new Set(dates));
   };
 
-  const dayReservations = RESERVATIONS.filter(r => r.date === selectedDate);
+  // Status Colors for Calendar
+  const getDayStatus = (dateStr: string) => {
+    if (dayOffDates.has(dateStr)) return 'bg-gray-400 text-white';
+    if (soldOutDates.has(dateStr)) return 'bg-red-500 text-white';
+    
+    const hasRes = appointments.some(r => r.date === dateStr);
+    if (hasRes) return 'bg-blue-500 text-white';
+    
+    return 'bg-transparent text-gray-700 dark:text-gray-300';
+  };
+
+  const dayReservations = appointments.filter(r => r.date === selectedDate);
+
+  const handleToggleDayOff = (date: string) => {
+    const newDayOff = new Set(dayOffDates);
+    if (newDayOff.has(date)) {
+      newDayOff.delete(date);
+    } else {
+      newDayOff.add(date);
+    }
+    setDayOffDates(newDayOff);
+  };
+
+  const handleSaveHolidays = async () => {
+    setIsSyncingHolidays(true);
+    const success = await apiService.syncHolidays(currentCcaId, Array.from(dayOffDates));
+    if (success) {
+      setShowDayOffModal(false);
+    } else {
+      alert("Failed to sync holidays");
+    }
+    setIsSyncingHolidays(false);
+  };
+
+  const handleAddAppointment = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newRes: Reservation = {
+      id: Math.random().toString(36).substr(2, 9),
+      venueId: 'v1',
+      ccaId: 'c1',
+      ccaName: 'Yumi Kim',
+      customerName: formData.get('customerName') as string,
+      customerNote: formData.get('note') as string,
+      time: formData.get('time') as string,
+      date: selectedDate,
+      status: 'pending',
+      shortMessage: formData.get('note') as string,
+    };
+    setAppointments([...appointments, newRes]);
+    setShowAddAppointmentModal(false);
+  };
+
+  const handleUpdateStatus = (id: string, status: Reservation['status']) => {
+    setAppointments(appointments.map(r => r.id === id ? { ...r, status } : r));
+    setShowManageModal(false);
+  };
+
+  // Calendar Helpers for Modal
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const renderHolidayCalendar = () => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const monthName = viewDate.toLocaleString('default', { month: 'long' });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-4">
+          <button 
+            onClick={() => setViewDate(new Date(year, month - 1, 1))}
+            className="size-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center"
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          <h4 className="text-xl font-black uppercase tracking-widest">{monthName} {year}</h4>
+          <button 
+            onClick={() => setViewDate(new Date(year, month + 1, 1))}
+            className="size-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center"
+          >
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2">
+          {['S','M','T','W','T','F','S'].map(d => <div key={d} className="text-center text-[10px] font-black text-gray-400 py-2">{d}</div>)}
+          {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isDayOff = dayOffDates.has(dateStr);
+            return (
+              <button
+                key={day}
+                onClick={() => handleToggleDayOff(dateStr)}
+                className={`aspect-square rounded-xl flex items-center justify-center text-sm font-black transition-all ${isDayOff ? 'bg-gray-400 text-white shadow-lg' : 'bg-gray-50 dark:bg-white/5 hover:bg-primary/10'}`}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start animate-fade-in">
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start animate-fade-in pb-20">
        {/* Left: Premium Calendar */}
        <div className="xl:col-span-5 space-y-8">
           <div className="flex items-center justify-between">
@@ -32,23 +158,26 @@ const CCAMySchedule: React.FC = () => {
              
              <div className="grid grid-cols-7 gap-4 relative z-10">
                 {['S','M','T','W','T','F','S'].map(d => <div key={d} className="text-center text-[10px] font-black text-gray-300 py-4">{d}</div>)}
-                {Array.from({length: 30}).map((_, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setSelectedDate(`2023-11-${String(i+1).padStart(2, '0')}`)}
-                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${getDayStatus(i+1)} ${selectedDate.endsWith(String(i+1).padStart(2, '0')) ? 'ring-4 ring-primary bg-primary text-[#1b180d]' : ''}`}
-                  >
-                     <span className="text-sm font-black">{i+1}</span>
-                     {i === 19 && <span className="text-[8px] font-black uppercase opacity-60">Full</span>}
-                  </button>
-                ))}
+                {Array.from({length: 30}).map((_, i) => {
+                  const dateStr = `2023-11-${String(i+1).padStart(2, '0')}`;
+                  return (
+                    <button 
+                      key={i} 
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${getDayStatus(dateStr)} ${selectedDate === dateStr ? 'ring-4 ring-primary !bg-primary !text-[#1b180d]' : ''}`}
+                    >
+                       <span className="text-sm font-black">{i+1}</span>
+                       {soldOutDates.has(dateStr) && <span className="text-[8px] font-black uppercase opacity-60">Full</span>}
+                    </button>
+                  );
+                })}
              </div>
              
              {/* Legend */}
              <div className="mt-10 flex flex-wrap gap-4 pt-10 border-t border-primary/5">
-                <div className="flex items-center gap-2"><div className="size-3 rounded-full bg-blue-100"></div><span className="text-[9px] font-black uppercase text-gray-400">Sold Out</span></div>
-                <div className="flex items-center gap-2"><div className="size-3 rounded-full bg-red-100"></div><span className="text-[9px] font-black uppercase text-gray-400">Holiday</span></div>
-                <div className="flex items-center gap-2"><div className="size-3 rounded-full bg-yellow-100"></div><span className="text-[9px] font-black uppercase text-gray-400">No Show</span></div>
+                <div className="flex items-center gap-2"><div className="size-3 rounded-full bg-red-500"></div><span className="text-[9px] font-black uppercase text-gray-400">Sold Out</span></div>
+                <div className="flex items-center gap-2"><div className="size-3 rounded-full bg-blue-500"></div><span className="text-[9px] font-black uppercase text-gray-400">Available</span></div>
+                <div className="flex items-center gap-2"><div className="size-3 rounded-full bg-gray-400"></div><span className="text-[9px] font-black uppercase text-gray-400">Day Off</span></div>
              </div>
           </div>
        </div>
@@ -61,7 +190,12 @@ const CCAMySchedule: React.FC = () => {
                    <h4 className="text-2xl font-black">{selectedDate}</h4>
                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Timeline Detail</p>
                 </div>
-                <button className="material-symbols-outlined size-12 flex items-center justify-center bg-primary/10 text-primary rounded-full">more_horiz</button>
+                <button 
+                  onClick={() => setShowDayDetailModal(true)}
+                  className="material-symbols-outlined size-12 flex items-center justify-center bg-primary/10 text-primary rounded-full hover:scale-110 transition-all"
+                >
+                  more_horiz
+                </button>
              </div>
 
              <div className="space-y-6">
@@ -79,12 +213,20 @@ const CCAMySchedule: React.FC = () => {
                             <div>
                                <div className="flex items-center gap-2">
                                   <span className="font-black text-lg">{res.customerName}</span>
-                                  <span className="text-[8px] font-black px-2 py-0.5 bg-primary text-[#1b180d] rounded-full">VIP</span>
+                                  {res.customerGrade === 'VIP' && <span className="text-[8px] font-black px-2 py-0.5 bg-primary text-[#1b180d] rounded-full">VIP</span>}
                                </div>
                                <p className="text-xs italic text-gray-400 font-bold truncate max-w-[150px]">"{res.shortMessage}"</p>
                             </div>
                          </div>
-                         <button className="px-6 py-2.5 bg-white dark:bg-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-all">Manage</button>
+                         <button 
+                           onClick={() => {
+                             setSelectedRes(res);
+                             setShowManageModal(true);
+                           }}
+                           className="px-6 py-2.5 bg-white dark:bg-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-all"
+                         >
+                           Manage
+                         </button>
                       </div>
                    </div>
                 )) : (
@@ -97,10 +239,156 @@ const CCAMySchedule: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-6">
-             <button className="h-16 bg-white dark:bg-zinc-900 border border-primary/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-primary transition-all">Set Holiday</button>
-             <button className="h-16 bg-background-dark text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Add Appointment</button>
+             <button 
+               onClick={() => setShowDayOffModal(true)}
+               className="h-16 bg-white dark:bg-zinc-900 border border-primary/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-primary transition-all"
+             >
+               Set Day Off
+             </button>
+             <button 
+               onClick={() => setShowAddAppointmentModal(true)}
+               className="h-16 bg-background-dark text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
+             >
+               Add Appointment
+             </button>
           </div>
        </div>
+
+       {/* Day Detail Modal */}
+       {showDayDetailModal && (
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+           <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-[3rem] p-10 shadow-2xl animate-scale-in border border-primary/10">
+             <div className="flex items-center justify-between mb-8">
+               <h3 className="text-2xl font-black tracking-tight">{selectedDate} Full Schedule</h3>
+               <button onClick={() => setShowDayDetailModal(false)} className="size-10 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center"><span className="material-symbols-outlined">close</span></button>
+             </div>
+             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+               {dayReservations.map(res => (
+                 <div key={res.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-primary/5">
+                   <div className="flex items-center gap-4">
+                     <span className="text-sm font-black w-16">{res.time}</span>
+                     <div>
+                       <p className="font-black">{res.customerName}</p>
+                       <p className="text-[10px] text-gray-400 uppercase font-black">{res.status}</p>
+                     </div>
+                   </div>
+                   <button 
+                     onClick={() => {
+                       setSelectedRes(res);
+                       setShowManageModal(true);
+                       setShowDayDetailModal(false);
+                     }}
+                     className="text-primary font-black text-[10px] uppercase tracking-widest"
+                   >
+                     Manage
+                   </button>
+                 </div>
+               ))}
+               {dayReservations.length === 0 && <p className="text-center py-10 text-gray-400 font-bold">No appointments scheduled.</p>}
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Day Off Modal (Multi-date Calendar) */}
+       {showDayOffModal && (
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+           <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[3rem] p-10 shadow-2xl animate-scale-in border border-primary/10">
+             <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black tracking-tight">Manage Day Offs</h3>
+                <button onClick={() => setShowDayOffModal(false)} className="size-10 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center"><span className="material-symbols-outlined">close</span></button>
+             </div>
+             
+             {renderHolidayCalendar()}
+
+             <div className="mt-10 flex gap-4">
+               <button 
+                 onClick={handleSaveHolidays}
+                 disabled={isSyncingHolidays}
+                 className="flex-1 py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+               >
+                 {isSyncingHolidays ? (
+                   <div className="size-4 border-2 border-[#1b180d] border-t-transparent rounded-full animate-spin"></div>
+                 ) : (
+                   <>
+                     <span className="material-symbols-outlined text-sm">save</span>
+                     Save Changes
+                   </>
+                 )}
+               </button>
+               <button 
+                 onClick={() => setShowDayOffModal(false)}
+                 className="flex-1 py-4 bg-gray-100 dark:bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest"
+               >
+                 Cancel
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Add Appointment Modal */}
+       {showAddAppointmentModal && (
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+           <form onSubmit={handleAddAppointment} className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-scale-in border border-primary/10">
+             <h3 className="text-2xl font-black tracking-tight mb-8">Add Appointment</h3>
+             <div className="space-y-6">
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Customer Name</label>
+                 <input name="customerName" required type="text" className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm" placeholder="Name" />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Time</label>
+                 <input name="time" required type="time" className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm" />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Note</label>
+                 <textarea name="note" className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm h-24 resize-none" placeholder="Short message..."></textarea>
+               </div>
+               <div className="flex gap-4 pt-4">
+                 <button type="submit" className="flex-1 py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-xs tracking-widest">Add</button>
+                 <button type="button" onClick={() => setShowAddAppointmentModal(false)} className="flex-1 py-4 bg-gray-100 dark:bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest">Cancel</button>
+               </div>
+             </div>
+           </form>
+         </div>
+       )}
+
+       {/* Manage Modal */}
+       {showManageModal && selectedRes && (
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+           <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-scale-in border border-primary/10">
+             <h3 className="text-2xl font-black tracking-tight mb-4">Manage Appointment</h3>
+             <p className="text-gray-400 font-bold text-sm mb-8">Customer: {selectedRes.customerName} at {selectedRes.time}</p>
+             <div className="grid grid-cols-1 gap-4">
+               <button 
+                 onClick={() => handleUpdateStatus(selectedRes.id, 'confirmed')}
+                 className="py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest"
+               >
+                 Confirm
+               </button>
+               <button 
+                 onClick={() => handleUpdateStatus(selectedRes.id, 'no_show')}
+                 className="py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest"
+               >
+                 Mark No Show
+               </button>
+               <button 
+                 onClick={() => handleUpdateStatus(selectedRes.id, 'cancelled')}
+                 className="py-4 bg-gray-400 text-white rounded-2xl font-black uppercase text-xs tracking-widest"
+               >
+                 Cancel Appointment
+               </button>
+               <button 
+                 onClick={() => setShowManageModal(false)}
+                 className="py-4 bg-gray-100 dark:bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest"
+               >
+                 Close
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 };

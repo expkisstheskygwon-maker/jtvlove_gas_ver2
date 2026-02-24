@@ -115,6 +115,15 @@ CREATE TABLE IF NOT EXISTS gallery (
   FOREIGN KEY (cca_id) REFERENCES ccas(id)
 );
 
+-- 8. CCA Holidays Table
+CREATE TABLE IF NOT EXISTS cca_holidays (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  holiday_date TEXT NOT NULL, -- YYYY-MM-DD
+  FOREIGN KEY (cca_id) REFERENCES ccas(id),
+  UNIQUE(cca_id, holiday_date)
+);
+
 -- [초기 샘플 데이터 삽입]
 INSERT OR IGNORE INTO venues (id, name, region, rating, reviews_count, description, image, phone, address, tags, features)
 VALUES ('v1', 'Grand Palace JTV', 'Pasay', 4.9, 128, 'Experience the pinnacle of nightlife at Grand Palace JTV.', 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=2000', '0912-345-6789', 'Entertainment City, Pasay', '["Premium Service", "VIP Room"]', '["VIP Rooms", "Live Stage"]');

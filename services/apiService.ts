@@ -214,6 +214,32 @@ export const apiService = {
     }
   },
 
+  // Holidays
+  async getHolidays(ccaId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/holidays?ccaId=${encodeURIComponent(ccaId)}`);
+      if (!response.ok) throw new Error('Failed to fetch holidays');
+      return await response.json();
+    } catch (error) {
+      console.error('getHolidays error:', error);
+      return [];
+    }
+  },
+
+  async syncHolidays(ccaId: string, dates: string[]): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/holidays`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId, dates }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('syncHolidays error:', error);
+      return false;
+    }
+  },
+
   // Site Settings
   async getSiteSettings(): Promise<any> {
     try {

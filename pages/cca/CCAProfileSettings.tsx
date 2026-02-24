@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '../../services/apiService';
-import { CCA, Venue, CCAExperience } from '../../types';
+import { CCA, Venue, CCAExperience, MediaItem } from '../../types';
 
 const MBTI_LIST = [
   'ISTJ', 'ISFJ', 'INFJ', 'INTJ',
