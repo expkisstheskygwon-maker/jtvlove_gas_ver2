@@ -40,9 +40,11 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           maritalStatus: result.marital_status,
           childrenStatus: result.children_status,
           specialNotes: result.special_notes,
+          oneLineStory: result.one_line_story,
+          zodiac: result.zodiac,
           viewsCount: result.views_count,
           likesCount: result.likes_count,
-          posts_count: result.posts_count
+          postsCount: result.posts_count
         }), {
           headers: { "Content-Type": "application/json" },
         });
@@ -66,6 +68,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         maritalStatus: c.marital_status,
         childrenStatus: c.children_status,
         specialNotes: c.special_notes,
+        oneLineStory: c.one_line_story,
+        zodiac: c.zodiac,
         viewsCount: c.views_count,
         likesCount: c.likes_count,
         postsCount: c.posts_count
@@ -88,7 +92,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       const body = await request.json();
       const { 
         name, nickname, realNameFirst, realNameMiddle, realNameLast, 
-        birthday, address, phone, mbti, sns, experienceHistory, 
+        birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory, 
         maritalStatus, childrenStatus, specialNotes, password,
         image, venueId
       } = body;
@@ -104,6 +108,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         address ? String(address) : null,
         phone ? String(phone) : null,
         mbti ? String(mbti) : null,
+        zodiac ? String(zodiac) : null,
+        oneLineStory ? String(oneLineStory) : null,
         sns ? JSON.stringify(sns) : null,
         experienceHistory ? JSON.stringify(experienceHistory) : null,
         maritalStatus ? String(maritalStatus) : null,
@@ -126,6 +132,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           address = COALESCE(?, address),
           phone = COALESCE(?, phone),
           mbti = COALESCE(?, mbti),
+          zodiac = COALESCE(?, zodiac),
+          one_line_story = COALESCE(?, one_line_story),
           sns_links = COALESCE(?, sns_links),
           experience_history = COALESCE(?, experience_history),
           marital_status = COALESCE(?, marital_status),

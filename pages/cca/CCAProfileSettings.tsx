@@ -88,6 +88,36 @@ const CCAProfileSettings: React.FC = () => {
     return sign ? sign.name : '';
   };
 
+  const calculateAge = (birthday: string) => {
+    if (!birthday) return '-';
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const calculateDays = (dateStr: string) => {
+    if (!dateStr) return 0;
+    const start = new Date(dateStr);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - start.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = MONTHS[d.getMonth()].toUpperCase();
+    const year = d.getFullYear();
+    return `${day}. ${month}. ${year}`;
+  };
+
   const handleInputChange = (field: keyof CCA | string, value: any) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
@@ -216,9 +246,9 @@ const CCAProfileSettings: React.FC = () => {
           <div className="absolute -bottom-2 -right-2 bg-green-500 size-6 rounded-full border-4 border-white dark:border-zinc-900 shadow-lg"></div>
         </div>
 
-        <div className="flex-1 space-y-6 text-center md:text-left">
-          <div className="space-y-2">
-            <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="flex-1 space-y-4 text-center md:text-left">
+          <div className="space-y-1">
+            <div className="flex flex-col md:flex-row items-center gap-6">
               {isEditMode ? (
                 <div className="flex flex-col gap-2 w-full md:w-auto">
                   <div className="flex flex-col gap-1">
@@ -243,43 +273,47 @@ const CCAProfileSettings: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center md:items-start">
-                  <h2 className="text-4xl font-black tracking-tight">{cca.nickname || cca.name}</h2>
-                  {cca.nickname && <p className="text-sm font-bold text-gray-400">({cca.name})</p>}
-                </div>
+                <h2 className="text-4xl font-black tracking-tight">{cca.nickname || cca.name}</h2>
               )}
               <div className="flex gap-2">
                 <button 
                   onClick={() => isEditMode ? handleSave() : setIsEditMode(true)}
-                  className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${isEditMode ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-primary text-[#1b180d] shadow-lg shadow-primary/20 hover:scale-105'}`}
+                  className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isEditMode ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-primary text-[#1b180d] shadow-lg shadow-primary/20 hover:scale-105'}`}
                 >
-                  {isSaving ? 'Saving...' : (isEditMode ? 'Done' : 'Edit Profile')}
+                  {isSaving ? 'Saving...' : (isEditMode ? 'Edit Profile' : 'Edit Profile')}
                 </button>
                 <button 
                   onClick={() => setShowPreview(true)}
-                  className="px-8 py-3 bg-white dark:bg-zinc-800 border border-primary/10 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-primary/5 transition-all"
+                  className="px-6 py-2.5 bg-white dark:bg-zinc-800 border border-primary/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/5 transition-all"
                 >
                   Preview
                 </button>
               </div>
             </div>
-            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">
-              {cca.grade} • {cca.venueName} • {cca.experience} Experience
-            </p>
+            
+            <div className="flex items-center justify-center md:justify-start gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+              <span>{cca.venueName}</span>
+              <span>•</span>
+              <span>
+                {cca.experienceHistory && cca.experienceHistory.length > 0 
+                  ? `${formatDate(cca.experienceHistory[0].joinDate)} [${calculateDays(cca.experienceHistory[0].joinDate)} days]`
+                  : 'No Join Date'}
+              </span>
+            </div>
           </div>
 
-          <div className="flex justify-center md:justify-start gap-12">
-            <div className="text-center md:text-left">
-              <p className="text-2xl font-black">{cca.postsCount || 0}</p>
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">Posts</p>
+          <div className="flex justify-center md:justify-start gap-8">
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black">{cca.postsCount || 0}</span>
+              <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Posts</span>
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-2xl font-black">{cca.likesCount || 0}</p>
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">Fans</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black">{cca.likesCount || 0}</span>
+              <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Likes</span>
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-2xl font-black">{cca.viewsCount || 0}</p>
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">Rate</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black">{cca.viewsCount || 0}</span>
+              <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Views</span>
             </div>
           </div>
         </div>
@@ -342,28 +376,23 @@ const CCAProfileSettings: React.FC = () => {
 
             <div className="space-y-4">
               {[
-                { id: 'instagram', icon: 'photo_camera', label: 'Instagram', color: 'text-pink-500' },
-                { id: 'facebook', icon: 'facebook', label: 'Facebook', color: 'text-blue-600' },
-                { id: 'tiktok', icon: 'music_note', label: 'TikTok', color: 'text-black dark:text-white' },
-                { id: 'twitter', icon: 'close', label: 'X (Twitter)', color: 'text-zinc-400' },
-                { id: 'threads', icon: 'alternate_email', label: 'Threads', color: 'text-zinc-500' },
-                { id: 'telegram', icon: 'send', label: 'Telegram', color: 'text-sky-500' }
+                { id: 'instagram', label: 'Instagram' },
+                { id: 'facebook', label: 'Facebook' },
+                { id: 'tiktok', label: 'TikTok' },
+                { id: 'twitter', label: 'X (Twitter)' },
+                { id: 'threads', label: 'Threads' },
+                { id: 'telegram', label: 'Telegram' }
               ].map(social => (
-                <div key={social.id} className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-3 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all">
-                  <div className={`size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm ${social.color}`}>
-                    <span className="material-symbols-outlined text-xl">{social.icon}</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{social.label}</p>
-                    <input 
-                      type="text" 
-                      disabled={!isEditMode}
-                      value={(formData.sns as any)?.[social.id] || ''}
-                      onChange={(e) => handleInputChange(`sns.${social.id}`, e.target.value)}
-                      placeholder={`@username or link`}
-                      className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0"
-                    />
-                  </div>
+                <div key={social.id} className="flex flex-col gap-2 bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all">
+                  <p className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">{social.label}</p>
+                  <input 
+                    type="text" 
+                    disabled={!isEditMode}
+                    value={(formData.sns as any)?.[social.id] || ''}
+                    onChange={(e) => handleInputChange(`sns.${social.id}`, e.target.value)}
+                    placeholder={`@username or link`}
+                    className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 text-gray-600 dark:text-gray-300"
+                  />
                 </div>
               ))}
             </div>
@@ -744,42 +773,87 @@ const CCAProfileSettings: React.FC = () => {
             </div>
             <div className="flex-1 overflow-y-auto p-10 space-y-10">
                <div className="flex flex-col items-center text-center gap-6">
-                  <div className="size-40 rounded-full border-4 border-primary p-1 bg-white dark:bg-zinc-800 shadow-2xl">
+                  <div className="size-32 rounded-full border-4 border-primary p-1 bg-white dark:bg-zinc-800 shadow-2xl">
                      <img src={formData.image || cca.image} className="size-full rounded-full object-cover" />
                   </div>
-                  <div className="space-y-2">
-                     <h2 className="text-4xl font-black">{formData.nickname || cca.name}</h2>
-                     <p className="text-primary font-black uppercase tracking-widest text-xs">{cca.grade} • {cca.venueName}</p>
+                  <div className="space-y-1">
+                     <h2 className="text-3xl font-black">{formData.nickname || cca.name}</h2>
+                     <p className="text-primary font-black uppercase tracking-widest text-[10px]">{cca.grade} • {cca.venueName}</p>
                   </div>
                </div>
                
-               <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-3xl text-center">
-                     <p className="text-2xl font-black">{formData.mbti || '-'}</p>
-                     <p className="text-[10px] text-gray-500 font-black uppercase">MBTI</p>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-3xl text-center">
-                     <p className="text-2xl font-black">{formData.zodiac?.split(' ')[0] || '-'}</p>
-                     <p className="text-[10px] text-gray-500 font-black uppercase">Zodiac</p>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-3xl text-center">
-                     <p className="text-2xl font-black">{cca.experience}</p>
-                     <p className="text-[10px] text-gray-500 font-black uppercase">Exp</p>
-                  </div>
-               </div>
-
-               <div className="space-y-4">
-                  <p className="text-center italic text-lg text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
-                    "{formData.oneLineStory || cca.description}"
-                  </p>
-               </div>
-
-               <div className="flex justify-center gap-4">
-                  {Object.entries(formData.sns || {}).map(([key, val]) => val && (
-                    <div key={key} className="size-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shadow-sm">
-                       <span className="material-symbols-outlined">{key === 'instagram' ? 'photo_camera' : key === 'facebook' ? 'facebook' : 'share'}</span>
+               <div className="flex flex-col items-center gap-8">
+                  {/* Stats Row */}
+                  <div className="flex gap-10">
+                    <div className="text-center">
+                      <p className="text-sm font-black">{formData.mbti || '-'}</p>
+                      <p className="text-[8px] text-gray-500 font-black uppercase tracking-tighter">MBTI</p>
                     </div>
-                  ))}
+                    <div className="text-center">
+                      <p className="text-sm font-black">{formData.zodiac?.split(' ')[0] || '-'}</p>
+                      <p className="text-[8px] text-gray-500 font-black uppercase tracking-tighter">Zodiac</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-black">{calculateAge(formData.birthday || '')}</p>
+                      <p className="text-[8px] text-gray-500 font-black uppercase tracking-tighter">Age</p>
+                    </div>
+                  </div>
+
+                  {/* Social Row */}
+                  <div className="flex flex-wrap justify-center gap-6">
+                    {Object.entries(formData.sns || {}).map(([key, val]) => val && (
+                      <div key={key} className="text-center">
+                         <p className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">{key}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Intro Row */}
+                  <div className="max-w-md">
+                    <p className="text-center italic text-sm text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+                      "{formData.oneLineStory || cca.description}"
+                    </p>
+                  </div>
+               </div>
+
+               {/* Instagram Style Gallery */}
+               <div className="space-y-4 pt-10 border-t border-gray-100 dark:border-white/5">
+                  <div className="flex items-center justify-center gap-8 border-t border-black dark:border-white -mt-10 pt-4">
+                    <div className="flex items-center gap-1.5 text-black dark:text-white">
+                      <span className="material-symbols-outlined text-sm">grid_on</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Posts</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                      <span className="material-symbols-outlined text-sm">movie</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Reels</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                      <span className="material-symbols-outlined text-sm">assignment_ind</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Tagged</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1 md:gap-2">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+                      <div key={i} className="aspect-square bg-gray-100 dark:bg-white/5 relative group cursor-pointer overflow-hidden">
+                        <img 
+                          src={`https://picsum.photos/seed/cca_${cca.id}_${i}/600/600`} 
+                          className="size-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+                           <div className="flex items-center gap-1">
+                              <span className="material-symbols-outlined text-sm fill-1">favorite</span>
+                              <span className="text-xs font-bold">{Math.floor(Math.random() * 100)}</span>
+                           </div>
+                           <div className="flex items-center gap-1">
+                              <span className="material-symbols-outlined text-sm fill-1">chat_bubble</span>
+                              <span className="text-xs font-bold">{Math.floor(Math.random() * 20)}</span>
+                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                </div>
             </div>
           </div>
