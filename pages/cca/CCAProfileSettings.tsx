@@ -37,6 +37,7 @@ const CCAProfileSettings: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [galleryItems, setGalleryItems] = useState<MediaItem[]>([]);
   
   // Form State
   const [formData, setFormData] = useState<Partial<CCA>>({});
@@ -48,9 +49,10 @@ const CCAProfileSettings: React.FC = () => {
       try {
         // For demo/preview, we use 'c1' as the current CCA ID
         const currentCcaId = 'c1'; 
-        const [ccaData, venuesData] = await Promise.all([
+        const [ccaData, venuesData, galleryData] = await Promise.all([
           apiService.getCCAs().then(list => list.find(c => c.id === currentCcaId) || null),
-          apiService.getVenues()
+          apiService.getVenues(),
+          apiService.getGallery(currentCcaId)
         ]);
         
         if (ccaData) {
@@ -60,6 +62,7 @@ const CCAProfileSettings: React.FC = () => {
           setError("CCA 정보를 불러올 수 없습니다. DB에 해당 ID의 데이터가 있는지 확인해주세요.");
         }
         setVenues(venuesData);
+        setGalleryItems(galleryData);
       } catch (err) {
         console.error("Load failed", err);
         setError("데이터 로딩 중 오류가 발생했습니다. DB 테이블이 생성되었는지 확인해주세요.");
@@ -834,25 +837,29 @@ const CCAProfileSettings: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-3 gap-1 md:gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-                      <div key={i} className="aspect-square bg-gray-100 dark:bg-white/5 relative group cursor-pointer overflow-hidden">
+                    {galleryItems.length > 0 ? galleryItems.map((item) => (
+                      <div key={item.id} className="aspect-square bg-gray-100 dark:bg-white/5 relative group cursor-pointer overflow-hidden">
                         <img 
-                          src={`https://picsum.photos/seed/cca_${cca.id}_${i}/600/600`} 
+                          src={item.url} 
                           className="size-full object-cover transition-transform duration-700 group-hover:scale-110" 
                           referrerPolicy="no-referrer"
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
                            <div className="flex items-center gap-1">
                               <span className="material-symbols-outlined text-sm fill-1">favorite</span>
-                              <span className="text-xs font-bold">{Math.floor(Math.random() * 100)}</span>
+                              <span className="text-xs font-bold">{item.likes || 0}</span>
                            </div>
                            <div className="flex items-center gap-1">
                               <span className="material-symbols-outlined text-sm fill-1">chat_bubble</span>
-                              <span className="text-xs font-bold">{Math.floor(Math.random() * 20)}</span>
+                              <span className="text-xs font-bold">{item.commentsCount || 0}</span>
                            </div>
                         </div>
                       </div>
-                    ))}
+                    )) : (
+                      [1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="aspect-square bg-gray-100 dark:bg-white/5 animate-pulse rounded-sm"></div>
+                      ))
+                    )}
                   </div>
                </div>
             </div>
