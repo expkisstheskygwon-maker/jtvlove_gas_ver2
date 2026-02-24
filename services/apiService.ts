@@ -99,6 +99,18 @@ export const apiService = {
     }
   },
 
+  async getCCAById(id: string): Promise<CCA | null> {
+    try {
+      const response = await fetch(`${API_BASE}/ccas/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch cca');
+      return await response.json();
+    } catch (error) {
+      console.error('getCCAById error:', error);
+      const { CCAS } = await import('../constants');
+      return CCAS.find(c => c.id === id) || null;
+    }
+  },
+
   async updateCCAProfile(id: string, data: Partial<CCA> & { password?: string }): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/ccas/${id}`, {

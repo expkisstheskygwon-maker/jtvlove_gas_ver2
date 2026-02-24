@@ -42,6 +42,10 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           specialNotes: result.special_notes,
           oneLineStory: result.one_line_story,
           zodiac: result.zodiac,
+          weight: result.weight,
+          drinking: result.drinking,
+          smoking: result.smoking,
+          pets: result.pets,
           viewsCount: result.views_count,
           likesCount: result.likes_count,
           postsCount: result.posts_count,
@@ -71,6 +75,10 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         specialNotes: c.special_notes,
         oneLineStory: c.one_line_story,
         zodiac: c.zodiac,
+        weight: c.weight,
+        drinking: c.drinking,
+        smoking: c.smoking,
+        pets: c.pets,
         viewsCount: c.views_count,
         likesCount: c.likes_count,
         postsCount: c.posts_count,
@@ -96,7 +104,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         name, nickname, realNameFirst, realNameMiddle, realNameLast, 
         birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory, 
         maritalStatus, childrenStatus, specialNotes, password,
-        image, venueId, languages, isNew
+        image, venueId, languages, isNew, weight, drinking, smoking, pets
       } = body;
 
       // Force all values to primitives or null for D1 compatibility
@@ -122,6 +130,10 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         password ? String(password) : null,
         languages ? JSON.stringify(languages) : null,
         isNew ? 1 : 0,
+        weight ? String(weight) : null,
+        drinking ? String(drinking) : null,
+        smoking ? String(smoking) : null,
+        pets ? String(pets) : null,
         String(id) // The ID for WHERE clause
       ];
 
@@ -147,7 +159,11 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           venue_id = COALESCE(?, venue_id),
           password = COALESCE(?, password),
           languages = COALESCE(?, languages),
-          is_new = COALESCE(?, is_new)
+          is_new = COALESCE(?, is_new),
+          weight = COALESCE(?, weight),
+          drinking = COALESCE(?, drinking),
+          smoking = COALESCE(?, smoking),
+          pets = COALESCE(?, pets)
         WHERE id = ?
       `).bind(...paramsList).run();
 

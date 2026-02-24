@@ -47,6 +47,10 @@ CREATE TABLE IF NOT EXISTS ccas (
   likes_count INTEGER DEFAULT 0,
   posts_count INTEGER DEFAULT 0,
   is_new INTEGER DEFAULT 0,
+  weight TEXT,
+  drinking TEXT,
+  smoking TEXT,
+  pets TEXT,
   password TEXT,
   FOREIGN KEY (venue_id) REFERENCES venues(id)
 );
