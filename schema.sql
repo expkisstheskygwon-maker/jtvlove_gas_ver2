@@ -144,7 +144,7 @@ INSERT OR IGNORE INTO venues (id, name, region, rating, reviews_count, descripti
 VALUES ('v1', 'Grand Palace JTV', 'Pasay', 4.9, 128, 'Experience the pinnacle of nightlife at Grand Palace JTV.', 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=2000', '0912-345-6789', 'Entertainment City, Pasay', '["Premium Service", "VIP Room"]', '["VIP Rooms", "Live Stage"]');
 
 INSERT OR IGNORE INTO ccas (id, name, venue_id, rating, image, experience, languages, height, description, status, grade, points)
-VALUES ('c1', 'Yumi Kim', 'v1', 4.9, 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000', '4 Years', '["PH", "EN", "JP"]', '165 cm', '안녕하세요, 유미입니다. 우아하고 편안한 밤을 약속드립니다.', 'active', 'ACE', 1250);
+VALUES ('c1', 'Yumi Kim', 'v1', 4.9, 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000', '4 Years', '["ENGLISH", "KOREAN", "JAPANESE"]', '165 cm', '안녕하세요, 유미입니다. 우아하고 편안한 밤을 약속드립니다.', 'active', 'ACE', 1250);
 
 INSERT OR IGNORE INTO posts (id, board, title, author, content, views, likes)
 VALUES ('p1', 'Free Board', 'Welcome to the New Portal', 'Admin', 'This is the first post on our new Cloudflare D1 powered system.', 10, 5);
