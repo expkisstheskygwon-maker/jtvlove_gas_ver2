@@ -46,6 +46,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           drinking: result.drinking,
           smoking: result.smoking,
           pets: result.pets,
+          specialties: result.specialties ? JSON.parse(result.specialties) : [],
           viewsCount: result.views_count,
           likesCount: result.likes_count,
           postsCount: result.posts_count,
@@ -79,6 +80,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         drinking: c.drinking,
         smoking: c.smoking,
         pets: c.pets,
+        specialties: c.specialties ? JSON.parse(c.specialties) : [],
         viewsCount: c.views_count,
         likesCount: c.likes_count,
         postsCount: c.posts_count,
@@ -104,7 +106,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         name, nickname, realNameFirst, realNameMiddle, realNameLast, 
         birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory, 
         maritalStatus, childrenStatus, specialNotes, password,
-        image, venueId, languages, isNew, weight, drinking, smoking, pets
+        image, venueId, languages, isNew, weight, drinking, smoking, pets, specialties
       } = body;
 
       // Force all values to primitives or null for D1 compatibility
@@ -134,6 +136,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         drinking ? String(drinking) : null,
         smoking ? String(smoking) : null,
         pets ? String(pets) : null,
+        specialties ? JSON.stringify(specialties) : null,
         String(id) // The ID for WHERE clause
       ];
 
@@ -163,7 +166,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           weight = COALESCE(?, weight),
           drinking = COALESCE(?, drinking),
           smoking = COALESCE(?, smoking),
-          pets = COALESCE(?, pets)
+          pets = COALESCE(?, pets),
+          specialties = COALESCE(?, specialties)
         WHERE id = ?
       `).bind(...paramsList).run();
 

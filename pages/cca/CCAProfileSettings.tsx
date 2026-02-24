@@ -349,13 +349,6 @@ const CCAProfileSettings: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Zodiac (Auto-calc)</label>
-                <div className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm text-gray-500">
-                  {formData.zodiac || 'Enter birthday first'}
-                </div>
-              </div>
-
-              <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">One-Line Story</label>
                 <textarea 
                   disabled={!isEditMode}
@@ -364,6 +357,74 @@ const CCAProfileSettings: React.FC = () => {
                   placeholder="Your vibe in one line..."
                   className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm focus:ring-2 ring-primary/20 resize-none h-24"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">특징 / 특기 (Specialties)</label>
+                <div className="flex flex-wrap gap-2">
+                  {['Dance', 'Singing', 'Cooking', 'Gaming', 'Sports', 'Music', 'Art', 'Travel'].map(s => {
+                    const isSelected = (formData.specialties || []).includes(s);
+                    return (
+                      <button
+                        key={s}
+                        disabled={!isEditMode}
+                        onClick={() => {
+                          const current = formData.specialties || [];
+                          const next = isSelected ? current.filter(x => x !== s) : [...current, s];
+                          handleInputChange('specialties', next);
+                        }}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${isSelected ? 'bg-primary text-[#1b180d] border-primary' : 'bg-gray-50 dark:bg-white/5 border-transparent text-gray-500'}`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Drinking</label>
+                <select 
+                  disabled={!isEditMode}
+                  value={formData.drinking || ''}
+                  onChange={(e) => handleInputChange('drinking', e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm"
+                >
+                  <option value="">Select Option</option>
+                  {['Special day', 'Enjoying', 'Sometimes', 'Social', 'SOJU Machine'].map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Smoking</label>
+                <select 
+                  disabled={!isEditMode}
+                  value={formData.smoking || ''}
+                  onChange={(e) => handleInputChange('smoking', e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm"
+                >
+                  <option value="">Select Option</option>
+                  {['Sometimes', 'Enjoying', 'Vaping', 'Social', 'No'].map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Like Pets</label>
+                <select 
+                  disabled={!isEditMode}
+                  value={formData.pets || ''}
+                  onChange={(e) => handleInputChange('pets', e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 font-bold text-sm"
+                >
+                  <option value="">Select Option</option>
+                  {['Dog', 'Cat', 'Bird', 'Etc.'].map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS ccas (
   drinking TEXT,
   smoking TEXT,
   pets TEXT,
+  specialties TEXT, -- JSON array string
   password TEXT,
   FOREIGN KEY (venue_id) REFERENCES venues(id)
 );

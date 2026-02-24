@@ -3,6 +3,50 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { CCA, MediaItem } from '../types';
 
+const ZODIAC_SIGNS = [
+  { name: 'Aries (양자리)', start: '03-21', end: '04-19' },
+  { name: 'Taurus (황소자리)', start: '04-20', end: '05-20' },
+  { name: 'Gemini (쌍둥이자리)', start: '05-21', end: '06-20' },
+  { name: 'Cancer (게자리)', start: '06-21', end: '07-22' },
+  { name: 'Leo (사자자리)', start: '07-23', end: '08-22' },
+  { name: 'Virgo (처녀자리)', start: '08-23', end: '09-22' },
+  { name: 'Libra (천칭자리)', start: '09-23', end: '10-22' },
+  { name: 'Scorpio (전갈자리)', start: '10-23', end: '11-21' },
+  { name: 'Sagittarius (궁수자리)', start: '11-22', end: '12-21' },
+  { name: 'Capricorn (염소자리)', start: '12-22', end: '01-19' },
+  { name: 'Aquarius (물병자리)', start: '01-20', end: '02-18' },
+  { name: 'Pisces (물고기자리)', start: '02-19', end: '03-20' }
+];
+
+const calculateZodiac = (birthday: string) => {
+  if (!birthday) return 'N/A';
+  const date = new Date(birthday);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const mmdd = `${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  
+  const sign = ZODIAC_SIGNS.find(s => {
+    if (s.start <= s.end) {
+      return mmdd >= s.start && mmdd <= s.end;
+    } else {
+      return mmdd >= s.start || mmdd <= s.end;
+    }
+  });
+  return sign ? sign.name : 'N/A';
+};
+
+const calculateAge = (birthday: string) => {
+  if (!birthday) return '??';
+  const birthDate = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const CCAProfile: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -84,29 +128,29 @@ const CCAProfile: React.FC = () => {
             {/* PC Display Stats Quick View */}
             <div className="hidden md:grid grid-cols-3 gap-4">
               <div className="bg-white dark:bg-zinc-800/50 p-6 rounded-2xl border border-primary/5 text-center space-y-2 shadow-sm">
-                <span className="material-symbols-outlined text-primary block">history</span>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">경력</p>
-                <p className="text-sm font-black">{cca.experience}</p>
+                <span className="material-symbols-outlined text-primary block">location_on</span>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">소속 JTV</p>
+                <p className="text-sm font-black">{cca.venueName}</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-800/50 p-6 rounded-2xl border border-primary/5 text-center space-y-2 shadow-sm">
+                <span className="material-symbols-outlined text-primary block">cake</span>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">나이</p>
+                <p className="text-sm font-black">{calculateAge(cca.birthday || '')} Years</p>
               </div>
               <div className="bg-white dark:bg-zinc-800/50 p-6 rounded-2xl border border-primary/5 text-center space-y-2 shadow-sm">
                 <span className="material-symbols-outlined text-primary block">translate</span>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">언어</p>
                 <p className="text-sm font-black">{(cca.languages || []).join(', ') || 'N/A'}</p>
               </div>
-              <div className="bg-white dark:bg-zinc-800/50 p-6 rounded-2xl border border-primary/5 text-center space-y-2 shadow-sm">
-                <span className="material-symbols-outlined text-primary block">straighten</span>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">신체</p>
-                <p className="text-sm font-black">{cca.height} / {cca.weight || '??'}</p>
-              </div>
             </div>
 
             {/* SNS Links */}
             {cca.sns && Object.values(cca.sns).some(v => v) && (
               <div className="hidden md:flex flex-wrap gap-3 justify-center">
-                {cca.sns.instagram && <a href={`https://instagram.com/${cca.sns.instagram}`} target="_blank" rel="noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" className="size-5" alt="IG" /></a>}
-                {cca.sns.facebook && <a href={`https://facebook.com/${cca.sns.facebook}`} target="_blank" rel="noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" className="size-5" alt="FB" /></a>}
-                {cca.sns.tiktok && <a href={`https://tiktok.com/@${cca.sns.tiktok}`} target="_blank" rel="noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" className="size-5" alt="TT" /></a>}
-                {cca.sns.telegram && <a href={`https://t.me/${cca.sns.telegram}`} target="_blank" rel="noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" className="size-5" alt="TG" /></a>}
+                {cca.sns.instagram && <a href={`https://instagram.com/${cca.sns.instagram}`} target="_blank" rel="noopener noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" className="size-5" alt="IG" /></a>}
+                {cca.sns.facebook && <a href={`https://facebook.com/${cca.sns.facebook}`} target="_blank" rel="noopener noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" className="size-5" alt="FB" /></a>}
+                {cca.sns.tiktok && <a href={`https://tiktok.com/@${cca.sns.tiktok}`} target="_blank" rel="noopener noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" className="size-5" alt="TT" /></a>}
+                {cca.sns.telegram && <a href={`https://t.me/${cca.sns.telegram}`} target="_blank" rel="noopener noreferrer" className="size-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center border border-primary/10 hover:bg-primary/10 transition-colors"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" className="size-5" alt="TG" /></a>}
               </div>
             )}
 
@@ -146,7 +190,7 @@ const CCAProfile: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-3xl border border-primary/5 space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Age</p>
-                  <p className="text-lg font-black">{cca.age || '??'} Years</p>
+                  <p className="text-lg font-black">{calculateAge(cca.birthday || '')} Years</p>
                </div>
                <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-3xl border border-primary/5 space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">MBTI</p>
@@ -154,7 +198,7 @@ const CCAProfile: React.FC = () => {
                </div>
                <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-3xl border border-primary/5 space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Zodiac</p>
-                  <p className="text-lg font-black">{cca.zodiac || 'N/A'}</p>
+                  <p className="text-lg font-black">{calculateZodiac(cca.birthday || '')}</p>
                </div>
                <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-3xl border border-primary/5 space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Marital</p>
@@ -169,7 +213,7 @@ const CCAProfile: React.FC = () => {
                 <h3 className="text-2xl font-extrabold tracking-tight">인사말</h3>
               </div>
               <div className="bg-white dark:bg-zinc-900/50 p-8 rounded-3xl border border-primary/10 shadow-sm leading-relaxed text-lg md:text-xl text-gray-600 dark:text-gray-300 italic font-medium">
-                "{cca.description}"
+                "{cca.oneLineStory || cca.description}"
               </div>
             </div>
 
@@ -208,7 +252,7 @@ const CCAProfile: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-primary rounded-full"></div>
-                <h3 className="text-2xl font-extrabold tracking-tight">주요 전문 분야 및 기술</h3>
+                <h3 className="text-2xl font-extrabold tracking-tight">특징 / 특기</h3>
               </div>
               <div className="flex flex-wrap gap-3">
                 {(cca.specialties || []).map(s => (
@@ -225,7 +269,7 @@ const CCAProfile: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-1.5 h-8 bg-primary rounded-full"></div>
-                  <h3 className="text-2xl font-extrabold tracking-tight">최근 갤러리</h3>
+                  <h3 className="text-2xl font-extrabold tracking-tight uppercase">Gallery</h3>
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{gallery.length} Items</span>
               </div>
