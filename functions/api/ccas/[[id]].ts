@@ -20,7 +20,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     try {
       if (id) {
         const result = await env.DB.prepare(`
-          SELECT c.*, v.name as venueName 
+          SELECT c.*, v.name as venueName, v.region as region
           FROM ccas c 
           LEFT JOIN venues v ON c.venue_id = v.id
           WHERE c.id = ?
@@ -44,14 +44,15 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           zodiac: result.zodiac,
           viewsCount: result.views_count,
           likesCount: result.likes_count,
-          postsCount: result.posts_count
+          postsCount: result.posts_count,
+          isNew: result.is_new === 1
         }), {
           headers: { "Content-Type": "application/json" },
         });
       }
 
       const { results } = await env.DB.prepare(`
-        SELECT c.*, v.name as venueName 
+        SELECT c.*, v.name as venueName, v.region as region
         FROM ccas c 
         LEFT JOIN venues v ON c.venue_id = v.id
       `).all();
@@ -72,7 +73,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         zodiac: c.zodiac,
         viewsCount: c.views_count,
         likesCount: c.likes_count,
-        postsCount: c.posts_count
+        postsCount: c.posts_count,
+        isNew: c.is_new === 1
       }));
 
       return new Response(JSON.stringify(formattedResults), {
@@ -94,7 +96,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         name, nickname, realNameFirst, realNameMiddle, realNameLast, 
         birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory, 
         maritalStatus, childrenStatus, specialNotes, password,
-        image, venueId, languages
+        image, venueId, languages, isNew
       } = body;
 
       // Force all values to primitives or null for D1 compatibility
@@ -119,6 +121,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         venueId ? String(venueId) : null,
         password ? String(password) : null,
         languages ? JSON.stringify(languages) : null,
+        isNew ? 1 : 0,
         String(id) // The ID for WHERE clause
       ];
 
@@ -143,7 +146,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           image = COALESCE(?, image),
           venue_id = COALESCE(?, venue_id),
           password = COALESCE(?, password),
-          languages = COALESCE(?, languages)
+          languages = COALESCE(?, languages),
+          is_new = COALESCE(?, is_new)
         WHERE id = ?
       `).bind(...paramsList).run();
 

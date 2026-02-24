@@ -47,6 +47,7 @@ export interface CCA {
   weight?: string;
   venueId: string;
   venueName: string;
+  region?: string;
   rating: number;
   image: string;
   isNew?: boolean;
