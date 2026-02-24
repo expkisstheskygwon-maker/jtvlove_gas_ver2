@@ -8,7 +8,7 @@ const CCAMySchedule: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState('2023-11-20');
   const [appointments, setAppointments] = useState<Reservation[]>(RESERVATIONS);
   const [dayOffDates, setDayOffDates] = useState<Set<string>>(new Set());
-  const [soldOutDates, setSoldOutDates] = useState<Set<string>>(new Set(['2023-11-20']));
+  const [soldOutDates, setSoldOutDates] = useState<Set<string>>(new Set());
   
   // Modal States
   const [showDayDetailModal, setShowDayDetailModal] = useState(false);
@@ -25,6 +25,7 @@ const CCAMySchedule: React.FC = () => {
 
   useEffect(() => {
     loadHolidays();
+    loadSoldOutDates();
   }, []);
 
   const loadHolidays = async () => {
@@ -32,14 +33,24 @@ const CCAMySchedule: React.FC = () => {
     setDayOffDates(new Set(dates));
   };
 
+  const loadSoldOutDates = async () => {
+    const dates = await apiService.getSoldOutDates(currentCcaId);
+    setSoldOutDates(new Set(dates));
+  };
+
   // Status Colors for Calendar
   const getDayStatus = (dateStr: string) => {
+    // 1. Day Off (Gray)
     if (dayOffDates.has(dateStr)) return 'bg-gray-400 text-white';
+    
+    // 2. Sold Out (Red)
     if (soldOutDates.has(dateStr)) return 'bg-red-500 text-white';
     
+    // 3. Available (Blue) - At least 1 reservation
     const hasRes = appointments.some(r => r.date === dateStr);
     if (hasRes) return 'bg-blue-500 text-white';
     
+    // 4. None - No display
     return 'bg-transparent text-gray-700 dark:text-gray-300';
   };
 
@@ -53,6 +64,18 @@ const CCAMySchedule: React.FC = () => {
       newDayOff.add(date);
     }
     setDayOffDates(newDayOff);
+  };
+
+  const handleToggleSoldOut = async (date: string) => {
+    const newSoldOut = new Set(soldOutDates);
+    if (newSoldOut.has(date)) {
+      newSoldOut.delete(date);
+    } else {
+      newSoldOut.add(date);
+    }
+    setSoldOutDates(newSoldOut);
+    // Auto-sync sold out status to DB
+    await apiService.syncSoldOutDates(currentCcaId, Array.from(newSoldOut));
   };
 
   const handleSaveHolidays = async () => {
@@ -188,7 +211,15 @@ const CCAMySchedule: React.FC = () => {
              <div className="flex items-center justify-between border-b border-primary/5 pb-8">
                 <div>
                    <h4 className="text-2xl font-black">{selectedDate}</h4>
-                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Timeline Detail</p>
+                   <div className="flex items-center gap-4 mt-1">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Timeline Detail</p>
+                      <button 
+                        onClick={() => handleToggleSoldOut(selectedDate)}
+                        className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border transition-all ${soldOutDates.has(selectedDate) ? 'bg-red-500 border-red-500 text-white' : 'border-primary/20 text-gray-400 hover:border-red-500 hover:text-red-500'}`}
+                      >
+                        {soldOutDates.has(selectedDate) ? 'Sold Out' : 'Mark Sold Out'}
+                      </button>
+                   </div>
                 </div>
                 <button 
                   onClick={() => setShowDayDetailModal(true)}

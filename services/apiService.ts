@@ -240,6 +240,32 @@ export const apiService = {
     }
   },
 
+  // Sold Out Dates
+  async getSoldOutDates(ccaId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/soldout?ccaId=${encodeURIComponent(ccaId)}`);
+      if (!response.ok) throw new Error('Failed to fetch sold out dates');
+      return await response.json();
+    } catch (error) {
+      console.error('getSoldOutDates error:', error);
+      return [];
+    }
+  },
+
+  async syncSoldOutDates(ccaId: string, dates: string[]): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/soldout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId, dates }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('syncSoldOutDates error:', error);
+      return false;
+    }
+  },
+
   // Site Settings
   async getSiteSettings(): Promise<any> {
     try {
