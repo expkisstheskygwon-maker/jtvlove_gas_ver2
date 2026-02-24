@@ -101,7 +101,7 @@ const VenueDetail: React.FC = () => {
                           </div>
                        </div>
                        <div>
-                          <p className="font-bold text-base group-hover:text-primary transition-colors">{cca.name}</p>
+                          <p className="font-bold text-base group-hover:text-primary transition-colors">{cca.nickname || cca.name}</p>
                           <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">일본어 가능</p>
                        </div>
                     </Link>

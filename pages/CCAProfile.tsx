@@ -118,7 +118,7 @@ const CCAProfile: React.FC = () => {
                {/* Mobile Floating Overlay Info */}
                <div className="absolute bottom-6 left-6 right-6 md:hidden text-white space-y-2">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-4xl font-extrabold tracking-tighter">{cca.name}</h2>
+                    <h2 className="text-4xl font-extrabold tracking-tighter">{cca.nickname || cca.name}</h2>
                     <span className="material-symbols-outlined text-primary fill-1">verified</span>
                   </div>
                   <p className="text-sm font-bold opacity-80">{cca.venueName}</p>
@@ -169,7 +169,7 @@ const CCAProfile: React.FC = () => {
             {/* Name and Rating Block - Desktop Only */}
             <div className="hidden md:block space-y-4">
                <div className="flex items-center gap-4">
-                 <h1 className="text-6xl font-extrabold tracking-tighter">{cca.name}</h1>
+                 <h1 className="text-6xl font-extrabold tracking-tighter">{cca.nickname || cca.name}</h1>
                  <div className="bg-primary/10 text-primary px-4 py-2 rounded-2xl flex items-center gap-2">
                     <span className="material-symbols-outlined fill-1 text-2xl">star</span>
                     <span className="text-2xl font-black">{cca.rating}</span>

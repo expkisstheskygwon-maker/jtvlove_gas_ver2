@@ -51,8 +51,10 @@ const CCAList: React.FC = () => {
     })
     .filter(cca => {
       if (!searchQuery) return true;
-      return cca.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-             cca.venueName.toLowerCase().includes(searchQuery.toLowerCase());
+      const name = (cca.nickname || cca.name).toLowerCase();
+      const venue = cca.venueName.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return name.includes(query) || venue.includes(query);
     })
     .sort((a, b) => {
       // LIKES > VIEWS > NEW
@@ -151,7 +153,7 @@ const CCAList: React.FC = () => {
                     <div className="p-6 md:p-8 flex-1 flex flex-col">
                        <div className="flex justify-between items-start mb-4">
                           <div>
-                             <h4 className="text-xl md:text-2xl font-extrabold group-hover:text-primary transition-colors">{cca.name}</h4>
+                             <h4 className="text-xl md:text-2xl font-extrabold group-hover:text-primary transition-colors">{cca.nickname || cca.name}</h4>
                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{cca.venueName}</p>
                           </div>
                           <div className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-lg">

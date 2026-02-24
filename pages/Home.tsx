@@ -180,7 +180,7 @@ const Home: React.FC = () => {
                   <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   {cca.isNew && <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-primary border border-primary/20">신규</div>}
                 </div>
-                <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{cca.name}</h4>
+                <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{cca.nickname || cca.name}</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{cca.venueName} | 프리미엄 클래스</p>
               </Link>
             ))}

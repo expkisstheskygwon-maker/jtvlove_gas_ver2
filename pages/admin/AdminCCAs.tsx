@@ -28,7 +28,7 @@ const AdminCCAs: React.FC = () => {
                   <div className="p-8 pt-10">
                      <div className="flex items-center justify-between mb-4">
                         <div>
-                           <h4 className="text-xl font-black">{cca.name}</h4>
+                           <h4 className="text-xl font-black">{cca.nickname || cca.name}</h4>
                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Grade: {cca.grade}</span>
                         </div>
                         <div className="text-right">

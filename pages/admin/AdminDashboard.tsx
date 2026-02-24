@@ -67,7 +67,7 @@ const AdminDashboard: React.FC = () => {
                             <div className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background-dark ${cca.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}`}></div>
                          </div>
                          <div>
-                            <p className="font-bold text-sm">{cca.name}</p>
+                            <p className="font-bold text-sm">{cca.nickname || cca.name}</p>
                             <p className="text-[10px] text-primary font-black uppercase tracking-tighter">{cca.grade}</p>
                          </div>
                       </div>

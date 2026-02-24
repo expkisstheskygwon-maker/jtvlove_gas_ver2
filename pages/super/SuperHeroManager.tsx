@@ -152,7 +152,7 @@ const SuperHeroManager: React.FC = () => {
                   >
                     <option value="">-- CCA 선택 (선택 시 기본 정보 자동 입력) --</option>
                     {ccas.map(cca => (
-                      <option key={cca.id} value={cca.id}>{cca.name} ({cca.venueName})</option>
+                      <option key={cca.id} value={cca.id}>{cca.nickname || cca.name} ({cca.venueName})</option>
                     ))}
                   </select>
                 </div>
