@@ -13,6 +13,7 @@ const AdminReservations: React.FC = () => {
   const [showManagePopup, setShowManagePopup] = useState<string | null>(null); // time slot for popup
   const [isHolidayMode, setIsHolidayMode] = useState(false);
   const [selectedHolidays, setSelectedHolidays] = useState<string[]>([]);
+  const [direction, setDirection] = useState(0);
 
   useEffect(() => {
     fetchVenue();
@@ -27,8 +28,14 @@ const AdminReservations: React.FC = () => {
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
-  const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
-  const handleNextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  const handlePrevMonth = () => {
+    setDirection(-1);
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+  const handleNextMonth = () => {
+    setDirection(1);
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
 
   const isPast = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -63,7 +70,6 @@ const AdminReservations: React.FC = () => {
   };
 
   const timeSlots = generateTimeSlots();
-
   const dayReservations = reservations.filter(r => r.date === selectedDate);
 
   const toggleHoliday = (date: string) => {
@@ -74,168 +80,219 @@ const AdminReservations: React.FC = () => {
     }
   };
 
+  const calendarVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 300 : -300,
+      opacity: 0
+    })
+  };
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in relative">
+
       {/* LEFT: Calendar Section */}
-      <div className="xl:col-span-12 2xl:col-span-12 bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-primary/10">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
-          <div>
-            <h3 className="text-3xl font-black italic uppercase italic">
-              {viewDate.getFullYear()}년 {viewDate.getMonth() + 1}월
-            </h3>
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">Reservation Calendar</p>
-          </div>
-          <div className="flex gap-4">
-            <button onClick={handlePrevMonth} className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl hover:bg-primary hover:text-[#1b180d] transition-all group">
-              <span className="material-symbols-outlined group-hover:-translate-x-1 transition-transform">chevron_left</span>
-            </button>
-            <button onClick={handleNextMonth} className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl hover:bg-primary hover:text-[#1b180d] transition-all group">
-              <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 gap-3">
-          {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
-            <div key={d} className="text-center text-[10px] font-black text-gray-400 py-4 tracking-[0.2em]">{d}</div>
-          ))}
-          {Array.from({ length: getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
-          {Array.from({ length: getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => {
-            const day = i + 1;
-            const dateStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const isSelected = selectedDate === dateStr;
-            const isHoliday = selectedHolidays.includes(dateStr);
-            const resCount = reservations.filter(r => r.date === dateStr).length;
-            const past = isPast(dateStr);
-
-            return (
+      <div className="lg:col-span-5 xl:col-span-4 space-y-8 sticky top-8">
+        <section className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-sm border border-primary/10 overflow-hidden relative">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-2xl font-black italic uppercase italic text-[#1b180d] dark:text-white">
+                {viewDate.getFullYear()}년 {viewDate.getMonth() + 1}월
+              </h3>
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">Select Reservation Date</p>
+            </div>
+            <div className="flex gap-2">
               <button
-                key={i}
-                onClick={() => isHolidayMode ? toggleHoliday(dateStr) : setSelectedDate(dateStr)}
-                className={`aspect-square rounded-[2rem] p-4 flex flex-col items-center justify-between border-2 transition-all relative overflow-hidden group 
-                  ${isSelected ? 'bg-primary border-primary text-[#1b180d] shadow-xl shadow-primary/20 scale-105 z-10' : 'bg-transparent border-primary/5 hover:border-primary/40'}
-                  ${past ? 'grayscale opacity-50 bg-gray-50/50' : ''}
-                  ${isHoliday ? 'ring-4 ring-blue-500 ring-offset-4 dark:ring-offset-zinc-950 shadow-lg' : ''}
-                `}
+                onClick={handlePrevMonth}
+                className="size-10 flex items-center justify-center bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-primary hover:text-[#1b180d] transition-all"
               >
-                <span className={`text-base font-black ${isSelected ? 'text-[#1b180d]' : 'text-gray-600 dark:text-gray-300'}`}>{day}</span>
-                {resCount > 0 && !isHoliday && (
-                  <div className={`text-[10px] font-black px-2.5 py-1 rounded-full ${isSelected ? 'bg-white/50 animate-pulse' : 'bg-primary/20 text-primary'}`}>
-                    {resCount}
-                  </div>
-                )}
-                {isHoliday && <div className="absolute top-2 right-2 size-3 bg-blue-500 rounded-full shadow-lg border-2 border-white" />}
+                <span className="material-symbols-outlined text-sm">chevron_left</span>
               </button>
-            );
-          })}
-        </div>
+              <button
+                onClick={handleNextMonth}
+                className="size-10 flex items-center justify-center bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-primary hover:text-[#1b180d] transition-all"
+              >
+                <span className="material-symbols-outlined text-sm">chevron_right</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="relative min-h-[320px]">
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={viewDate.getMonth()}
+                custom={direction}
+                variants={calendarVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.2 }
+                }}
+                className="w-full"
+              >
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                    <div key={d} className="text-center text-[10px] font-black text-gray-300 dark:text-gray-600 py-2">{d}</div>
+                  ))}
+                  {Array.from({ length: getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => (
+                    <div key={`empty-${i}`} />
+                  ))}
+                  {Array.from({ length: getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => {
+                    const day = i + 1;
+                    const dateStr = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const isSelected = selectedDate === dateStr;
+                    const isHoliday = selectedHolidays.includes(dateStr);
+                    const resCount = reservations.filter(r => r.date === dateStr).length;
+                    const past = isPast(dateStr);
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => isHolidayMode ? toggleHoliday(dateStr) : setSelectedDate(dateStr)}
+                        className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 border transition-all relative group
+                          ${isSelected ? 'bg-primary border-primary text-[#1b180d] shadow-lg shadow-primary/10' : 'bg-transparent border-primary/5 hover:border-primary/20'}
+                          ${past ? 'opacity-30' : ''}
+                          ${isHoliday ? 'ring-2 ring-blue-500/50' : ''}
+                        `}
+                      >
+                        <span className={`text-[11px] font-black ${isSelected ? 'text-[#1b180d]' : ''}`}>{day}</span>
+                        {resCount > 0 && !isHoliday && (
+                          <div className={`text-[8px] font-black px-1 rounded-full ${isSelected ? 'bg-black/20' : 'bg-primary/20 text-primary'}`}>
+                            {resCount}
+                          </div>
+                        )}
+                        {isHoliday && <div className="absolute top-1 right-1 size-1.5 bg-blue-500 rounded-full" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <button
+            onClick={() => setIsHolidayMode(!isHolidayMode)}
+            className={`w-full mt-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isHolidayMode ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-zinc-800 text-gray-500 hover:text-primary'}`}
+          >
+            {isHolidayMode ? 'Finish Holiday Setup' : 'Manage Holidays'}
+          </button>
+        </section>
 
         {/* Day Summary */}
-        <div className="mt-12 space-y-6 bg-gray-50/50 dark:bg-white/5 p-8 rounded-[2.5rem] border border-primary/5">
-          <div className="flex items-center justify-between border-b border-primary/10 pb-4">
-            <h4 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-primary">analytics</span> Day Summary — {selectedDate}
-            </h4>
+        <section className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-sm border border-primary/10 space-y-6">
+          <div className="flex items-center gap-2 border-b border-primary/5 pb-4">
+            <span className="material-symbols-outlined text-primary text-lg">monochrome_photos</span>
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Attendance Alert ({selectedDate})</h4>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {reservations.filter(r => r.date === selectedDate).map(res => {
-              const targetCcaIds = res.ccaIds || (res.ccaId ? [res.ccaId] : []);
-              return targetCcaIds.map(cid => {
-                const cca = CCAS.find((c: CCA) => c.id === cid);
-                if (!cca || cca.status === 'active') return null;
-                return (
-                  <div key={`${res.id}-${cid}`} className={`text-[11px] font-black px-5 py-3 rounded-2xl shadow-sm flex items-center gap-3 animate-fade-in border border-white/10 ${getDayStatusColor(cca.status || '')}`}>
-                    <span className="material-symbols-outlined text-[16px]">
-                      {cca.status === 'absent' ? 'block' : cca.status === 'off' ? 'event_busy' : 'schedule'}
-                    </span>
-                    {cca.name} ({res.time})
-                  </div>
-                );
-              });
-            })}
-            {dayReservations.length === 0 && <p className="text-gray-400 text-xs italic font-bold">No summary data available for this date.</p>}
+          <div className="flex flex-wrap gap-2">
+            {reservations.filter(r => r.date === selectedDate).length > 0 ? (
+              reservations.filter(r => r.date === selectedDate).flatMap(res => {
+                const targetCcaIds = res.ccaIds || (res.ccaId ? [res.ccaId] : []);
+                return targetCcaIds.map(cid => {
+                  const cca = CCAS.find((c: CCA) => c.id === cid);
+                  if (!cca || cca.status === 'active') return null;
+                  return (
+                    <div key={`${res.id}-${cid}`} className={`text-[10px] font-black px-4 py-2 rounded-xl flex items-center gap-2 border border-white/5 shadow-sm ${getDayStatusColor(cca.status || '')}`}>
+                      <span className="material-symbols-outlined text-[12px]">
+                        {cca.status === 'absent' ? 'block' : cca.status === 'off' ? 'event_busy' : 'schedule'}
+                      </span>
+                      {cca.name}
+                    </div>
+                  );
+                });
+              })
+            ) : (
+              <p className="text-[10px] font-bold text-gray-400 italic">No critical alerts for today.</p>
+            )}
           </div>
-
-          <div className="pt-4 flex gap-4">
-            <button
-              onClick={() => setIsHolidayMode(!isHolidayMode)}
-              className={`flex-1 py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${isHolidayMode ? 'bg-blue-600 text-white shadow-xl scale-95' : 'bg-[#1b180d] text-white hover:bg-primary hover:text-[#1b180d]'}`}
-            >
-              <span className="material-symbols-outlined text-lg">{isHolidayMode ? 'check_circle' : 'event_busy'}</span>
-              {isHolidayMode ? 'Finish Selection' : 'Set Holiday Group'}
-            </button>
-          </div>
-        </div>
+        </section>
       </div>
 
       {/* RIGHT: Detail View */}
-      <div className="xl:col-span-12 2xl:col-span-12 space-y-8 mt-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-primary/10 shadow-sm">
-          <div>
-            <h3 className="text-4xl font-black tracking-tight uppercase italic flex items-center gap-4">
-              {selectedDate}
-              <span className="text-sm font-bold text-primary not-italic tracking-normal bg-primary/10 px-4 py-2 rounded-full uppercase">Today's Schedule</span>
-            </h3>
-            <p className="text-sm font-bold text-gray-500 mt-2">1-hour intervals based on venue operating hours</p>
+      <div className="lg:col-span-7 xl:col-span-8 space-y-8 pb-20">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-primary/10 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl rounded-full" />
+          <div className="relative z-10">
+            <h3 className="text-5xl font-black tracking-tighter uppercase italic text-primary">{selectedDate}</h3>
+            <p className="text-xs font-bold text-gray-500 mt-2 uppercase tracking-widest flex items-center gap-2">
+              <span className="size-2 bg-green-500 rounded-full animate-pulse" /> Live Booking Inventory
+            </p>
           </div>
-          <div className="flex bg-gray-50 dark:bg-zinc-950 p-3 rounded-[2rem] border border-primary/5">
-            <div className="px-8 py-4 border-r border-primary/10 text-center">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CCA Requests</p>
-              <p className="text-3xl font-black text-primary mt-1">{dayReservations.reduce((acc, r) => acc + (r.ccaIds?.length || (r.ccaId ? 1 : 0)), 0)}</p>
+          <div className="flex items-center gap-1 bg-gray-50 dark:bg-zinc-950 p-2 rounded-[2rem] border border-primary/5 relative z-10">
+            <div className="px-8 py-3 border-r border-primary/10 text-center">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Requests</p>
+              <p className="text-2xl font-black text-white">{dayReservations.reduce((acc, r) => acc + (r.ccaIds?.length || (r.ccaId ? 1 : 0)), 0)}</p>
             </div>
-            <div className="px-8 py-4 text-center">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tables/Rooms</p>
-              <p className="text-3xl font-black text-primary mt-1">{dayReservations.filter(r => r.tableId || r.roomId).length}</p>
+            <div className="px-8 py-3 text-center">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Inventory</p>
+              <p className="text-2xl font-black text-white">{dayReservations.filter(r => r.tableId || r.roomId).length}</p>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-4">
           {timeSlots.map(time => {
             const slotReservations = dayReservations.filter(r => r.time === time);
             const requestCount = slotReservations.reduce((acc, r) => acc + (r.ccaIds?.length || (r.ccaId ? 1 : 0)), 0);
             const tableRoomCount = slotReservations.filter(r => r.tableId || r.roomId).length;
+            const hasBookings = slotReservations.length > 0;
 
             return (
-              <div key={time} className={`group flex items-stretch bg-white dark:bg-zinc-900 rounded-[2.5rem] overflow-hidden border-2 transition-all p-2 ${slotReservations.length > 0 ? 'border-primary/30 shadow-2xl scale-[1.02] z-10' : 'border-primary/5 opacity-80'}`}>
-                <div className={`w-28 md:w-40 flex flex-col items-center justify-center rounded-[2rem] ${slotReservations.length > 0 ? 'bg-primary text-[#1b180d]' : 'bg-gray-50 dark:bg-zinc-950 text-gray-400'}`}>
-                  <span className="text-3xl font-black">{time}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">{slotReservations.length > 0 ? 'Active' : 'Empty'}</span>
+              <motion.div
+                layout
+                key={time}
+                className={`group flex items-stretch bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden border-2 transition-all duration-300 ${hasBookings ? 'border-primary/30 shadow-xl' : 'border-primary/5 opacity-70 hover:opacity-100 hover:border-primary/20'}`}
+              >
+                <div className={`w-24 md:w-36 flex flex-col items-center justify-center p-6 ${hasBookings ? 'bg-primary text-[#1b180d]' : 'bg-gray-50 dark:bg-zinc-950 text-gray-400'}`}>
+                  <span className="text-xl md:text-3xl font-black">{time}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest mt-1 opacity-60">{hasBookings ? 'Booked' : 'Free'}</span>
                 </div>
 
-                <div className="flex-1 px-8 py-6 flex flex-col justify-center gap-4">
-                  {slotReservations.length > 0 ? (
+                <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  {hasBookings ? (
                     <>
-                      <div className="grid grid-cols-1 gap-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CCA Requests</p>
-                          <p className="text-sm font-black text-primary">REQUEST : {requestCount}</p>
+                      <div className="flex-1 grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Requested Staff</p>
+                          <p className="text-sm font-black text-[#1b180d] dark:text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[16px] text-primary">groups</span>
+                            REQUEST: {requestCount}
+                          </p>
                         </div>
-                        <div className="h-1 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: `${Math.min(100, requestCount * 20)}%` }} />
-                        </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory</p>
-                          <p className="text-sm font-black text-primary">T/R : {tableRoomCount}</p>
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Floor Space</p>
+                          <p className="text-sm font-black text-[#1b180d] dark:text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[16px] text-primary">chair</span>
+                            T/R: {tableRoomCount}
+                          </p>
                         </div>
                       </div>
                       <button
                         onClick={() => setShowManagePopup(time)}
-                        className="w-full mt-2 py-4 bg-[#1b180d] text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-[#1b180d] transition-all shadow-lg hover:shadow-primary/30"
+                        className="px-6 py-4 bg-[#1b180d] dark:bg-white/5 dark:hover:bg-primary dark:hover:text-[#1b180d] text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
                       >
-                        Manage Details
+                        Details
                       </button>
                     </>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-300 dark:text-gray-700 italic border-2 border-dashed border-gray-100 dark:border-white/5 rounded-2xl">
-                      <span className="material-symbols-outlined text-4xl mb-2 opacity-20">event_available</span>
+                    <div className="flex-1 flex items-center justify-between text-gray-300 dark:text-zinc-700 italic px-4">
                       <span className="text-[10px] font-black uppercase tracking-widest opacity-40">No bookings for this slot</span>
+                      <span className="material-symbols-outlined opacity-20">history_toggle_off</span>
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
@@ -244,7 +301,7 @@ const AdminReservations: React.FC = () => {
       {/* POPUP: Detail Management */}
       <AnimatePresence>
         {showManagePopup && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10 pointer-events-auto">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-10">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -253,74 +310,54 @@ const AdminReservations: React.FC = () => {
               className="absolute inset-0 bg-black/90 backdrop-blur-xl"
             />
             <motion.div
-              initial={{ y: 100, opacity: 0, scale: 0.9 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 100, opacity: 0, scale: 0.9 }}
-              className="bg-[#1b180d] border border-primary/30 w-full max-w-6xl md:h-[85vh] rounded-[4rem] overflow-hidden shadow-[0_0_100px_rgba(238,206,108,0.15)] z-10 flex flex-col relative"
+              initial={{ scale: 0.9, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 50 }}
+              className="bg-[#1b180d] border border-primary/20 w-full max-w-5xl h-[90vh] md:h-[80vh] rounded-[3rem] overflow-hidden shadow-2xl z-10 flex flex-col relative"
             >
-              <div className="p-12 border-b border-primary/10 flex items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
+              <div className="p-8 border-b border-primary/10 flex items-center justify-between">
                 <div>
-                  <h4 className="text-5xl font-black text-white italic uppercase tracking-tighter">Reservation Control</h4>
-                  <div className="flex items-center gap-6 mt-4">
-                    <p className="text-[11px] font-black text-primary bg-primary/10 px-5 py-2.5 rounded-full uppercase tracking-[0.3em] flex items-center gap-3">
-                      <span className="material-symbols-outlined text-sm">event</span>
-                      {selectedDate}
-                    </p>
-                    <p className="text-[11px] font-black text-white bg-white/5 px-5 py-2.5 rounded-full uppercase tracking-[0.3em] flex items-center gap-3">
-                      <span className="material-symbols-outlined text-sm">schedule</span>
-                      {showManagePopup} Slot
-                    </p>
-                  </div>
+                  <h4 className="text-3xl font-black text-white italic uppercase">{showManagePopup} Reservations</h4>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-1">{selectedDate}</p>
                 </div>
-                <button onClick={() => setShowManagePopup(null)} className="size-20 flex items-center justify-center rounded-[2.5rem] bg-white/5 text-white hover:bg-primary hover:text-[#1b180d] hover:rotate-90 transition-all duration-700 active:scale-90">
-                  <span className="material-symbols-outlined text-4xl font-light">close</span>
+                <button onClick={() => setShowManagePopup(null)} className="size-14 flex items-center justify-center rounded-[1.5rem] bg-white/5 text-white hover:bg-primary hover:text-[#1b180d] transition-all">
+                  <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-12 space-y-12">
+              <div className="flex-1 overflow-y-auto p-8 space-y-6">
                 {dayReservations.filter(r => r.time === showManagePopup).map(res => (
-                  <div key={res.id} className="bg-white/5 border border-primary/10 p-10 rounded-[3.5rem] space-y-10 group hover:bg-white/[0.07] transition-all relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
-
-                    <div className="flex flex-col xl:flex-row justify-between gap-10">
-                      <div className="flex gap-8">
-                        <div className="size-24 rounded-[2rem] bg-primary flex items-center justify-center text-[#1b180d] shadow-2xl shadow-primary/20">
-                          <span className="material-symbols-outlined text-5xl">person_filled</span>
+                  <div key={res.id} className="bg-white/5 border border-primary/5 p-8 rounded-[2rem] space-y-8">
+                    <div className="flex flex-col md:flex-row justify-between gap-6">
+                      <div className="flex gap-6">
+                        <div className="size-16 rounded-2xl bg-primary flex items-center justify-center text-[#1b180d] shrink-0">
+                          <span className="material-symbols-outlined text-2xl font-black">person</span>
                         </div>
-                        <div className="flex flex-col justify-center">
-                          <h5 className="text-3xl font-black text-white tracking-tight">{res.customerName} <span className="text-primary/40 ml-3 text-xl font-bold">Group of {res.groupSize}</span></h5>
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="material-symbols-outlined text-primary text-base">location_on</span>
-                            <p className="text-sm text-gray-400 font-black uppercase tracking-[0.2em]">{res.roomId ? res.roomName : res.tableName || 'Standby'}</p>
-                          </div>
+                        <div>
+                          <h5 className="text-2xl font-black text-white">{res.customerName} <span className="text-primary/50 text-sm italic font-bold">({res.groupSize} Guests)</span></h5>
+                          <p className="text-[10px] font-black text-gray-400 mt-2 uppercase tracking-widest flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[14px]">location_on</span>
+                            {res.roomId ? res.roomName : res.tableName || 'Pending Assignment'}
+                          </p>
                         </div>
                       </div>
-                      <div className="xl:text-right flex items-center xl:items-end flex-col justify-center gap-2">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Status</p>
-                        <span className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl ${res.status === 'confirmed' ? 'bg-green-600 text-white' : 'bg-primary text-[#1b180d]'}`}>
+                      <div>
+                        <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${res.status === 'confirmed' ? 'bg-green-500 text-white' : 'bg-primary text-[#1b180d]'}`}>
                           {res.status}
                         </span>
                       </div>
                     </div>
 
-                    {/* Requested CCAs Grid */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-4">
-                        <div className="h-px flex-1 bg-white/10" />
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">Requested Personnel</p>
-                        <div className="h-px flex-1 bg-white/10" />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {(res.ccaIds || (res.ccaId ? [res.ccaId] : [])).map(cid => {
                           const cca = CCAS.find((c: CCA) => c.id === cid);
                           return (
-                            <div key={cid} className="flex items-center gap-5 bg-[#0a0a0a] p-5 rounded-[2rem] border border-white/5 group-hover:border-primary/20 transition-all hover:scale-105 active:scale-95 cursor-pointer">
-                              <div className="size-16 rounded-2xl overflow-hidden border-2 border-primary/20">
-                                <img src={cca?.image} className="w-full h-full object-cover" alt={cca?.nickname} />
-                              </div>
-                              <div>
-                                <p className="font-black text-lg text-white tracking-tight">{cca?.nickname || 'Unknown'}</p>
-                                <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest mt-1 inline-block ${cca?.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                            <div key={cid} className="flex items-center gap-4 bg-black p-4 rounded-2xl border border-white/5">
+                              <img src={cca?.image} className="size-12 rounded-xl object-cover" />
+                              <div className="overflow-hidden">
+                                <p className="font-black text-sm text-white truncate">{cca?.nickname || 'Unknown'}</p>
+                                <span className={`text-[8px] font-black px-1.5 rounded-full uppercase ${cca?.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
                                   {cca?.status}
                                 </span>
                               </div>
@@ -331,33 +368,28 @@ const AdminReservations: React.FC = () => {
                     </div>
 
                     {res.customerNote && (
-                      <div className="p-8 rounded-[2rem] bg-white/[0.03] border border-white/5 relative group/note">
-                        <span className="material-symbols-outlined absolute top-4 left-4 text-primary/30 text-4xl select-none">format_quote</span>
-                        <p className="text-gray-400 text-base italic leading-relaxed pl-8">
-                          {res.customerNote}
-                        </p>
+                      <div className="p-6 rounded-2xl bg-primary/5 border-l-2 border-primary italic text-gray-500 text-xs leading-relaxed">
+                        "{res.customerNote}"
                       </div>
                     )}
 
-                    <div className="flex flex-wrap justify-end gap-5 pt-4">
-                      <button className="flex-1 sm:flex-none px-10 py-5 rounded-[1.5rem] border-2 border-red-500/20 text-red-500 font-black text-xs uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all active:scale-95">Cancel</button>
-                      <button className="flex-1 sm:flex-none px-10 py-5 rounded-[1.5rem] bg-primary text-[#1b180d] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">Verify & Update</button>
+                    <div className="flex justify-end gap-3">
+                      <button className="px-6 py-3 rounded-xl border border-red-500/20 text-red-500 font-black text-[9px] uppercase hover:bg-red-500 hover:text-white transition-all">Cancel</button>
+                      <button className="px-6 py-3 rounded-xl bg-primary text-[#1b180d] font-black text-[9px] uppercase hover:scale-105 transition-all">Update Control</button>
                     </div>
                   </div>
                 ))}
 
-                <div className="pt-16 border-t border-white/10 flex flex-col md:flex-row gap-10 items-center justify-center">
+                <div className="pt-8 border-t border-white/5 grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {[
-                    { label: 'Available Tables', val: (venue?.tables?.length || 10) - dayReservations.filter(r => r.time === showManagePopup && r.tableId).length, icon: 'table_bar' },
-                    { label: 'Available Rooms', val: (venue?.rooms?.length || 5) - dayReservations.filter(r => r.time === showManagePopup && r.roomId).length, icon: 'door_front' },
-                    { label: 'Active Personnel', val: CCAS.filter((c: CCA) => c.status === 'active').length, icon: 'groups' }
+                    { label: 'Left Tables', val: (venue?.tables?.length || 12) - dayReservations.filter(r => r.time === showManagePopup && r.tableId).length, icon: 'table_bar' },
+                    { label: 'Left Rooms', val: (venue?.rooms?.length || 6) - dayReservations.filter(r => r.time === showManagePopup && r.roomId).length, icon: 'meeting_room' },
+                    { label: 'Staff Ready', val: CCAS.filter((c: CCA) => c.status === 'active').length, icon: 'diversity_3' }
                   ].map(stat => (
-                    <div key={stat.label} className="bg-white/5 px-12 py-8 rounded-[2.5rem] border border-white/5 flex flex-col items-center min-w-[240px] hover:bg-white/[0.08] transition-colors border-b-4 border-b-primary/40">
-                      <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <span className="material-symbols-outlined text-primary text-3xl">{stat.icon}</span>
-                      </div>
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">{stat.label}</p>
-                      <p className="text-4xl font-black text-white mt-3 italic">{stat.val}</p>
+                    <div key={stat.label} className="bg-white/5 p-6 rounded-2xl border border-white/5 flex flex-col items-center">
+                      <span className="material-symbols-outlined text-primary text-xl mb-1">{stat.icon}</span>
+                      <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
+                      <p className="text-xl font-black text-white mt-1">{stat.val}</p>
                     </div>
                   ))}
                 </div>
