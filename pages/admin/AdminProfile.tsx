@@ -158,23 +158,23 @@ const AdminProfile: React.FC = () => {
    return (
       <div className="max-w-6xl space-y-8 pb-20">
          {/* Header */}
-         <div className="flex items-center justify-between">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
                <h1 className="text-3xl font-black tracking-tight text-[#1b180d] dark:text-white uppercase italic">Venue Settings</h1>
                <p className="text-sm font-bold text-gray-500 mt-1">Manage your store's information, media, and menu</p>
             </div>
-            <button className="px-8 py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.05] transition-all">
+            <button className="w-full md:w-auto px-8 py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.05] transition-all">
                Save All Changes
             </button>
          </div>
 
          {/* Tab Switcher */}
-         <div className="flex gap-4 p-1 bg-white dark:bg-zinc-900 rounded-2xl border border-primary/10 w-fit">
+         <div className="flex flex-wrap md:flex-nowrap gap-2 md:gap-4 p-1 bg-white dark:bg-zinc-900 rounded-2xl border border-primary/10 w-full md:w-fit">
             {['basic', 'media', 'menu'].map(t => (
                <button
                   key={t}
                   onClick={() => setActiveTab(t)}
-                  className={`py-3 px-8 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${activeTab === t ? 'bg-primary text-[#1b180d]' : 'text-gray-400 hover:text-primary/50'}`}
+                  className={`flex-1 md:flex-none py-3 px-4 md:px-8 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === t ? 'bg-primary text-[#1b180d]' : 'text-gray-400 hover:text-primary/50'}`}
                >
                   {t} Settings
                </button>
