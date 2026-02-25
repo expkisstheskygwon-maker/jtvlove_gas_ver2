@@ -5,15 +5,34 @@ import { apiService } from '../../services/apiService';
 import { RESERVATIONS, CCAS } from '../../constants';
 import { Reservation, CCA, Venue, CCAStatus } from '../../types';
 
+interface TableRoomItem {
+  id: string;
+  name: string;
+  type: 'table' | 'room';
+}
+
 const AdminReservations: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState('2023-11-20');
   const [viewDate, setViewDate] = useState(new Date(2023, 10, 1)); // Nov 2023
   const [venue, setVenue] = useState<Venue | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>(RESERVATIONS);
   const [showManagePopup, setShowManagePopup] = useState<string | null>(null); // time slot for popup
+  const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [isHolidayMode, setIsHolidayMode] = useState(false);
   const [selectedHolidays, setSelectedHolidays] = useState<string[]>([]);
   const [direction, setDirection] = useState(0);
+
+  // Form State for New Reservation
+  const [newRes, setNewRes] = useState<Partial<Reservation>>({
+    time: '19:00',
+    customerName: '',
+    customerNote: '',
+    groupSize: 1,
+    ccaIds: [],
+    status: 'confirmed',
+    tableId: '',
+    roomId: ''
+  });
 
   useEffect(() => {
     fetchVenue();
@@ -78,6 +97,39 @@ const AdminReservations: React.FC = () => {
     } else {
       setSelectedHolidays([...selectedHolidays, date]);
     }
+  };
+
+  const handleCreateReservation = () => {
+    const reservation: Reservation = {
+      id: `res-${Date.now()}`,
+      venueId: 'v1',
+      date: selectedDate,
+      customerName: newRes.customerName || 'Guest',
+      customerNote: newRes.customerNote || '',
+      groupSize: newRes.groupSize || 1,
+      time: newRes.time || '19:00',
+      status: 'confirmed',
+      ccaIds: newRes.ccaIds,
+      tableId: newRes.tableId,
+      roomId: newRes.roomId,
+      tableName: venue?.tables?.find((t: any) => t.id === newRes.tableId)?.name,
+      roomName: venue?.rooms?.find((r: any) => r.id === newRes.roomId)?.name,
+      shortMessage: `${newRes.customerName} + ${newRes.groupSize - 1}`
+    };
+
+    setReservations([...reservations, reservation]);
+    setShowCreatePopup(false);
+    // Reset form
+    setNewRes({
+      time: '19:00',
+      customerName: '',
+      customerNote: '',
+      groupSize: 1,
+      ccaIds: [],
+      status: 'confirmed',
+      tableId: '',
+      roomId: ''
+    });
   };
 
   const calendarVariants = {
@@ -220,7 +272,7 @@ const AdminReservations: React.FC = () => {
       </div>
 
       {/* RIGHT: Detail View */}
-      <div className="lg:col-span-7 xl:col-span-8 space-y-8 pb-20">
+      <div className="lg:col-span-7 xl:col-span-8 space-y-8 pb-32">
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-primary/10 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl rounded-full" />
           <div className="relative z-10">
@@ -296,6 +348,15 @@ const AdminReservations: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Global Action Button */}
+        <button
+          onClick={() => setShowCreatePopup(true)}
+          className="w-full py-6 rounded-[2rem] bg-primary text-[#1b180d] font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
+        >
+          <span className="material-symbols-outlined text-2xl">add_circle</span>
+          Create Manual Reservation
+        </button>
       </div>
 
       {/* POPUP: Detail Management */}
@@ -392,6 +453,145 @@ const AdminReservations: React.FC = () => {
                       <p className="text-xl font-black text-white mt-1">{stat.val}</p>
                     </div>
                   ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* POPUP: Create Reservation */}
+      <AnimatePresence>
+        {showCreatePopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-10">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCreatePopup(false)}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 100 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 100 }}
+              className="bg-[#1b180d] border border-primary/30 w-full max-w-4xl h-[90vh] md:h-auto max-h-[90vh] rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(238,189,43,0.1)] z-10 flex flex-col relative"
+            >
+              <div className="p-10 border-b border-primary/10 flex items-center justify-between">
+                <div>
+                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter">Manual Booking</h4>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mt-1">{selectedDate}</p>
+                </div>
+                <button onClick={() => setShowCreatePopup(false)} className="size-16 flex items-center justify-center rounded-2xl bg-white/5 text-white hover:bg-primary hover:text-[#1b180d] transition-all">
+                  <span className="material-symbols-outlined text-3xl">close</span>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  {/* Left Column */}
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Customer Name</label>
+                      <input
+                        type="text"
+                        value={newRes.customerName}
+                        onChange={(e) => setNewRes({ ...newRes, customerName: e.target.value })}
+                        placeholder="e.g. Mr. Smith"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Guests</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={newRes.groupSize}
+                          onChange={(e) => setNewRes({ ...newRes, groupSize: parseInt(e.target.value) })}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Selected Time</label>
+                        <select
+                          value={newRes.time}
+                          onChange={(e) => setNewRes({ ...newRes, time: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all appearance-none"
+                        >
+                          {timeSlots.map(t => <option key={t} value={t} className="bg-[#1b180d]">{t}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Table / Room</label>
+                      <select
+                        onChange={(e) => {
+                          const [type, id] = e.target.value.split(':');
+                          setNewRes({ ...newRes, tableId: type === 'table' ? id : '', roomId: type === 'room' ? id : '' });
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all appearance-none"
+                      >
+                        <option value="">Standby / Not Assigned</option>
+                        {venue?.tables?.map((t: any) => <option key={t.id} value={`table:${t.id}`} className="bg-[#1b180d]">Table: {t.name}</option>)}
+                        {venue?.rooms?.map((r: any) => <option key={r.id} value={`room:${r.id}`} className="bg-[#1b180d]">Room: {r.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Customer Note / Request</label>
+                      <textarea
+                        rows={4}
+                        value={newRes.customerNote}
+                        onChange={(e) => setNewRes({ ...newRes, customerNote: e.target.value })}
+                        placeholder="Preferences, allergies, special events..."
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column: CCA Selection */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Available Staff (CCA Requests)</label>
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-[400px] overflow-y-auto space-y-3 scrollbar-hide">
+                      {CCAS.filter(c => c.status === 'active').map(cca => {
+                        const isSelected = newRes.ccaIds?.includes(cca.id);
+                        return (
+                          <button
+                            key={cca.id}
+                            onClick={() => {
+                              const ids = isSelected
+                                ? newRes.ccaIds?.filter(id => id !== cca.id)
+                                : [...(newRes.ccaIds || []), cca.id];
+                              setNewRes({ ...newRes, ccaIds: ids });
+                            }}
+                            className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${isSelected ? 'bg-primary border-primary text-[#1b180d]' : 'bg-white/5 border-transparent text-white hover:bg-white/10'}`}
+                          >
+                            <img src={cca.image} className="size-12 rounded-xl object-cover" />
+                            <div className="text-left">
+                              <p className="font-black text-sm uppercase">{cca.nickname || cca.name}</p>
+                              <p className={`text-[8px] font-black opacity-60 uppercase ${isSelected ? 'text-black' : 'text-primary'}`}>{cca.grade || 'Staff'}</p>
+                            </div>
+                            {isSelected && <span className="material-symbols-outlined ml-auto">check_circle</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-6">
+                  <button
+                    onClick={() => setShowCreatePopup(false)}
+                    className="flex-1 py-6 rounded-2xl border-2 border-white/10 text-gray-400 font-black uppercase text-xs tracking-widest hover:border-white/30 transition-all"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    onClick={handleCreateReservation}
+                    className="flex-[2] py-6 rounded-2xl bg-primary text-[#1b180d] font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    Confirm & Add Reservation
+                  </button>
                 </div>
               </div>
             </motion.div>
