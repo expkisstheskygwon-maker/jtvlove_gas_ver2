@@ -139,6 +139,60 @@ CREATE TABLE IF NOT EXISTS cca_sold_out (
   UNIQUE(cca_id, sold_out_date)
 );
 
+-- 10. CCA Attendance Table (출퇴근 기록)
+CREATE TABLE IF NOT EXISTS cca_attendance (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  venue_id TEXT NOT NULL,
+  check_in_at DATETIME,
+  check_out_at DATETIME,
+  attendance_date TEXT NOT NULL, -- YYYY-MM-DD
+  status TEXT DEFAULT 'checked_in', -- 'checked_in', 'checked_out'
+  FOREIGN KEY (cca_id) REFERENCES ccas(id),
+  FOREIGN KEY (venue_id) REFERENCES venues(id),
+  UNIQUE(cca_id, attendance_date)
+);
+
+-- 11. Customer Messages Table (고객 메시지)
+CREATE TABLE IF NOT EXISTS customer_messages (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  customer_name TEXT NOT NULL,
+  message TEXT NOT NULL,
+  is_read INTEGER DEFAULT 0,
+  replied INTEGER DEFAULT 0,
+  reply_text TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  replied_at DATETIME,
+  FOREIGN KEY (cca_id) REFERENCES ccas(id)
+);
+
+-- 12. Admin Messages Table (관리자→CCA 개별 메시지)
+CREATE TABLE IF NOT EXISTS admin_messages (
+  id TEXT PRIMARY KEY,
+  venue_id TEXT NOT NULL,
+  cca_id TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  is_read INTEGER DEFAULT 0,
+  priority TEXT DEFAULT 'normal', -- 'normal', 'important', 'urgent'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (venue_id) REFERENCES venues(id),
+  FOREIGN KEY (cca_id) REFERENCES ccas(id)
+);
+
+-- 13. Venue Notices Table (업체 공지사항)
+CREATE TABLE IF NOT EXISTS venue_notices (
+  id TEXT PRIMARY KEY,
+  venue_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_pinned INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (venue_id) REFERENCES venues(id)
+);
+
 -- [초기 샘플 데이터 삽입]
 INSERT OR IGNORE INTO venues (id, name, region, rating, reviews_count, description, image, phone, address, tags, features)
 VALUES ('v1', 'Grand Palace JTV', 'Pasay', 4.9, 128, 'Experience the pinnacle of nightlife at Grand Palace JTV.', 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=2000', '0912-345-6789', 'Entertainment City, Pasay', '["Premium Service", "VIP Room"]', '["VIP Rooms", "Live Stage"]');
@@ -151,3 +205,29 @@ VALUES ('p1', 'Free Board', 'Welcome to the New Portal', 'Admin', 'This is the f
 
 INSERT OR IGNORE INTO site_settings (id, site_name, admin_phone, admin_email, admin_sns, hq_address, logo_url, favicon_url)
 VALUES ('global', 'Philippine JTV Association', '0917-000-0000', 'admin@ph-jtv.org', '@phjtv_official', 'Metro Manila, Philippines', '', '');
+
+-- CCA Portal 샘플 데이터
+INSERT OR IGNORE INTO customer_messages (id, cca_id, customer_name, message, is_read, replied, created_at)
+VALUES
+  ('cm1', 'c1', 'Lee Manager', '유미님, 오늘 저녁 8시 예약 가능할까요?', 0, 0, '2026-02-25 14:30:00'),
+  ('cm2', 'c1', 'Mr. Tanaka', '先日はありがとうございました。また来週お会いしましょう。', 0, 0, '2026-02-25 13:15:00'),
+  ('cm3', 'c1', 'Kim Director', '다음 주 금요일 VIP 파티 참석 가능하신가요?', 1, 0, '2026-02-25 11:00:00'),
+  ('cm4', 'c1', 'Park Team Lead', '오늘 방문 시 특별 주문이 있습니다.', 0, 0, '2026-02-25 10:20:00'),
+  ('cm5', 'c1', 'Alex Chen', '좋은 시간 감사했습니다 😊', 1, 1, '2026-02-24 22:00:00');
+
+INSERT OR IGNORE INTO admin_messages (id, venue_id, cca_id, sender_name, title, message, is_read, priority, created_at)
+VALUES
+  ('am1', 'v1', 'c1', 'Grand Palace 매니저', '이번 주 VIP 이벤트 안내', '유미님, 이번 주 토요일 VIP 이벤트 세션 참여 가능 여부를 확인해 주세요. 참석 시 추가 포인트가 지급됩니다.', 0, 'important', '2026-02-25 09:00:00'),
+  ('am2', 'v1', 'c1', 'Grand Palace 매니저', '유니폼 변경 공지', '새로운 유니폼이 도착했습니다. 내일 출근 시 사무실에서 수령해 주세요.', 1, 'normal', '2026-02-24 15:00:00');
+
+INSERT OR IGNORE INTO venue_notices (id, venue_id, title, content, is_pinned, created_at)
+VALUES
+  ('vn1', 'v1', '2월 마지막 주 영업시간 변경', '2월 28일(금)은 특별 이벤트로 인해 영업시간이 18:00~05:00으로 변경됩니다.', 1, '2026-02-25 08:00:00'),
+  ('vn2', 'v1', '신규 음료 메뉴 추가', '3월부터 프리미엄 칵테일 라인업이 추가됩니다. 메뉴 숙지 부탁드립니다.', 0, '2026-02-24 10:00:00'),
+  ('vn3', 'v1', '직원 건강검진 안내', '3월 첫째 주 직원 건강검진이 예정되어 있습니다. 일정 확인 후 참여해 주세요.', 0, '2026-02-23 14:00:00');
+
+INSERT OR IGNORE INTO reservations (id, venue_id, cca_id, customer_name, reservation_time, reservation_date, status)
+VALUES
+  ('r10', 'v1', 'c1', 'Lee Manager', '20:00', '2026-02-25', 'confirmed'),
+  ('r11', 'v1', 'c1', 'Mr. Tanaka', '21:30', '2026-02-25', 'pending'),
+  ('r12', 'v1', 'c1', 'Kim Director', '22:00', '2026-02-25', 'confirmed');

@@ -125,7 +125,7 @@ async function startServer() {
   app.post("/api/ccas/:id", (req, res) => {
     const index = ccas.findIndex(c => c.id === req.params.id);
     if (index === -1) return res.status(404).json({ error: "Not found" });
-    
+
     const body = req.body;
     ccas[index] = {
       ...ccas[index],
@@ -156,6 +156,56 @@ async function startServer() {
 
   app.get("/api/posts", (req, res) => {
     res.status(404).json({ error: "Use mock data" });
+  });
+
+  // CCA Portal Home API (local dev)
+  let mockAttendance: any = null;
+
+  app.get("/api/cca-portal/home", (req, res) => {
+    const ccaId = req.query.ccaId;
+    const today = new Date().toISOString().split('T')[0];
+    const cca = ccas.find(c => c.id === ccaId) || ccas[0];
+
+    res.json({
+      cca: { ...cca, venue_name: 'Grand Palace JTV' },
+      reservations: [
+        { id: 'r10', customer_name: 'Lee Manager', reservation_time: '20:00', reservation_date: today, status: 'confirmed' },
+        { id: 'r11', customer_name: 'Mr. Tanaka', reservation_time: '21:30', reservation_date: today, status: 'pending' },
+        { id: 'r12', customer_name: 'Kim Director', reservation_time: '22:00', reservation_date: today, status: 'confirmed' },
+      ],
+      customerMessages: [
+        { id: 'cm1', customer_name: 'Lee Manager', message: '유미님, 오늘 저녁 8시 예약 가능할까요?', is_read: 0, replied: 0, created_at: '2026-02-25 14:30:00' },
+        { id: 'cm2', customer_name: 'Mr. Tanaka', message: '先日はありがとうございました。また来週お会いしましょう。', is_read: 0, replied: 0, created_at: '2026-02-25 13:15:00' },
+        { id: 'cm3', customer_name: 'Kim Director', message: '다음 주 금요일 VIP 파티 참석 가능하신가요?', is_read: 1, replied: 0, created_at: '2026-02-25 11:00:00' },
+        { id: 'cm4', customer_name: 'Park Team Lead', message: '오늘 방문 시 특별 주문이 있습니다.', is_read: 0, replied: 0, created_at: '2026-02-25 10:20:00' },
+        { id: 'cm5', customer_name: 'Alex Chen', message: '좋은 시간 감사했습니다 😊', is_read: 1, replied: 1, created_at: '2026-02-24 22:00:00' },
+      ],
+      adminMessages: [
+        { id: 'am1', sender_name: 'Grand Palace 매니저', title: '이번 주 VIP 이벤트 안내', message: '유미님, 이번 주 토요일 VIP 이벤트 세션 참여 가능 여부를 확인해 주세요. 참석 시 추가 포인트가 지급됩니다.', is_read: 0, priority: 'important', created_at: '2026-02-25 09:00:00' },
+        { id: 'am2', sender_name: 'Grand Palace 매니저', title: '유니폼 변경 공지', message: '새로운 유니폼이 도착했습니다. 내일 출근 시 사무실에서 수령해 주세요.', is_read: 1, priority: 'normal', created_at: '2026-02-24 15:00:00' },
+      ],
+      notices: [
+        { id: 'vn1', title: '2월 마지막 주 영업시간 변경', content: '2월 28일(금)은 특별 이벤트로 인해 영업시간이 18:00~05:00으로 변경됩니다.', is_pinned: 1, created_at: '2026-02-25 08:00:00' },
+        { id: 'vn2', title: '신규 음료 메뉴 추가', content: '3월부터 프리미엄 칵테일 라인업이 추가됩니다. 메뉴 숙지 부탁드립니다.', is_pinned: 0, created_at: '2026-02-24 10:00:00' },
+        { id: 'vn3', title: '직원 건강검진 안내', content: '3월 첫째 주 직원 건강검진이 예정되어 있습니다. 일정 확인 후 참여해 주세요.', is_pinned: 0, created_at: '2026-02-23 14:00:00' },
+      ],
+      attendance: mockAttendance,
+      today,
+    });
+  });
+
+  app.post("/api/cca-portal/attendance", (req, res) => {
+    const { action } = req.body;
+    const now = new Date().toISOString();
+    if (action === 'check_in') {
+      mockAttendance = { status: 'checked_in', check_in_at: now };
+      res.json({ success: true, action: 'check_in', time: now });
+    } else if (action === 'check_out') {
+      mockAttendance = { ...mockAttendance, status: 'checked_out', check_out_at: now };
+      res.json({ success: true, action: 'check_out', time: now });
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
   });
 
   // Vite middleware for development

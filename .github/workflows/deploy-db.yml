@@ -1,0 +1,22 @@
+name: Deploy DB Schema to Cloudflare D1
+
+on:
+  push:
+    branches:
+      - master  # 현재 프로젝트의 기본 브랜치인 master로 변경합니다.
+    paths:
+      - 'schema.sql'  # schema.sql 파일이 변경될 때만 실행
+
+jobs:
+  deploy-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare D1
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute jtvlove_db --remote --file=schema.sql
