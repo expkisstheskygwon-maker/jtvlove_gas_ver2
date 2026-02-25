@@ -174,7 +174,7 @@ const CCAPortalHome: React.FC = () => {
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
-                        {reservations.map((r: any) => (
+                        {reservations.slice(0, 5).map((r: any) => (
                            <div key={r.id} className="flex items-center gap-4 p-5 md:p-6 hover:bg-primary/[0.02] transition-colors">
                               <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
                                  <span className="text-sm font-black text-primary">{r.reservation_time}</span>
@@ -228,7 +228,7 @@ const CCAPortalHome: React.FC = () => {
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
-                        {customerMessages.map((m: any) => (
+                        {customerMessages.slice(0, 5).map((m: any) => (
                            <div key={m.id} className={`flex items-start gap-4 p-5 md:p-6 transition-colors ${!m.replied ? 'hover:bg-blue-500/[0.02]' : 'opacity-60'}`}>
                               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black ${!m.replied ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
                                  }`}>
@@ -282,7 +282,7 @@ const CCAPortalHome: React.FC = () => {
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
-                        {adminMessages.map((m: any) => (
+                        {adminMessages.slice(0, 5).map((m: any) => (
                            <div key={m.id} className={`p-5 md:p-6 transition-colors hover:bg-purple-500/[0.02] ${m.is_read ? 'opacity-60' : ''}`}>
                               <div className="flex items-start gap-4">
                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${m.priority === 'urgent' ? 'bg-red-500/15' :
@@ -342,7 +342,7 @@ const CCAPortalHome: React.FC = () => {
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
-                        {notices.map((n: any) => (
+                        {notices.slice(0, 5).map((n: any) => (
                            <div key={n.id} className="p-5 md:p-6 hover:bg-orange-500/[0.02] transition-colors cursor-pointer group">
                               <div className="flex items-start gap-3">
                                  {n.is_pinned ? (
