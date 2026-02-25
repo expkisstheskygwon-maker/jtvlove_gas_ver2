@@ -108,18 +108,37 @@ const AdminReservations: React.FC = () => {
 
   // --- Time Slot Generation ---
   const generateTimeSlots = () => {
-    if (!venue?.operating_hours) return ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
-    const { open, close } = venue.operating_hours;
-    let slots: string[] = [];
-    let current = parseInt(open.split(':')[0]);
-    let end = parseInt(close.split(':')[0]);
-    if (end < current) end += 24;
+    const defaultSlots = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 
-    for (let h = current; h <= end; h++) {
-      const hour = h % 24;
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    // Safely check for operating_hours and its properties
+    if (!venue || !venue.operating_hours || !venue.operating_hours.open || !venue.operating_hours.close) {
+      return defaultSlots;
     }
-    return slots;
+
+    try {
+      const { open, close } = venue.operating_hours;
+      const openParts = open.split(':');
+      const closeParts = close.split(':');
+
+      if (openParts.length < 1 || closeParts.length < 1) return defaultSlots;
+
+      let current = parseInt(openParts[0]);
+      let end = parseInt(closeParts[0]);
+
+      if (isNaN(current) || isNaN(end)) return defaultSlots;
+
+      if (end < current) end += 24;
+
+      let slots: string[] = [];
+      for (let h = current; h <= end; h++) {
+        const hour = h % 24;
+        slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      }
+      return slots.length > 0 ? slots : defaultSlots;
+    } catch (err) {
+      console.warn("Error generating time slots from venue data:", err);
+      return defaultSlots;
+    }
   };
 
   const timeSlots = generateTimeSlots();
@@ -134,16 +153,21 @@ const AdminReservations: React.FC = () => {
   };
 
   const handleCreateReservation = async () => {
+    if (!newRes.customerName) {
+      alert("고객 이름을 입력해주세요.");
+      return;
+    }
+
     try {
       // 1. Prepare Data for API
       const apiData = {
         venueId: 'v1',
         ccaId: newRes.ccaIds?.[0] || 'c1', // DB currently takes 1 id, we use the first one
-        customer_name: newRes.customerName,
-        customer_note: newRes.customerNote,
+        customer_name: newRes.customerName as string,
+        customer_note: newRes.customerNote || '',
         reservation_date: selectedDate,
-        reservation_time: newRes.time,
-        group_size: newRes.groupSize
+        reservation_time: newRes.time as string || '19:00',
+        group_size: newRes.groupSize || 1
       };
 
       // 2. Call API
@@ -155,19 +179,20 @@ const AdminReservations: React.FC = () => {
           id: `res-${Date.now()}`,
           venueId: 'v1',
           date: selectedDate,
-          customerName: newRes.customerName || 'Guest',
+          customerName: newRes.customerName as string,
           customerNote: newRes.customerNote || '',
           groupSize: newRes.groupSize || 1,
-          time: newRes.time || '19:00',
+          time: newRes.time as string || '19:00',
           status: 'confirmed',
-          ccaIds: newRes.ccaIds,
+          ccaIds: newRes.ccaIds || [],
           tableId: newRes.tableId,
           roomId: newRes.roomId,
           tableName: venue?.tables?.find((t: any) => t.id === newRes.tableId)?.name,
           roomName: venue?.rooms?.find((r: any) => r.id === newRes.roomId)?.name,
-          shortMessage: `${newRes.customerName} + ${newRes.groupSize - 1}`
+          shortMessage: `${newRes.customerName} + ${Math.max(0, (newRes.groupSize || 1) - 1)}`
         };
-        setReservations([...reservations, localRes]);
+
+        setReservations(prev => [...prev, localRes]);
         setShowCreatePopup(false);
         // Reset form
         setNewRes({
@@ -181,11 +206,11 @@ const AdminReservations: React.FC = () => {
           roomId: ''
         });
       } else {
-        alert("Failed to create reservation on server.");
+        alert("서버 오류: 예약 생성에 실패했습니다. (DB 스키마 확인 필요)");
       }
     } catch (err) {
-      console.error("Error creating reservation", err);
-      alert("An error occurred while creating reservation.");
+      console.error("Error creating reservation:", err);
+      alert("예약 생성 중 오류가 발생했습니다.");
     }
   };
 
