@@ -40,7 +40,7 @@ export interface Venue {
   introduction?: string;
 }
 
-export type CCAStatus = 'active' | 'absent' | 'off' | 'resigned';
+export type CCAStatus = 'active' | 'absent' | 'off' | 'resigned' | 'late';
 export type CCAGrade = 'ACE' | 'PRO' | 'CUTE';
 export type CustomerGrade = 'VIP' | 'EXCELLENT' | 'GENERAL' | 'WARNING';
 
@@ -114,16 +114,22 @@ export interface CCAExperience {
 export interface Reservation {
   id: string;
   venueId: string;
-  ccaId: string;
-  ccaName: string;
+  ccaId?: string;
+  ccaIds?: string[];
+  ccaName?: string;
   customerName: string;
   customerNote: string;
   customerGrade?: CustomerGrade;
+  groupSize: number;
   time: string;
   endTime?: string;
   date: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'no_show' | 'request_change';
   shortMessage: string;
+  tableId?: string;
+  roomId?: string;
+  tableName?: string;
+  roomName?: string;
 }
 
 // Fixed missing Post interface to resolve import error in constants.ts
