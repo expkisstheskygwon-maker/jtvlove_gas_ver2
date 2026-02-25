@@ -150,210 +150,222 @@ const CCAPortalHome: React.FC = () => {
             </div>
          </section>
 
-         {/* ──── 2. 오늘 예약 요약 ──── */}
-         <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden">
-            <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                     <span className="material-symbols-outlined text-primary text-xl">calendar_today</span>
-                  </div>
-                  <div>
-                     <h3 className="text-base font-black tracking-tight">오늘 예약</h3>
-                     <p className="text-[11px] text-gray-400 font-medium">{reservations.length}건의 예약</p>
-                  </div>
-               </div>
-               <span className="text-[10px] font-black text-primary uppercase tracking-widest cursor-pointer hover:underline">전체보기 →</span>
-            </div>
-
-            {reservations.length === 0 ? (
-               <div className="p-8 text-center">
-                  <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">event_busy</span>
-                  <p className="text-sm text-gray-400 font-medium">오늘 예정된 예약이 없습니다</p>
-               </div>
-            ) : (
-               <div className="divide-y divide-primary/5">
-                  {reservations.map((r: any) => (
-                     <div key={r.id} className="flex items-center gap-4 p-5 md:p-6 hover:bg-primary/[0.02] transition-colors">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
-                           <span className="text-sm font-black text-primary">{r.reservation_time}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                           <p className="text-sm font-bold truncate">{r.customer_name}</p>
-                           <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                              {r.reservation_time} 예약
-                           </p>
-                        </div>
-                        <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide flex-shrink-0 ${r.status === 'confirmed'
-                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                              : r.status === 'pending'
-                                 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                 : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                           }`}>
-                           {r.status === 'confirmed' ? '확정' : r.status === 'pending' ? '대기' : '취소'}
-                        </span>
+         {/* ──── 2+3. 오늘 예약 & 고객 메시지 (좌우 배치) ──── */}
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
+               <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-primary text-xl">calendar_today</span>
                      </div>
-                  ))}
-               </div>
-            )}
-         </section>
-
-         {/* ──── 3. 고객 메시지 ──── */}
-         <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden">
-            <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
-               <div className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                     <span className="material-symbols-outlined text-blue-500 text-xl">chat</span>
-                     {unreadMsgCount > 0 && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                           <span className="text-[9px] font-black text-white">{unreadMsgCount}</span>
-                        </div>
-                     )}
-                  </div>
-                  <div>
-                     <h3 className="text-base font-black tracking-tight">고객 메시지</h3>
-                     <p className="text-[11px] text-gray-400 font-medium">미답변 {unreadMsgCount}건</p>
-                  </div>
-               </div>
-               <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest cursor-pointer hover:underline">전체보기 →</span>
-            </div>
-
-            {customerMessages.length === 0 ? (
-               <div className="p-8 text-center">
-                  <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">chat_bubble_outline</span>
-                  <p className="text-sm text-gray-400 font-medium">새로운 메시지가 없습니다</p>
-               </div>
-            ) : (
-               <div className="divide-y divide-primary/5">
-                  {customerMessages.map((m: any) => (
-                     <div key={m.id} className={`flex items-start gap-4 p-5 md:p-6 transition-colors ${!m.replied ? 'hover:bg-blue-500/[0.02]' : 'opacity-60'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black ${!m.replied ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
-                           }`}>
-                           {m.customer_name?.charAt(0) || '?'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                           <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-bold truncate">{m.customer_name}</p>
-                              {!m.replied && !m.is_read && (
-                                 <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
-                              )}
-                           </div>
-                           <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">{m.message}</p>
-                           <p className="text-[10px] text-gray-400 mt-1.5 font-medium">{formatRelativeTime(m.created_at)}</p>
-                        </div>
-                        {!m.replied ? (
-                           <button className="flex-shrink-0 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors">
-                              답변
-                           </button>
-                        ) : (
-                           <span className="flex-shrink-0 text-[10px] font-bold text-emerald-500">답변완료</span>
-                        )}
+                     <div>
+                        <h3 className="text-base font-black tracking-tight">오늘 예약</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">{reservations.length}건의 예약</p>
                      </div>
-                  ))}
-               </div>
-            )}
-         </section>
-
-         {/* ──── 4. 관리자 메시지 ──── */}
-         <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden">
-            <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
-                     <span className="material-symbols-outlined text-purple-500 text-xl">shield_person</span>
                   </div>
-                  <div>
-                     <h3 className="text-base font-black tracking-tight">관리자 메시지</h3>
-                     <p className="text-[11px] text-gray-400 font-medium">업체 관리자가 보낸 메시지</p>
-                  </div>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest cursor-pointer hover:underline">전체보기 →</span>
                </div>
-            </div>
 
-            {adminMessages.length === 0 ? (
-               <div className="p-8 text-center">
-                  <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">mark_email_read</span>
-                  <p className="text-sm text-gray-400 font-medium">새로운 관리자 메시지가 없습니다</p>
-               </div>
-            ) : (
-               <div className="divide-y divide-primary/5">
-                  {adminMessages.map((m: any) => (
-                     <div key={m.id} className={`p-5 md:p-6 transition-colors hover:bg-purple-500/[0.02] ${m.is_read ? 'opacity-60' : ''}`}>
-                        <div className="flex items-start gap-4">
-                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${m.priority === 'urgent' ? 'bg-red-500/15' :
-                                 m.priority === 'important' ? 'bg-amber-500/15' : 'bg-purple-500/10'
-                              }`}>
-                              <span className={`material-symbols-outlined text-lg ${m.priority === 'urgent' ? 'text-red-500' :
-                                    m.priority === 'important' ? 'text-amber-500' : 'text-purple-400'
+               <div className="flex-1 overflow-auto">
+                  {reservations.length === 0 ? (
+                     <div className="p-8 text-center">
+                        <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">event_busy</span>
+                        <p className="text-sm text-gray-400 font-medium">오늘 예정된 예약이 없습니다</p>
+                     </div>
+                  ) : (
+                     <div className="divide-y divide-primary/5">
+                        {reservations.slice(0, 5).map((r: any) => (
+                           <div key={r.id} className="flex items-center gap-4 p-5 md:p-6 hover:bg-primary/[0.02] transition-colors">
+                              <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center flex-shrink-0">
+                                 <span className="text-sm font-black text-primary">{r.reservation_time}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <p className="text-sm font-bold truncate">{r.customer_name}</p>
+                                 <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                                    {r.reservation_time} 예약
+                                 </p>
+                              </div>
+                              <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide flex-shrink-0 ${r.status === 'confirmed'
+                                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                 : r.status === 'pending'
+                                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
                                  }`}>
-                                 {m.priority === 'urgent' ? 'priority_high' : m.priority === 'important' ? 'star' : 'mail'}
+                                 {r.status === 'confirmed' ? '확정' : r.status === 'pending' ? '대기' : '취소'}
                               </span>
                            </div>
-                           <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                 {m.priority !== 'normal' && (
-                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${m.priority === 'urgent' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600'
+                        ))}
+                     </div>
+                  )}
+               </div>
+            </section>
+
+            {/* ──── 3. 고객 메시지 ──── */}
+            <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
+               <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
+                  <div className="flex items-center gap-3">
+                     <div className="relative w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-blue-500 text-xl">chat</span>
+                        {unreadMsgCount > 0 && (
+                           <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-[9px] font-black text-white">{unreadMsgCount}</span>
+                           </div>
+                        )}
+                     </div>
+                     <div>
+                        <h3 className="text-base font-black tracking-tight">고객 메시지</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">미답변 {unreadMsgCount}건</p>
+                     </div>
+                  </div>
+                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest cursor-pointer hover:underline">전체보기 →</span>
+               </div>
+
+               <div className="flex-1 overflow-auto">
+                  {customerMessages.length === 0 ? (
+                     <div className="p-8 text-center">
+                        <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">chat_bubble_outline</span>
+                        <p className="text-sm text-gray-400 font-medium">새로운 메시지가 없습니다</p>
+                     </div>
+                  ) : (
+                     <div className="divide-y divide-primary/5">
+                        {customerMessages.slice(0, 5).map((m: any) => (
+                           <div key={m.id} className={`flex items-start gap-4 p-5 md:p-6 transition-colors ${!m.replied ? 'hover:bg-blue-500/[0.02]' : 'opacity-60'}`}>
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black ${!m.replied ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
+                                 }`}>
+                                 {m.customer_name?.charAt(0) || '?'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-sm font-bold truncate">{m.customer_name}</p>
+                                    {!m.replied && !m.is_read && (
+                                       <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
+                                    )}
+                                 </div>
+                                 <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">{m.message}</p>
+                                 <p className="text-[10px] text-gray-400 mt-1.5 font-medium">{formatRelativeTime(m.created_at)}</p>
+                              </div>
+                              {!m.replied ? (
+                                 <button className="flex-shrink-0 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors">
+                                    답변
+                                 </button>
+                              ) : (
+                                 <span className="flex-shrink-0 text-[10px] font-bold text-emerald-500">답변완료</span>
+                              )}
+                           </div>
+                        ))}
+                     </div>
+                  )}
+               </div>
+            </section>
+         </div>
+
+         {/* ──── 4+5. 관리자 메시지 & 공지사항 (좌우 배치) ──── */}
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
+               <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-purple-500 text-xl">shield_person</span>
+                     </div>
+                     <div>
+                        <h3 className="text-base font-black tracking-tight">관리자 메시지</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">업체 관리자가 보낸 메시지</p>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="flex-1 overflow-auto">
+                  {adminMessages.length === 0 ? (
+                     <div className="p-8 text-center">
+                        <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">mark_email_read</span>
+                        <p className="text-sm text-gray-400 font-medium">새로운 관리자 메시지가 없습니다</p>
+                     </div>
+                  ) : (
+                     <div className="divide-y divide-primary/5">
+                        {adminMessages.slice(0, 5).map((m: any) => (
+                           <div key={m.id} className={`p-5 md:p-6 transition-colors hover:bg-purple-500/[0.02] ${m.is_read ? 'opacity-60' : ''}`}>
+                              <div className="flex items-start gap-4">
+                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${m.priority === 'urgent' ? 'bg-red-500/15' :
+                                    m.priority === 'important' ? 'bg-amber-500/15' : 'bg-purple-500/10'
+                                    }`}>
+                                    <span className={`material-symbols-outlined text-lg ${m.priority === 'urgent' ? 'text-red-500' :
+                                       m.priority === 'important' ? 'text-amber-500' : 'text-purple-400'
                                        }`}>
-                                       {m.priority === 'urgent' ? '긴급' : '중요'}
+                                       {m.priority === 'urgent' ? 'priority_high' : m.priority === 'important' ? 'star' : 'mail'}
                                     </span>
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                       {m.priority !== 'normal' && (
+                                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${m.priority === 'urgent' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600'
+                                             }`}>
+                                             {m.priority === 'urgent' ? '긴급' : '중요'}
+                                          </span>
+                                       )}
+                                       <p className="text-sm font-bold">{m.title}</p>
+                                       {!m.is_read && <span className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></span>}
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{m.message}</p>
+                                    <div className="flex items-center gap-3 mt-2">
+                                       <p className="text-[10px] text-gray-400 font-medium">{m.sender_name}</p>
+                                       <span className="text-[10px] text-gray-300 dark:text-gray-600">•</span>
+                                       <p className="text-[10px] text-gray-400 font-medium">{formatRelativeTime(m.created_at)}</p>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  )}
+               </div>
+            </section>
+
+            {/* ──── 5. 공지사항 ──── */}
+            <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
+               <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-orange-500 text-xl">campaign</span>
+                     </div>
+                     <div>
+                        <h3 className="text-base font-black tracking-tight">공지사항</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">{cca?.venue_name || 'Venue'} 공지</p>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="flex-1 overflow-auto">
+                  {notices.length === 0 ? (
+                     <div className="p-8 text-center">
+                        <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">notifications_none</span>
+                        <p className="text-sm text-gray-400 font-medium">등록된 공지사항이 없습니다</p>
+                     </div>
+                  ) : (
+                     <div className="divide-y divide-primary/5">
+                        {notices.slice(0, 5).map((n: any) => (
+                           <div key={n.id} className="p-5 md:p-6 hover:bg-orange-500/[0.02] transition-colors cursor-pointer group">
+                              <div className="flex items-start gap-3">
+                                 {n.is_pinned ? (
+                                    <span className="material-symbols-outlined text-sm text-orange-500 mt-0.5 flex-shrink-0 fill-1">push_pin</span>
+                                 ) : (
+                                    <span className="material-symbols-outlined text-sm text-gray-300 dark:text-gray-600 mt-0.5 flex-shrink-0">article</span>
                                  )}
-                                 <p className="text-sm font-bold">{m.title}</p>
-                                 {!m.is_read && <span className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></span>}
-                              </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{m.message}</p>
-                              <div className="flex items-center gap-3 mt-2">
-                                 <p className="text-[10px] text-gray-400 font-medium">{m.sender_name}</p>
-                                 <span className="text-[10px] text-gray-300 dark:text-gray-600">•</span>
-                                 <p className="text-[10px] text-gray-400 font-medium">{formatRelativeTime(m.created_at)}</p>
+                                 <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-bold group-hover:text-primary transition-colors ${n.is_pinned ? 'text-orange-600 dark:text-orange-400' : ''}`}>
+                                       {n.title}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">{n.content}</p>
+                                    <p className="text-[10px] text-gray-400 mt-2 font-medium">{formatRelativeTime(n.created_at)}</p>
+                                 </div>
+                                 <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors flex-shrink-0">chevron_right</span>
                               </div>
                            </div>
-                        </div>
+                        ))}
                      </div>
-                  ))}
+                  )}
                </div>
-            )}
-         </section>
-
-         {/* ──── 5. 업체 공지사항 ──── */}
-         <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden">
-            <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                     <span className="material-symbols-outlined text-orange-500 text-xl">campaign</span>
-                  </div>
-                  <div>
-                     <h3 className="text-base font-black tracking-tight">업체 공지사항</h3>
-                     <p className="text-[11px] text-gray-400 font-medium">{cca?.venue_name || 'Venue'} 공지</p>
-                  </div>
-               </div>
-            </div>
-
-            {notices.length === 0 ? (
-               <div className="p-8 text-center">
-                  <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">notifications_none</span>
-                  <p className="text-sm text-gray-400 font-medium">등록된 공지사항이 없습니다</p>
-               </div>
-            ) : (
-               <div className="divide-y divide-primary/5">
-                  {notices.map((n: any) => (
-                     <div key={n.id} className="p-5 md:p-6 hover:bg-orange-500/[0.02] transition-colors cursor-pointer group">
-                        <div className="flex items-start gap-3">
-                           {n.is_pinned ? (
-                              <span className="material-symbols-outlined text-sm text-orange-500 mt-0.5 flex-shrink-0 fill-1">push_pin</span>
-                           ) : (
-                              <span className="material-symbols-outlined text-sm text-gray-300 dark:text-gray-600 mt-0.5 flex-shrink-0">article</span>
-                           )}
-                           <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-bold group-hover:text-primary transition-colors ${n.is_pinned ? 'text-orange-600 dark:text-orange-400' : ''}`}>
-                                 {n.title}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">{n.content}</p>
-                              <p className="text-[10px] text-gray-400 mt-2 font-medium">{formatRelativeTime(n.created_at)}</p>
-                           </div>
-                           <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors flex-shrink-0">chevron_right</span>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            )}
-         </section>
+            </section>
+         </div>
 
          {/* ──── 6. 퇴근하기 버튼 ──── */}
          {isCheckedIn && !isCheckedOut && (
