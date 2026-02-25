@@ -11,6 +11,11 @@ const CCAPortalHome: React.FC = () => {
    const [checkingIn, setCheckingIn] = useState(false);
    const [checkingOut, setCheckingOut] = useState(false);
 
+   // Message States
+   const [selectedMessage, setSelectedMessage] = useState<any>(null);
+   const [replyText, setReplyText] = useState('');
+   const [isReplying, setIsReplying] = useState(false);
+
    const fetchData = useCallback(async () => {
       setLoading(true);
       const result = await apiService.getCCAPortalHome(CCA_ID);
@@ -39,6 +44,37 @@ const CCAPortalHome: React.FC = () => {
          setAttendance({ ...attendance, status: 'checked_out', check_out_at: result.time || new Date().toISOString() });
       }
       setCheckingOut(false);
+   };
+
+   const handleMarkAsRead = async (msg: any) => {
+      if (msg.is_read) return;
+      const success = await apiService.updateCCAMessageStatus(msg.id, { is_read: true });
+      if (success) {
+         setData((prev: any) => ({
+            ...prev,
+            customerMessages: prev.customerMessages.map((m: any) => m.id === msg.id ? { ...m, is_read: 1 } : m)
+         }));
+      }
+   };
+
+   const handleReply = async () => {
+      if (!selectedMessage || !replyText.trim()) return;
+      setIsReplying(true);
+      const success = await apiService.updateCCAMessageStatus(selectedMessage.id, {
+         replied: true,
+         reply_text: replyText
+      });
+      if (success) {
+         setData((prev: any) => ({
+            ...prev,
+            customerMessages: prev.customerMessages.map((m: any) =>
+               m.id === selectedMessage.id ? { ...m, replied: 1, reply_text: replyText } : m
+            )
+         }));
+         setSelectedMessage(null);
+         setReplyText('');
+      }
+      setIsReplying(false);
    };
 
    const formatTime = (dateStr: string) => {
@@ -229,7 +265,11 @@ const CCAPortalHome: React.FC = () => {
                   ) : (
                      <div className="divide-y divide-primary/5">
                         {customerMessages.slice(0, 5).map((m: any) => (
-                           <div key={m.id} className={`flex items-start gap-4 p-5 md:p-6 transition-colors ${!m.replied ? 'hover:bg-blue-500/[0.02]' : 'opacity-60'}`}>
+                           <div
+                              key={m.id}
+                              onClick={() => handleMarkAsRead(m)}
+                              className={`flex items-start gap-4 p-5 md:p-6 transition-colors cursor-pointer ${!m.replied ? 'hover:bg-blue-500/[0.02]' : 'opacity-60'}`}
+                           >
                               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black ${!m.replied ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-400'
                                  }`}>
                                  {m.customer_name?.charAt(0) || '?'}
@@ -245,7 +285,13 @@ const CCAPortalHome: React.FC = () => {
                                  <p className="text-[10px] text-gray-400 mt-1.5 font-medium">{formatRelativeTime(m.created_at)}</p>
                               </div>
                               {!m.replied ? (
-                                 <button className="flex-shrink-0 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors">
+                                 <button
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       setSelectedMessage(m);
+                                    }}
+                                    className="flex-shrink-0 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors"
+                                 >
                                     답변
                                  </button>
                               ) : (
@@ -390,6 +436,64 @@ const CCAPortalHome: React.FC = () => {
                   </span>
                </div>
             </section>
+         )}
+
+         {/* ──── 7. 답변 모달 ──── */}
+         {selectedMessage && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+               <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-scale-in border border-primary/10">
+                  <div className="flex items-center justify-between mb-6">
+                     <h3 className="text-xl font-black tracking-tight">{selectedMessage.customer_name} 메시지 답변</h3>
+                     <button
+                        onClick={() => setSelectedMessage(null)}
+                        className="size-10 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center"
+                     >
+                        <span className="material-symbols-outlined">close</span>
+                     </button>
+                  </div>
+
+                  <div className="space-y-6">
+                     <div className="bg-gray-50 dark:bg-white/5 p-5 rounded-2xl border border-primary/5">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">원문 메시지</p>
+                        <p className="text-sm font-medium leading-relaxed">{selectedMessage.message}</p>
+                     </div>
+
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">답변 내용</label>
+                        <textarea
+                           autoFocus
+                           value={replyText}
+                           onChange={(e) => setReplyText(e.target.value)}
+                           placeholder="고객님께 보낼 답변을 입력해주세요..."
+                           className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-5 font-bold text-sm h-32 resize-none focus:ring-2 ring-primary/20"
+                        />
+                     </div>
+
+                     <div className="flex gap-4">
+                        <button
+                           onClick={handleReply}
+                           disabled={isReplying || !replyText.trim()}
+                           className="flex-1 py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                           {isReplying ? (
+                              <div className="size-4 border-2 border-[#1b180d] border-t-transparent rounded-full animate-spin"></div>
+                           ) : (
+                              <>
+                                 <span className="material-symbols-outlined text-sm">send</span>
+                                 답변 보내기
+                              </>
+                           )}
+                        </button>
+                        <button
+                           onClick={() => setSelectedMessage(null)}
+                           className="flex-1 py-4 bg-gray-100 dark:bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest"
+                        >
+                           취소
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            </div>
          )}
       </div>
    );

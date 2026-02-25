@@ -391,4 +391,72 @@ export const apiService = {
       return { success: true, time: new Date().toISOString() };
     }
   },
+
+  // CCA Portal Reservations
+  async getCCAReservations(ccaId: string, month?: string): Promise<any[]> {
+    try {
+      let url = `${API_BASE}/cca-portal/reservations?ccaId=${encodeURIComponent(ccaId)}`;
+      if (month) url += `&month=${encodeURIComponent(month)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch cca reservations');
+      return await response.json();
+    } catch (error) {
+      console.error('getCCAReservations error:', error);
+      return [];
+    }
+  },
+
+  async createCCAReservation(data: { venueId: string; ccaId: string; customer_name: string; reservation_date: string; reservation_time: string; customer_note?: string }): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('createCCAReservation error:', error);
+      return false;
+    }
+  },
+
+  async updateCCAReservationStatus(id: string, status: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/reservations`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updateCCAReservationStatus error:', error);
+      return false;
+    }
+  },
+
+  // CCA Portal Messages
+  async getCCAMessages(ccaId: string): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/messages?ccaId=${encodeURIComponent(ccaId)}`);
+      if (!response.ok) throw new Error('Failed to fetch cca messages');
+      return await response.json();
+    } catch (error) {
+      console.error('getCCAMessages error:', error);
+      return [];
+    }
+  },
+
+  async updateCCAMessageStatus(id: string, updates: { is_read?: boolean; replied?: boolean; reply_text?: string }): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/messages`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updateCCAMessageStatus error:', error);
+      return false;
+    }
+  },
 };
