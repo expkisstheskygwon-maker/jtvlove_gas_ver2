@@ -32,7 +32,9 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         sns: v.sns ? JSON.parse(v.sns) : null,
         operating_hours: v.operating_hours ? JSON.parse(v.operating_hours) : null,
         media: v.media ? JSON.parse(v.media) : [],
-        menu: v.menu ? JSON.parse(v.menu) : []
+        menu: v.menu ? JSON.parse(v.menu) : [],
+        tables: v.tables ? JSON.parse(v.tables) : [],
+        rooms: v.rooms ? JSON.parse(v.rooms) : []
       }));
 
       if (idParam && formattedResults.length === 0) {
