@@ -2,20 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../../services/apiService';
-import { RESERVATIONS, CCAS } from '../../constants';
 import { Reservation, CCA, Venue, CCAStatus } from '../../types';
 
-interface TableRoomItem {
-  id: string;
-  name: string;
-  type: 'table' | 'room';
-}
-
 const AdminReservations: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState('2023-11-20');
-  const [viewDate, setViewDate] = useState(new Date(2023, 10, 1)); // Nov 2023
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [viewDate, setViewDate] = useState(new Date());
   const [venue, setVenue] = useState<Venue | null>(null);
-  const [reservations, setReservations] = useState<Reservation[]>(RESERVATIONS);
+  const [allCCAs, setAllCCAs] = useState<CCA[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [showManagePopup, setShowManagePopup] = useState<string | null>(null); // time slot for popup
   const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [isHolidayMode, setIsHolidayMode] = useState(false);
@@ -35,12 +31,48 @@ const AdminReservations: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchVenue();
+    loadData();
   }, []);
 
-  const fetchVenue = async () => {
-    const data = await apiService.getVenueById('v1');
-    if (data) setVenue(data);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [vData, cData] = await Promise.all([
+        apiService.getVenueById('v1'),
+        apiService.getCCAs()
+      ]);
+      if (vData) setVenue(vData);
+      if (cData) setAllCCAs(cData);
+
+      // Fetch all reservations (you might want to filter by month or date range in a real app)
+      // Since we don't have a direct "getAllReservations" for admin yet, 
+      // we'll assume the API service is updated or we use a CCA-based fetch for now as a mock/proxy
+      // or just stay with mock for a moment until we add admin fetch
+
+      // Update: Let's use the CCAPortal fetch pattern as a proxy if we don't have a specific admin one
+      const resData = await apiService.getCCAReservations('c1'); // Proxy call
+      if (resData && resData.length > 0) {
+        // Format from DB structure to Reservation interface if needed
+        const formatted = resData.map((r: any) => ({
+          id: r.id,
+          venueId: r.venue_id,
+          ccaId: r.cca_id,
+          customerName: r.customer_name,
+          customerNote: r.customer_note || '',
+          groupSize: 1, // DB might need group_size column
+          time: r.reservation_time,
+          date: r.reservation_date,
+          status: r.status,
+          shortMessage: r.customer_name
+        }));
+        setReservations(formatted);
+      }
+
+    } catch (err) {
+      console.error("Failed to load admin reservation data", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- Date Helpers ---
@@ -49,11 +81,13 @@ const AdminReservations: React.FC = () => {
 
   const handlePrevMonth = () => {
     setDirection(-1);
-    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+    const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+    setViewDate(newDate);
   };
   const handleNextMonth = () => {
     setDirection(1);
-    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+    const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+    setViewDate(newDate);
   };
 
   const isPast = (dateStr: string) => {
@@ -99,37 +133,60 @@ const AdminReservations: React.FC = () => {
     }
   };
 
-  const handleCreateReservation = () => {
-    const reservation: Reservation = {
-      id: `res-${Date.now()}`,
-      venueId: 'v1',
-      date: selectedDate,
-      customerName: newRes.customerName || 'Guest',
-      customerNote: newRes.customerNote || '',
-      groupSize: newRes.groupSize || 1,
-      time: newRes.time || '19:00',
-      status: 'confirmed',
-      ccaIds: newRes.ccaIds,
-      tableId: newRes.tableId,
-      roomId: newRes.roomId,
-      tableName: venue?.tables?.find((t: any) => t.id === newRes.tableId)?.name,
-      roomName: venue?.rooms?.find((r: any) => r.id === newRes.roomId)?.name,
-      shortMessage: `${newRes.customerName} + ${newRes.groupSize - 1}`
-    };
+  const handleCreateReservation = async () => {
+    try {
+      // 1. Prepare Data for API
+      const apiData = {
+        venueId: 'v1',
+        ccaId: newRes.ccaIds?.[0] || 'c1', // DB currently takes 1 id, we use the first one
+        customer_name: newRes.customerName,
+        customer_note: newRes.customerNote,
+        reservation_date: selectedDate,
+        reservation_time: newRes.time,
+        group_size: newRes.groupSize
+      };
 
-    setReservations([...reservations, reservation]);
-    setShowCreatePopup(false);
-    // Reset form
-    setNewRes({
-      time: '19:00',
-      customerName: '',
-      customerNote: '',
-      groupSize: 1,
-      ccaIds: [],
-      status: 'confirmed',
-      tableId: '',
-      roomId: ''
-    });
+      // 2. Call API
+      const success = await apiService.createCCAReservation(apiData);
+
+      if (success) {
+        // 3. Update Local State
+        const localRes: Reservation = {
+          id: `res-${Date.now()}`,
+          venueId: 'v1',
+          date: selectedDate,
+          customerName: newRes.customerName || 'Guest',
+          customerNote: newRes.customerNote || '',
+          groupSize: newRes.groupSize || 1,
+          time: newRes.time || '19:00',
+          status: 'confirmed',
+          ccaIds: newRes.ccaIds,
+          tableId: newRes.tableId,
+          roomId: newRes.roomId,
+          tableName: venue?.tables?.find((t: any) => t.id === newRes.tableId)?.name,
+          roomName: venue?.rooms?.find((r: any) => r.id === newRes.roomId)?.name,
+          shortMessage: `${newRes.customerName} + ${newRes.groupSize - 1}`
+        };
+        setReservations([...reservations, localRes]);
+        setShowCreatePopup(false);
+        // Reset form
+        setNewRes({
+          time: '19:00',
+          customerName: '',
+          customerNote: '',
+          groupSize: 1,
+          ccaIds: [],
+          status: 'confirmed',
+          tableId: '',
+          roomId: ''
+        });
+      } else {
+        alert("Failed to create reservation on server.");
+      }
+    } catch (err) {
+      console.error("Error creating reservation", err);
+      alert("An error occurred while creating reservation.");
+    }
   };
 
   const calendarVariants = {
@@ -148,6 +205,14 @@ const AdminReservations: React.FC = () => {
       opacity: 0
     })
   };
+
+  if (loading && reservations.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin size-12 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in relative">
@@ -252,14 +317,14 @@ const AdminReservations: React.FC = () => {
               reservations.filter(r => r.date === selectedDate).flatMap(res => {
                 const targetCcaIds = res.ccaIds || (res.ccaId ? [res.ccaId] : []);
                 return targetCcaIds.map(cid => {
-                  const cca = CCAS.find((c: CCA) => c.id === cid);
+                  const cca = allCCAs.find((c: CCA) => c.id === cid);
                   if (!cca || cca.status === 'active') return null;
                   return (
                     <div key={`${res.id}-${cid}`} className={`text-[10px] font-black px-4 py-2 rounded-xl flex items-center gap-2 border border-white/5 shadow-sm ${getDayStatusColor(cca.status || '')}`}>
                       <span className="material-symbols-outlined text-[12px]">
                         {cca.status === 'absent' ? 'block' : cca.status === 'off' ? 'event_busy' : 'schedule'}
                       </span>
-                      {cca.name}
+                      {cca.nickname || cca.name}
                     </div>
                   );
                 });
@@ -412,7 +477,7 @@ const AdminReservations: React.FC = () => {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {(res.ccaIds || (res.ccaId ? [res.ccaId] : [])).map(cid => {
-                          const cca = CCAS.find((c: CCA) => c.id === cid);
+                          const cca = allCCAs.find((c: CCA) => c.id === cid);
                           return (
                             <div key={cid} className="flex items-center gap-4 bg-black p-4 rounded-2xl border border-white/5">
                               <img src={cca?.image} className="size-12 rounded-xl object-cover" />
@@ -445,7 +510,7 @@ const AdminReservations: React.FC = () => {
                   {[
                     { label: 'Left Tables', val: (venue?.tables?.length || 12) - dayReservations.filter(r => r.time === showManagePopup && r.tableId).length, icon: 'table_bar' },
                     { label: 'Left Rooms', val: (venue?.rooms?.length || 6) - dayReservations.filter(r => r.time === showManagePopup && r.roomId).length, icon: 'meeting_room' },
-                    { label: 'Staff Ready', val: CCAS.filter((c: CCA) => c.status === 'active').length, icon: 'diversity_3' }
+                    { label: 'Staff Ready', val: allCCAs.filter((c: CCA) => c.status === 'active').length, icon: 'diversity_3' }
                   ].map(stat => (
                     <div key={stat.label} className="bg-white/5 p-6 rounded-2xl border border-white/5 flex flex-col items-center">
                       <span className="material-symbols-outlined text-primary text-xl mb-1">{stat.icon}</span>
@@ -553,7 +618,7 @@ const AdminReservations: React.FC = () => {
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Available Staff (CCA Requests)</label>
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-[400px] overflow-y-auto space-y-3 scrollbar-hide">
-                      {CCAS.filter(c => c.status === 'active').map(cca => {
+                      {allCCAs.filter((c: CCA) => c.status === 'active').map((cca: CCA) => {
                         const isSelected = newRes.ccaIds?.includes(cca.id);
                         return (
                           <button
