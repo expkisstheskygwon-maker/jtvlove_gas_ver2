@@ -46,6 +46,26 @@ const AdminProfile: React.FC = () => {
       banner: venue.bannerImage || ''
    });
 
+   // Keep track of initial state for comparison
+   const [initialBasicInfo] = useState(JSON.parse(JSON.stringify({
+      name: venue.name,
+      phone: venue.phone,
+      openTime: venue.operatingHours?.open || '',
+      closeTime: venue.operatingHours?.close || '',
+      address: venue.address,
+      introduction: '',
+      sns: {
+         telegram: venue.sns?.telegram || '',
+         facebook: '',
+         kakao: venue.sns?.kakao || '',
+         band: '',
+         instagram: '',
+         discord: ''
+      },
+      logo: venue.image || '',
+      banner: venue.bannerImage || ''
+   })));
+
    // --- State for Media Settings ---
    const [mediaItems, setMediaItems] = useState<MediaItem[]>([
       { id: 'm1', type: 'image', url: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=400', isExposed: true, selected: false },
@@ -66,6 +86,20 @@ const AdminProfile: React.FC = () => {
          isEvent: false
       }
    ]);
+
+   const [initialMediaItems] = useState(JSON.parse(JSON.stringify(mediaItems)));
+   const [initialCategories] = useState(JSON.parse(JSON.stringify(categories)));
+   const [initialMenuItems] = useState(JSON.parse(JSON.stringify([
+      {
+         id: 'itm1',
+         category: 'Premium Drinks',
+         name: 'Hennessy XO',
+         price: '15,000',
+         promotion: '10% OFF',
+         image: 'https://images.unsplash.com/photo-1595977437232-9a0426ebfe4c?q=80&w=400',
+         isEvent: false
+      }
+   ])));
    const [newMenuItem, setNewMenuItem] = useState<Partial<MenuItem>>({
       category: 'Premium Drinks',
       isEvent: false
@@ -155,6 +189,13 @@ const AdminProfile: React.FC = () => {
       setNewMenuItem({ category: categories[0], isEvent: false });
    };
 
+   // Check if any state has changed from initial
+   const hasChanges =
+      JSON.stringify(basicInfo) !== JSON.stringify(initialBasicInfo) ||
+      JSON.stringify(mediaItems.map(({ selected, ...rest }: MediaItem) => rest)) !== JSON.stringify(initialMediaItems.map(({ selected, ...rest }: MediaItem) => rest)) ||
+      JSON.stringify(categories) !== JSON.stringify(initialCategories) ||
+      JSON.stringify(menuItems) !== JSON.stringify(initialMenuItems);
+
    return (
       <div className="max-w-6xl space-y-8 pb-20">
          {/* Header */}
@@ -163,7 +204,13 @@ const AdminProfile: React.FC = () => {
                <h1 className="text-3xl font-black tracking-tight text-[#1b180d] dark:text-white uppercase italic">Venue Settings</h1>
                <p className="text-sm font-bold text-gray-500 mt-1">Manage your store's information, media, and menu</p>
             </div>
-            <button className="w-full md:w-auto px-8 py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.05] transition-all">
+            <button
+               disabled={!hasChanges}
+               className={`w-full md:w-auto px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all ${hasChanges
+                  ? 'bg-primary text-[#1b180d] shadow-primary/20 hover:scale-[1.05]'
+                  : 'bg-gray-300 dark:bg-zinc-700 text-gray-500 cursor-not-allowed'
+                  }`}
+            >
                Save All Changes
             </button>
          </div>
