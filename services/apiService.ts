@@ -86,6 +86,31 @@ export const apiService = {
     }
   },
 
+  async getVenueById(id: string): Promise<Venue | null> {
+    try {
+      const response = await fetch(`${API_BASE}/venues?id=${encodeURIComponent(id)}`);
+      if (!response.ok) throw new Error('Failed to fetch venue');
+      return await response.json();
+    } catch (error) {
+      console.error('getVenueById error:', error);
+      return null;
+    }
+  },
+
+  async updateVenue(id: string, updates: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/venues`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updateVenue error:', error);
+      return false;
+    }
+  },
+
   // CCAs
   async getCCAs(): Promise<CCA[]> {
     try {

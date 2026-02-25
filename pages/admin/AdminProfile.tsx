@@ -1,6 +1,6 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { VENUES } from '../../constants';
+import { apiService } from '../../services/apiService';
 
 interface MediaItem {
    id: string;
@@ -23,87 +23,126 @@ interface MenuItem {
 }
 
 const AdminProfile: React.FC = () => {
-   const venue = VENUES[0];
+   const [isLoading, setIsLoading] = useState(true);
    const [activeTab, setActiveTab] = useState('basic');
+   const [isSaving, setIsSaving] = useState(false);
+   const venueId = 'v1';
 
    // --- State for Basic Settings ---
    const [basicInfo, setBasicInfo] = useState({
-      name: venue.name,
-      phone: venue.phone,
-      openTime: venue.operatingHours?.open || '',
-      closeTime: venue.operatingHours?.close || '',
-      address: venue.address,
-      introduction: '', // New field
-      sns: {
-         telegram: venue.sns?.telegram || '',
-         facebook: '',
-         kakao: venue.sns?.kakao || '',
-         band: '',
-         instagram: '',
-         discord: ''
-      },
-      logo: venue.image || '',
-      banner: venue.bannerImage || ''
-   });
-
-   // Keep track of initial state for comparison
-   const [initialBasicInfo] = useState(JSON.parse(JSON.stringify({
-      name: venue.name,
-      phone: venue.phone,
-      openTime: venue.operatingHours?.open || '',
-      closeTime: venue.operatingHours?.close || '',
-      address: venue.address,
+      name: '',
+      phone: '',
+      openTime: '',
+      closeTime: '',
+      address: '',
       introduction: '',
       sns: {
-         telegram: venue.sns?.telegram || '',
+         telegram: '',
          facebook: '',
-         kakao: venue.sns?.kakao || '',
+         kakao: '',
          band: '',
          instagram: '',
          discord: ''
       },
-      logo: venue.image || '',
-      banner: venue.bannerImage || ''
-   })));
+      logo: '',
+      banner: ''
+   });
+
+   const [initialBasicInfo, setInitialBasicInfo] = useState<any>(null);
+   const [initialMediaItems, setInitialMediaItems] = useState<any>(null);
+   const [initialCategories, setInitialCategories] = useState<any>(null);
+   const [initialMenuItems, setInitialMenuItems] = useState<any>(null);
 
    // --- State for Media Settings ---
-   const [mediaItems, setMediaItems] = useState<MediaItem[]>([
-      { id: 'm1', type: 'image', url: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?q=80&w=400', isExposed: true, selected: false },
-      { id: 'm2', type: 'image', url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=400', isExposed: true, selected: false },
-   ]);
+   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
    const [videoUrl, setVideoUrl] = useState('');
 
    // --- State for Menu Settings ---
    const [categories, setCategories] = useState(['Main Dishes', 'Set Menu', 'Premium Drinks', 'Side Dishes']);
-   const [menuItems, setMenuItems] = useState<MenuItem[]>([
-      {
-         id: 'itm1',
-         category: 'Premium Drinks',
-         name: 'Hennessy XO',
-         price: '15,000',
-         promotion: '10% OFF',
-         image: 'https://images.unsplash.com/photo-1595977437232-9a0426ebfe4c?q=80&w=400',
-         isEvent: false
-      }
-   ]);
-
-   const [initialMediaItems] = useState(JSON.parse(JSON.stringify(mediaItems)));
-   const [initialCategories] = useState(JSON.parse(JSON.stringify(categories)));
-   const [initialMenuItems] = useState(JSON.parse(JSON.stringify([
-      {
-         id: 'itm1',
-         category: 'Premium Drinks',
-         name: 'Hennessy XO',
-         price: '15,000',
-         promotion: '10% OFF',
-         image: 'https://images.unsplash.com/photo-1595977437232-9a0426ebfe4c?q=80&w=400',
-         isEvent: false
-      }
-   ])));
+   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
    const [newMenuItem, setNewMenuItem] = useState<Partial<MenuItem>>({
       category: 'Premium Drinks',
       isEvent: false
    });
+
+   useEffect(() => {
+      fetchVenueData();
+   }, []);
+
+   const fetchVenueData = async () => {
+      setIsLoading(true);
+      const data = await apiService.getVenueById(venueId);
+      if (data) {
+         const basic = {
+            name: data.name || '',
+            phone: data.phone || '',
+            openTime: data.operating_hours?.open || '',
+            closeTime: data.operating_hours?.close || '',
+            address: data.address || '',
+            introduction: data.introduction || '',
+            sns: {
+               telegram: data.sns?.telegram || '',
+               facebook: data.sns?.facebook || '',
+               kakao: data.sns?.kakao || '',
+               band: data.sns?.band || '',
+               instagram: data.sns?.instagram || '',
+               discord: data.sns?.discord || ''
+            },
+            logo: data.image || '',
+            banner: data.banner_image || ''
+         };
+         setBasicInfo(basic);
+         setInitialBasicInfo(JSON.parse(JSON.stringify(basic)));
+
+         setMediaItems(data.media || []);
+         setInitialMediaItems(JSON.parse(JSON.stringify(data.media || [])));
+
+         const cats = data.tags || ['Main Dishes', 'Set Menu', 'Premium Drinks', 'Side Dishes'];
+         setCategories(cats);
+         setInitialCategories(JSON.parse(JSON.stringify(cats)));
+
+         setMenuItems(data.menu || []);
+         setInitialMenuItems(JSON.parse(JSON.stringify(data.menu || [])));
+      }
+      setIsLoading(false);
+   };
+
+   const handleSave = async () => {
+      setIsSaving(true);
+      try {
+         const updates = {
+            name: basicInfo.name,
+            phone: basicInfo.phone,
+            address: basicInfo.address,
+            introduction: basicInfo.introduction,
+            image: basicInfo.logo,
+            banner_image: basicInfo.banner,
+            sns: basicInfo.sns,
+            operating_hours: { open: basicInfo.openTime, close: basicInfo.closeTime },
+            media: mediaItems.map(({ selected, ...rest }) => rest),
+            tags: categories,
+            menu: menuItems
+         };
+
+         const success = await apiService.updateVenue(venueId, updates);
+         if (success) {
+            // Update initial states to match current state
+            setInitialBasicInfo(JSON.parse(JSON.stringify(basicInfo)));
+            setInitialMediaItems(JSON.parse(JSON.stringify(mediaItems)));
+            setInitialCategories(JSON.parse(JSON.stringify(categories)));
+            setInitialMenuItems(JSON.parse(JSON.stringify(menuItems)));
+            alert('Settings saved successfully!');
+         } else {
+            alert('Failed to save settings.');
+         }
+      } catch (err) {
+         console.error('Save error:', err);
+         alert('Error saving settings.');
+      } finally {
+         setIsSaving(false);
+      }
+   };
+
 
    // --- Helpers ---
    const handleImageToBase64 = (file: File): Promise<string> => {
@@ -190,11 +229,20 @@ const AdminProfile: React.FC = () => {
    };
 
    // Check if any state has changed from initial
-   const hasChanges =
+   const hasChanges = !!initialBasicInfo && (
       JSON.stringify(basicInfo) !== JSON.stringify(initialBasicInfo) ||
-      JSON.stringify(mediaItems.map(({ selected, ...rest }: MediaItem) => rest)) !== JSON.stringify(initialMediaItems.map(({ selected, ...rest }: MediaItem) => rest)) ||
+      JSON.stringify(mediaItems.map(({ selected, ...rest }: any) => rest)) !== JSON.stringify(initialMediaItems?.map(({ selected, ...rest }: any) => rest)) ||
       JSON.stringify(categories) !== JSON.stringify(initialCategories) ||
-      JSON.stringify(menuItems) !== JSON.stringify(initialMenuItems);
+      JSON.stringify(menuItems) !== JSON.stringify(initialMenuItems)
+   );
+
+   if (isLoading) {
+      return (
+         <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+         </div>
+      );
+   }
 
    return (
       <div className="max-w-6xl space-y-8 pb-20">
@@ -205,13 +253,14 @@ const AdminProfile: React.FC = () => {
                <p className="text-sm font-bold text-gray-500 mt-1">Manage your store's information, media, and menu</p>
             </div>
             <button
-               disabled={!hasChanges}
-               className={`w-full md:w-auto px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all ${hasChanges
+               onClick={handleSave}
+               disabled={!hasChanges || isSaving}
+               className={`w-full md:w-auto px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all ${hasChanges && !isSaving
                   ? 'bg-primary text-[#1b180d] shadow-primary/20 hover:scale-[1.05]'
                   : 'bg-gray-300 dark:bg-zinc-700 text-gray-500 cursor-not-allowed'
                   }`}
             >
-               Save All Changes
+               {isSaving ? 'Saving...' : 'Save All Changes'}
             </button>
          </div>
 

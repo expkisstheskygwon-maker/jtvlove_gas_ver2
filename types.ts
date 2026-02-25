@@ -7,12 +7,20 @@ export interface Venue {
   reviewsCount: number;
   description: string;
   image: string;
-  bannerImage?: string;
+  banner_image?: string;
+  bannerImage?: string; // legacy support
   phone?: string;
   sns?: {
     telegram?: string;
     kakao?: string;
     facebook?: string;
+    band?: string;
+    instagram?: string;
+    discord?: string;
+  };
+  operating_hours?: {
+    open: string;
+    close: string;
   };
   operatingHours?: {
     open: string;
@@ -25,7 +33,9 @@ export interface Venue {
   address?: string;
   tags: string[];
   features: string[];
-  menu?: string;
+  menu?: any;
+  media?: any;
+  introduction?: string;
 }
 
 export type CCAStatus = 'active' | 'absent' | 'off' | 'resigned';
