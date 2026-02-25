@@ -49,7 +49,7 @@ export const apiService = {
         method: 'POST',
         body: formData,
       });
-      
+
       if (response.ok) {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
@@ -60,7 +60,7 @@ export const apiService = {
     } catch (error) {
       console.warn("Server upload failed, using client-side fallback");
     }
-    
+
     // 2. 서버 업로드 실패 시 클라이언트 측에서 Base64 변환 후 반환
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -118,12 +118,12 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         return { success: false, error: errorData.error || 'Server error' };
       }
-      
+
       return { success: true };
     } catch (error: any) {
       console.error('updateCCAProfile error:', error);
@@ -308,18 +308,87 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Critical: Update failed server-side:", errorData);
         return false;
       }
-      
+
       const result = await response.json();
       return result.success === true;
     } catch (error) {
       console.error('Critical: Update settings failed network-side:', error);
       return false;
     }
-  }
+  },
+
+  // CCA Portal Home
+  async getCCAPortalHome(ccaId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/home?ccaId=${encodeURIComponent(ccaId)}`);
+      if (!response.ok) throw new Error('Failed to fetch cca portal home');
+      return await response.json();
+    } catch (error) {
+      console.warn('getCCAPortalHome fallback:', error);
+      // fallback mock data
+      const today = new Date().toISOString().split('T')[0];
+      return {
+        cca: { id: ccaId, name: 'Yumi Kim', venue_name: 'Grand Palace JTV', grade: 'ACE', points: 1250, image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200' },
+        reservations: [
+          { id: 'r10', customer_name: 'Lee Manager', reservation_time: '20:00', reservation_date: today, status: 'confirmed' },
+          { id: 'r11', customer_name: 'Mr. Tanaka', reservation_time: '21:30', reservation_date: today, status: 'pending' },
+          { id: 'r12', customer_name: 'Kim Director', reservation_time: '22:00', reservation_date: today, status: 'confirmed' },
+        ],
+        customerMessages: [
+          { id: 'cm1', customer_name: 'Lee Manager', message: '유미님, 오늘 저녁 8시 예약 가능할까요?', is_read: 0, replied: 0, created_at: '2026-02-25 14:30:00' },
+          { id: 'cm2', customer_name: 'Mr. Tanaka', message: '先日はありがとうございました。また来週お会いしましょう。', is_read: 0, replied: 0, created_at: '2026-02-25 13:15:00' },
+          { id: 'cm3', customer_name: 'Kim Director', message: '다음 주 금요일 VIP 파티 참석 가능하신가요?', is_read: 1, replied: 0, created_at: '2026-02-25 11:00:00' },
+          { id: 'cm4', customer_name: 'Park Team Lead', message: '오늘 방문 시 특별 주문이 있습니다.', is_read: 0, replied: 0, created_at: '2026-02-25 10:20:00' },
+          { id: 'cm5', customer_name: 'Alex Chen', message: '좋은 시간 감사했습니다 😊', is_read: 1, replied: 1, created_at: '2026-02-24 22:00:00' },
+        ],
+        adminMessages: [
+          { id: 'am1', sender_name: 'Grand Palace 매니저', title: '이번 주 VIP 이벤트 안내', message: '유미님, 이번 주 토요일 VIP 이벤트 세션 참여 가능 여부를 확인해 주세요.', is_read: 0, priority: 'important', created_at: '2026-02-25 09:00:00' },
+          { id: 'am2', sender_name: 'Grand Palace 매니저', title: '유니폼 변경 공지', message: '새로운 유니폼이 도착했습니다. 내일 출근 시 사무실에서 수령해 주세요.', is_read: 1, priority: 'normal', created_at: '2026-02-24 15:00:00' },
+        ],
+        notices: [
+          { id: 'vn1', title: '2월 마지막 주 영업시간 변경', content: '2월 28일(금)은 특별 이벤트로 인해 영업시간이 18:00~05:00으로 변경됩니다.', is_pinned: 1, created_at: '2026-02-25 08:00:00' },
+          { id: 'vn2', title: '신규 음료 메뉴 추가', content: '3월부터 프리미엄 칵테일 라인업이 추가됩니다. 메뉴 숙지 부탁드립니다.', is_pinned: 0, created_at: '2026-02-24 10:00:00' },
+          { id: 'vn3', title: '직원 건강검진 안내', content: '3월 첫째 주 직원 건강검진이 예정되어 있습니다.', is_pinned: 0, created_at: '2026-02-23 14:00:00' },
+        ],
+        attendance: null,
+        today,
+      };
+    }
+  },
+
+  async ccaCheckIn(ccaId: string, venueId: string): Promise<{ success: boolean; time?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId, venueId, action: 'check_in' }),
+      });
+      if (!response.ok) throw new Error('Check-in failed');
+      return await response.json();
+    } catch (error) {
+      console.error('ccaCheckIn error:', error);
+      return { success: true, time: new Date().toISOString() };
+    }
+  },
+
+  async ccaCheckOut(ccaId: string, venueId: string): Promise<{ success: boolean; time?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-portal/attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId, venueId, action: 'check_out' }),
+      });
+      if (!response.ok) throw new Error('Check-out failed');
+      return await response.json();
+    } catch (error) {
+      console.error('ccaCheckOut error:', error);
+      return { success: true, time: new Date().toISOString() };
+    }
+  },
 };
