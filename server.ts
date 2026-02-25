@@ -34,7 +34,7 @@ async function startServer() {
       rating: 4.9,
       image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000',
       experience: '4 Years',
-      languages: '["PH", "EN", "JP"]',
+      languages: '["ENGLISH", "KOREAN", "JAPANESE"]',
       height: '165 cm',
       description: '안녕하세요, 유미입니다. 우아하고 편안한 밤을 약속드립니다.',
       status: 'active',
