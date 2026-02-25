@@ -35,6 +35,8 @@ export interface Venue {
   features: string[];
   menu?: any;
   media?: any;
+  tables?: any;
+  rooms?: any;
   introduction?: string;
 }
 
