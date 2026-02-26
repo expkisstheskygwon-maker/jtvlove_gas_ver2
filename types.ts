@@ -148,6 +148,18 @@ export interface Post {
   commentsCount?: number;
   content: string;
   image?: string;
+  is_secret?: boolean;
+  password?: string;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  author: string;
+  content: string;
+  likes: number;
+  dislikes: number;
+  created_at: string;
 }
 
 export interface MediaItem {

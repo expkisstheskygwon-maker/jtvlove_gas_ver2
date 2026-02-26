@@ -18,9 +18,11 @@ const Community: React.FC = () => {
    const [formData, setFormData] = useState({
       title: '',
       board: boardId,
-      category: '', // initialized after currentBoard is defined
+      category: '',
       content: '',
-      image: ''
+      image: '',
+      is_secret: false,
+      password: ''
    });
 
    const boards = [
@@ -32,7 +34,6 @@ const Community: React.FC = () => {
 
    const currentBoard = boards.find(b => b.id === boardId) || boards[0];
 
-   // Initialize category from board defaults if empty
    useEffect(() => {
       if (!formData.category && currentBoard) {
          const firstCategory = currentBoard.categories.find(c => c !== '전체') || '일반';
@@ -42,8 +43,12 @@ const Community: React.FC = () => {
 
    const fetchPosts = async () => {
       setIsLoading(true);
-      const data = await apiService.getPosts(boardId, activeCategory === '전체' ? undefined : activeCategory);
-      setPosts(data);
+      try {
+         const data = await apiService.getPosts(boardId, activeCategory === '전체' ? undefined : activeCategory);
+         setPosts(data);
+      } catch (error) {
+         console.error('Fetch posts error:', error);
+      }
       setIsLoading(false);
    };
 
@@ -51,15 +56,27 @@ const Community: React.FC = () => {
       fetchPosts();
    }, [boardId, activeCategory]);
 
+   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+         const reader = new FileReader();
+         reader.onloadend = () => {
+            setFormData(prev => ({ ...prev, image: reader.result as string }));
+         };
+         reader.readAsDataURL(file);
+      }
+   };
+
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!formData.title || !formData.content) return alert('모든 필드를 입력해주세요.');
+      if (formData.is_secret && !formData.password) return alert('비밀글로 설정하려면 비밀번호를 입력해주세요.');
 
       setIsSubmitting(true);
       try {
          const result = await apiService.createPost({
             ...formData,
-            author: '길동이', // In a real app, this would be the logged-in user
+            author: '길동이', // Mock user
             authorAvatar: 'https://picsum.photos/100/100?random=1'
          });
 
@@ -69,7 +86,9 @@ const Community: React.FC = () => {
                board: boardId,
                category: currentBoard.categories.find(c => c !== '전체') || '일반',
                content: '',
-               image: ''
+               image: '',
+               is_secret: false,
+               password: ''
             });
             setIsModalOpen(false);
             fetchPosts();
@@ -88,11 +107,11 @@ const Community: React.FC = () => {
    };
 
    return (
-      <div className="max-w-7xl mx-auto px-4 py-12 animate-fade-in text-zinc-900 dark:text-zinc-100">
+      <div className="max-w-[1440px] mx-auto px-4 py-12 animate-fade-in text-zinc-900 dark:text-zinc-100">
          {/* Header Section */}
          <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 border-b-2 border-zinc-900 dark:border-white pb-6 gap-4">
             <div>
-               <h2 className="text-4xl font-black tracking-tight">{currentBoard.name}</h2>
+               <h2 className="text-4xl font-black tracking-tight uppercase italic">{currentBoard.name}</h2>
                <div className="flex items-center gap-2 mt-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                   <Link to="/" className="hover:text-primary transition-colors">HOME</Link>
                   <span className="material-symbols-outlined text-[10px]">chevron_right</span>
@@ -107,7 +126,6 @@ const Community: React.FC = () => {
 
          {/* Navigation & Search Panel */}
          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-            {/* Categories */}
             <div className="flex flex-wrap gap-1 bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-white/5">
                {currentBoard.categories.map(cat => (
                   <button
@@ -120,7 +138,6 @@ const Community: React.FC = () => {
                ))}
             </div>
 
-            {/* Search */}
             <div className="flex items-center gap-2 w-full lg:w-auto">
                <select
                   value={searchType}
@@ -148,62 +165,66 @@ const Community: React.FC = () => {
 
          {/* Board List Table */}
          <div className="bg-white dark:bg-zinc-900/30 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm">
-            <table className="w-full text-left border-collapse">
-               <thead>
-                  <tr className="bg-zinc-50 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-white/5">
-                     <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-20 text-center">번호</th>
-                     <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest">제목</th>
-                     <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-32 text-center">작성자</th>
-                     <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-32 text-center">날짜</th>
-                     <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-20 text-center">조회</th>
-                  </tr>
-               </thead>
-               <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
-                  {isLoading ? (
-                     <tr>
-                        <td colSpan={5} className="py-20 text-center">
-                           <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">데이터를 불러오는 중...</p>
-                        </td>
+            <div className="overflow-x-auto">
+               <table className="w-full text-left border-collapse min-w-[800px]">
+                  <thead>
+                     <tr className="bg-zinc-50 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-white/5">
+                        <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-20 text-center">번호</th>
+                        <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest">제목</th>
+                        <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-32 text-center">작성자</th>
+                        <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-32 text-center">날짜</th>
+                        <th className="px-6 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest w-20 text-center">조회</th>
                      </tr>
-                  ) : posts.length > 0 ? (
-                     posts.map((post, index) => (
-                        <tr key={post.id} className="hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group cursor-pointer">
-                           <td className="px-6 py-5 text-[11px] font-bold text-gray-400 text-center">{posts.length - index}</td>
-                           <td className="px-6 py-5">
-                              <Link to={`/community/post/${post.id}`} className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
-                                 {post.category && (
-                                    <span className="text-[9px] font-black font-mono text-gray-400 uppercase tracking-tighter bg-zinc-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
-                                       [{post.category}]
-                                    </span>
-                                 )}
-                                 <span className="text-sm font-bold group-hover:text-primary transition-colors">{post.title}</span>
-                                 {post.commentsCount && post.commentsCount > 0 && (
-                                    <span className="text-[10px] font-black text-primary">[{post.commentsCount}]</span>
-                                 )}
-                                 {post.image && <span className="material-symbols-outlined text-sm text-gray-300">image</span>}
-                              </Link>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
+                     {isLoading ? (
+                        <tr>
+                           <td colSpan={5} className="py-20 text-center">
+                              <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">데이터를 불러오는 중...</p>
                            </td>
-                           <td className="px-6 py-5 text-[11px] font-bold text-center">{post.author}</td>
-                           <td className="px-6 py-5 text-[11px] font-bold text-gray-400 text-center">{formatDate(post.created_at)}</td>
-                           <td className="px-6 py-5 text-[11px] font-bold text-gray-400 text-center">{post.views || 0}</td>
                         </tr>
-                     ))
-                  ) : (
-                     <tr>
-                        <td colSpan={5} className="py-20 text-center">
-                           <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">inbox</span>
-                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">등록된 게시글이 없습니다.</p>
-                        </td>
-                     </tr>
-                  )}
-               </tbody>
-            </table>
+                     ) : posts.length > 0 ? (
+                        posts.map((post, index) => (
+                           <tr key={post.id} className="hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group cursor-pointer">
+                              <td className="px-6 py-5 text-[11px] font-bold text-gray-400 text-center">{posts.length - index}</td>
+                              <td className="px-6 py-5">
+                                 <Link to={`/community/post/${post.id}`} className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                                    {post.category && (
+                                       <span className="text-[9px] font-black font-mono text-gray-400 uppercase tracking-tighter bg-zinc-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
+                                          [{post.category}]
+                                       </span>
+                                    )}
+                                    <span className={`text-sm font-bold group-hover:text-primary transition-colors flex items-center gap-1 ${post.is_secret ? 'text-gray-400' : ''}`}>
+                                       {post.is_secret && <span className="material-symbols-outlined text-xs">lock</span>}
+                                       {post.is_secret ? '비밀글입니다.' : post.title}
+                                    </span>
+                                    {post.commentsCount && post.commentsCount > 0 && (
+                                       <span className="text-[10px] font-black text-primary">[{post.commentsCount}]</span>
+                                    )}
+                                    {post.image && <span className="material-symbols-outlined text-sm text-gray-300">image</span>}
+                                 </Link>
+                              </td>
+                              <td className="px-6 py-5 text-[11px] font-bold text-center">{post.author}</td>
+                              <td className="px-6 py-5 text-[11px] font-bold text-gray-400 text-center">{formatDate(post.created_at)}</td>
+                              <td className="px-6 py-5 text-[11px] font-bold text-gray-400 text-center">{post.views || 0}</td>
+                           </tr>
+                        ))
+                     ) : (
+                        <tr>
+                           <td colSpan={5} className="py-20 text-center">
+                              <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">inbox</span>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">등록된 게시글이 없습니다.</p>
+                           </td>
+                        </tr>
+                     )}
+                  </tbody>
+               </table>
+            </div>
          </div>
 
          {/* Footer Actions */}
          <div className="mt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            {/* Pagination placeholder */}
             <div className="flex items-center gap-2">
                <button className="size-10 rounded-xl border border-zinc-200 dark:border-white/10 flex items-center justify-center text-gray-400 hover:border-primary hover:text-primary transition-all">
                   <span className="material-symbols-outlined">keyboard_double_arrow_left</span>
@@ -229,7 +250,7 @@ const Community: React.FC = () => {
          {isModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
                <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">
-                  <div className="bg-zinc-950 p-8 flex items-center justify-between">
+                  <div className="bg-zinc-950 p-8 flex items-center justify-between border-b border-white/5">
                      <div>
                         <h4 className="text-2xl font-black tracking-tight text-white uppercase italic">Create New Post</h4>
                         <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Share your experience with the community</p>
@@ -239,50 +260,103 @@ const Community: React.FC = () => {
                      </button>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="p-10 space-y-6">
-                     <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
+                  <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                     {/* Row 1: Category & Secret Settings */}
+                     <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1 space-y-2">
                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Category</label>
                            <select
                               value={formData.category}
                               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                              className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-4 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                              className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
                            >
                               {currentBoard.categories.filter(c => c !== '전체').map(c => <option key={c} value={c}>{c}</option>)}
                            </select>
                         </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Title</label>
-                           <input
-                              type="text"
-                              placeholder="Enter post title..."
-                              value={formData.title}
-                              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                              className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-4 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
-                           />
+                        <div className="flex-1 space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Privacy</label>
+                           <div className="flex items-center gap-4 h-[46px] px-4 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl">
+                              <label className="flex items-center gap-2 cursor-pointer group">
+                                 <input
+                                    type="checkbox"
+                                    checked={formData.is_secret}
+                                    onChange={(e) => setFormData({ ...formData, is_secret: e.target.checked })}
+                                    className="size-4 rounded border-gray-300 text-primary focus:ring-primary dark:bg-zinc-800 dark:border-white/10"
+                                 />
+                                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest group-hover:text-primary transition-colors">비밀글</span>
+                              </label>
+                              {formData.is_secret && (
+                                 <input
+                                    type="password"
+                                    placeholder="비밀번호"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="flex-1 bg-transparent border-none text-[11px] font-bold outline-none placeholder:text-gray-400"
+                                    maxLength={4}
+                                 />
+                              )}
+                           </div>
                         </div>
                      </div>
 
+                     {/* Row 2: Title */}
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Title</label>
+                        <input
+                           type="text"
+                           placeholder="게시글 제목을 입력해 주세요"
+                           value={formData.title}
+                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                           className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-4 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                     </div>
+
+                     {/* Row 3: Image Upload (Base64) */}
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Image Attachment</label>
+                        <div className="relative group">
+                           <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageChange}
+                              className="hidden"
+                              id="image-upload"
+                           />
+                           <label
+                              htmlFor="image-upload"
+                              className="flex flex-col items-center justify-center w-full py-8 bg-zinc-50 dark:bg-white/5 border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-2xl cursor-pointer hover:border-primary/50 transition-all"
+                           >
+                              {formData.image ? (
+                                 <div className="relative">
+                                    <img src={formData.image} alt="Preview" className="h-32 rounded-xl" />
+                                    <button
+                                       type="button"
+                                       onClick={(e) => { e.preventDefault(); setFormData({ ...formData, image: '' }); }}
+                                       className="absolute -top-2 -right-2 bg-red-500 text-white size-6 rounded-full flex items-center justify-center shadow-lg"
+                                    >
+                                       <span className="material-symbols-outlined text-xs">close</span>
+                                    </button>
+                                 </div>
+                              ) : (
+                                 <>
+                                    <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">add_photo_alternate</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">파일 업로드 (최대 1MB)</span>
+                                 </>
+                              )}
+                           </label>
+                        </div>
+                     </div>
+
+                     {/* Row 4: Content */}
                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Content</label>
                         <textarea
-                           placeholder="Tell us more about it..."
-                           rows={8}
+                           placeholder="내용을 입력해 주세요..."
+                           rows={6}
                            value={formData.content}
                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                            className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl px-6 py-5 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                         ></textarea>
-                     </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Image URL (Optional)</label>
-                        <input
-                           type="url"
-                           placeholder="https://images.unsplash.com/..."
-                           value={formData.image}
-                           onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                           className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-4 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
-                        />
                      </div>
 
                      <div className="pt-4">

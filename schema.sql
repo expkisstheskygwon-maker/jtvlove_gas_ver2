@@ -69,7 +69,32 @@ CREATE TABLE IF NOT EXISTS posts (
   image TEXT,
   views INTEGER DEFAULT 0,
   likes INTEGER DEFAULT 0,
+  is_secret INTEGER DEFAULT 0, -- 0: false, 1: true
+  password TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3.1 Post Comments Table
+CREATE TABLE IF NOT EXISTS post_comments (
+  id TEXT PRIMARY KEY,
+  post_id TEXT NOT NULL,
+  author TEXT NOT NULL,
+  content TEXT NOT NULL,
+  likes INTEGER DEFAULT 0,
+  dislikes INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+-- 3.2 Post Likes/Recommended Table (Optional, for strictly preventing double likes)
+CREATE TABLE IF NOT EXISTS post_likes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id TEXT NOT NULL,
+  ip_address TEXT,
+  user_id TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(post_id, ip_address),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
 -- 4. Reservations Table

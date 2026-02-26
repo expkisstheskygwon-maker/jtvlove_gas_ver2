@@ -203,7 +203,6 @@ export const apiService = {
       return POSTS.find(p => p.id === id) || null;
     }
   },
-
   async createPost(data: Partial<Post>): Promise<Post | null> {
     try {
       const response = await fetch(`${API_BASE}/posts`, {
@@ -214,14 +213,123 @@ export const apiService = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Create post server error:', errorData);
         throw new Error(errorData.error || 'Failed to create post');
       }
 
       return await response.json();
     } catch (error: any) {
-      console.error('Create post network/service error:', error);
-      throw error; // 에러를 다시 throw하여 호출 측에서 잡을 수 있게 함
+      console.error('Create post error:', error);
+      throw error;
+    }
+  },
+
+  async updatePost(id: string, data: Partial<Post>): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/posts?id=${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updatePost error:', error);
+      return false;
+    }
+  },
+
+  async deletePost(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/posts?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deletePost error:', error);
+      return false;
+    }
+  },
+
+  async incrementPostViews(id: string): Promise<void> {
+    try {
+      await fetch(`${API_BASE}/posts?id=${encodeURIComponent(id)}&action=view`, {
+        method: 'PATCH'
+      });
+    } catch (error) {
+      console.error('incrementPostViews error:', error);
+    }
+  },
+
+  async likePost(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/posts?id=${encodeURIComponent(id)}&action=like`, {
+        method: 'PATCH'
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('likePost error:', error);
+      return false;
+    }
+  },
+
+  // Comments
+  async getComments(postId: string): Promise<Comment[]> {
+    try {
+      const response = await fetch(`${API_BASE}/comments?postId=${encodeURIComponent(postId)}`);
+      if (!response.ok) throw new Error('Failed to fetch comments');
+      return await response.json();
+    } catch (error) {
+      console.error('getComments error:', error);
+      return [];
+    }
+  },
+
+  async createComment(data: { postId: string; author: string; content: string }): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('createComment error:', error);
+      return false;
+    }
+  },
+
+  async likeComment(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/comments?id=${encodeURIComponent(id)}&action=like`, {
+        method: 'PATCH'
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('likeComment error:', error);
+      return false;
+    }
+  },
+
+  async dislikeComment(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/comments?id=${encodeURIComponent(id)}&action=dislike`, {
+        method: 'PATCH'
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('dislikeComment error:', error);
+      return false;
+    }
+  },
+
+  async deleteComment(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/comments?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteComment error:', error);
+      return false;
     }
   },
 
