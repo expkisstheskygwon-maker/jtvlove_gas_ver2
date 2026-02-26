@@ -58,14 +58,21 @@ const Community: React.FC = () => {
 
    const currentBoard = boards.find((b: any) => b.id === boardId) || boards[0];
 
+   if (!currentBoard) {
+      return (
+         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+            <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Initializing Feed Node...</p>
+         </div>
+      );
+   }
+
    useEffect(() => {
-      if (currentBoard) {
-         const firstCategory = currentBoard.categories[0] || '일반';
-         if (!activeCategory || !currentBoard.categories.includes(activeCategory)) {
-            setActiveCategory(firstCategory);
-         }
-         setFormData(prev => ({ ...prev, category: firstCategory, board: boardId }));
+      const firstCategory = currentBoard?.categories?.[0] || '일반';
+      if (!activeCategory || !currentBoard?.categories?.includes(activeCategory)) {
+         setActiveCategory(firstCategory);
       }
+      setFormData(prev => ({ ...prev, category: firstCategory, board: boardId }));
    }, [boardId, currentBoard]);
 
    const fetchPosts = async () => {
