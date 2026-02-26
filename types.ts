@@ -40,7 +40,7 @@ export interface Venue {
   introduction?: string;
 }
 
-export type CCAStatus = 'active' | 'absent' | 'off' | 'resigned' | 'late';
+export type CCAStatus = 'active' | 'absent' | 'off' | 'resigned' | 'late' | 'applicant' | 'inactive';
 export type CCAGrade = 'ACE' | 'PRO' | 'CUTE';
 export type CustomerGrade = 'VIP' | 'EXCELLENT' | 'GENERAL' | 'WARNING';
 

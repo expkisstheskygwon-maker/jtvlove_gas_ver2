@@ -12,7 +12,25 @@ const AdminCCAs: React.FC = () => {
    const [pointCategories, setPointCategories] = useState<PointCategory[]>([]);
    const [pointLogs, setPointLogs] = useState<PointLog[]>([]);
    const [showDetailModal, setShowDetailModal] = useState(false);
+   const [showRegisterModal, setShowRegisterModal] = useState(false);
    const [detailTab, setDetailTab] = useState<'profile' | 'score'>('profile');
+
+   // New Registration Form State
+   const [regForm, setRegForm] = useState({
+      nickname: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      birthDay: '01',
+      birthMonth: 'Jan',
+      birthYear: '2000',
+      address: '',
+      phone: '',
+      password: '',
+      maritalStatus: 'single',
+      childrenStatus: 'none',
+      specialNotes: ''
+   });
 
    // New Score Form State
    const [newScore, setNewScore] = useState({
@@ -51,6 +69,78 @@ const AdminCCAs: React.FC = () => {
       setDetailTab('profile');
    };
 
+   const handleRegisterStaff = async (confirmImmediately: boolean = false) => {
+      const { nickname, firstName, middleName, lastName, birthDay, birthMonth, birthYear, address, phone, password, maritalStatus, childrenStatus, specialNotes } = regForm;
+
+      if (!nickname || !firstName || !lastName || !address || !phone || !password) {
+         alert('Please fill in all required fields.');
+         return;
+      }
+
+      const formattedBirthday = `${birthDay}. ${birthMonth}. ${birthYear}.`;
+
+      const success = await apiService.updateCCA({
+         nickname,
+         realNameFirst: firstName,
+         realNameMiddle: middleName,
+         realNameLast: lastName,
+         birthday: formattedBirthday,
+         address,
+         phone,
+         password,
+         maritalStatus,
+         childrenStatus,
+         specialNotes,
+         status: confirmImmediately ? 'active' : 'applicant',
+         venueId: 'v1'
+      });
+
+      if (success) {
+         alert(confirmImmediately ? 'Staff registered and hired successfully!' : 'Staff registered as applicant.');
+         setShowRegisterModal(false);
+         setRegForm({
+            nickname: '', firstName: '', middleName: '', lastName: '',
+            birthDay: '01', birthMonth: 'Jan', birthYear: '2000',
+            address: '', phone: '', password: '',
+            maritalStatus: 'single', childrenStatus: 'none', specialNotes: ''
+         });
+         fetchCCAs();
+      } else {
+         alert('Registration failed.');
+      }
+   };
+
+   const handleHireApplicant = async (ccaId: string) => {
+      const success = await apiService.updateCCA({ id: ccaId, status: 'active' });
+      if (success) {
+         alert('Staff hired successfully!');
+         fetchCCAs();
+      }
+   };
+
+   const handleDeclineApplicant = async (ccaId: string) => {
+      if (confirm('Are you sure you want to decline this applicant?')) {
+         // For now we just mark as dismissed or delete, but status 'declined' is also fine
+         await apiService.updateCCA({ id: ccaId, status: 'inactive' });
+         fetchCCAs();
+      }
+   };
+
+   const handleDeleteLog = async (log: PointLog) => {
+      if (!selectedCCA) return;
+      const category = pointCategories.find(c => c.id === log.category_id);
+      const success = await apiService.deleteCCAPointLog({
+         id: log.id,
+         ccaId: selectedCCA.id,
+         total: log.total,
+         type: (category?.type as any) || 'point'
+      });
+      if (success) {
+         fetchPointLogs(selectedCCA.id);
+         fetchCCAs();
+      }
+   };
+
    const handleAddScore = async () => {
       if (!selectedCCA || !newScore.categoryId) return;
       const category = pointCategories.find(c => c.id === newScore.categoryId);
@@ -81,21 +171,6 @@ const AdminCCAs: React.FC = () => {
       }
    };
 
-   const handleDeleteLog = async (log: PointLog) => {
-      if (!selectedCCA) return;
-      const category = pointCategories.find(c => c.id === log.category_id);
-      const success = await apiService.deleteCCAPointLog({
-         id: log.id,
-         ccaId: selectedCCA.id,
-         total: log.total,
-         type: (category?.type as any) || 'point'
-      });
-      if (success) {
-         fetchPointLogs(selectedCCA.id);
-         fetchCCAs();
-      }
-   };
-
    const calculateSalary = () => {
       const totalPoints = pointLogs
          .filter(l => {
@@ -122,15 +197,15 @@ const AdminCCAs: React.FC = () => {
             <div className="flex gap-4 p-1.5 bg-white dark:bg-zinc-900 rounded-2xl border border-primary/10 w-fit">
                <button onClick={() => setActiveTab('current')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'current' ? 'bg-primary text-[#1b180d]' : 'text-gray-400 hover:text-primary'}`}>Current Staff</button>
                <button onClick={() => setActiveTab('applicants')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'applicants' ? 'bg-primary text-[#1b180d]' : 'text-gray-400 hover:text-primary'}`}>
-                  Applicants <span className="ml-1 bg-red-500 text-white text-[8px] px-1.5 rounded-full">3</span>
+                  Applicants <span className="ml-1 bg-red-500 text-white text-[8px] px-1.5 rounded-full">{ccas.filter(c => c.status === 'applicant').length}</span>
                </button>
             </div>
-            <button className="h-14 bg-primary text-[#1b180d] px-8 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Manually Register Staff</button>
+            <button onClick={() => setShowRegisterModal(true)} className="h-14 bg-primary text-[#1b180d] px-8 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Manually Register Staff</button>
          </div>
 
          {activeTab === 'current' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-               {ccas.map(cca => (
+               {ccas.filter(c => c.status === 'active').map(cca => (
                   <div key={cca.id} className="bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden border border-primary/5 shadow-sm group hover:border-primary transition-all">
                      <div className="h-32 bg-[#1b180d] relative">
                         <div className="absolute inset-0 bg-gradient-to-t from-[#1b180d] to-transparent opacity-60"></div>
@@ -166,11 +241,32 @@ const AdminCCAs: React.FC = () => {
             </div>
          )}
 
-         {/* Applicats View Omitted for brevity, keep same as before or enhance if needed */}
+         {/* Applicants View */}
          {activeTab === 'applicants' && (
-            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-8 border border-primary/10 shadow-sm">
-               <h3 className="text-xl font-black mb-8 tracking-tight italic uppercase">New Recruitment Requests</h3>
-               <p className="text-gray-500 italic text-sm">No new applicants found.</p>
+            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-8 border border-primary/10 shadow-sm animate-fade-in">
+               <h3 className="text-xl font-black mb-8 tracking-tight italic uppercase">Recruitment Requests</h3>
+               <div className="space-y-6">
+                  {ccas.filter(c => c.status === 'applicant').map(cca => (
+                     <div key={cca.id} className="flex flex-col md:flex-row md:items-center justify-between p-8 bg-background-light dark:bg-white/5 rounded-3xl border border-primary/5 gap-6">
+                        <div className="flex items-center gap-6">
+                           <img src={cca.image || 'https://via.placeholder.com/200'} className="size-20 rounded-2xl object-cover" />
+                           <div>
+                              <h4 className="text-2xl font-black">{cca.nickname || cca.name}</h4>
+                              <p className="text-sm font-bold text-gray-400">Apply Date: {cca.birthday} (Age verified)</p>
+                              <div className="flex gap-3 mt-2">
+                                 <span className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">Phone: {cca.phone}</span>
+                                 <span className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">Status: {cca.maritalStatus} / {cca.childrenStatus}</span>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="flex gap-3">
+                           <button onClick={() => handleDeclineApplicant(cca.id)} className="px-8 py-3 border border-red-500/20 text-red-500 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-red-500 hover:text-white transition-all">Decline</button>
+                           <button onClick={() => handleHireApplicant(cca.id)} className="px-8 py-3 bg-primary text-[#1b180d] rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">Acceptance of Employment</button>
+                        </div>
+                     </div>
+                  ))}
+                  {ccas.filter(c => c.status === 'applicant').length === 0 && <p className="text-gray-500 italic text-sm text-center py-10 uppercase tracking-widest">No candidates found.</p>}
+               </div>
             </div>
          )}
 
@@ -404,6 +500,112 @@ const AdminCCAs: React.FC = () => {
                               </div>
                            </div>
                         )}
+                     </div>
+                  </motion.div>
+               </div>
+            )}
+         </AnimatePresence>
+         {/* REGISTER MODAL */}
+         <AnimatePresence>
+            {showRegisterModal && (
+               <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowRegisterModal(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
+                  <motion.div initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }} className="bg-[#1b180d] border border-primary/30 w-full max-w-4xl h-[90vh] rounded-[3rem] overflow-hidden shadow-2xl z-10 flex flex-col relative" >
+                     <div className="p-8 border-b border-primary/10 flex items-center justify-between bg-primary/5">
+                        <h4 className="text-2xl font-black text-white italic uppercase tracking-widest">Register Staff Profile</h4>
+                        <button onClick={() => setShowRegisterModal(false)} className="size-12 flex items-center justify-center rounded-2xl bg-white/5 text-white hover:bg-primary hover:text-[#1b180d] transition-all">
+                           <span className="material-symbols-outlined">close</span>
+                        </button>
+                     </div>
+                     <div className="flex-1 overflow-y-auto p-10 space-y-10">
+                        {/* Section 1: Names & Identity */}
+                        <div className="space-y-6">
+                           <h5 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Identity & Recognition</h5>
+                           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                              <div className="md:col-span-2 space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Nickname (Display Name)*</label>
+                                 <input type="text" placeholder="e.g. Yumi" value={regForm.nickname} onChange={e => setRegForm({ ...regForm, nickname: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary" />
+                              </div>
+                              <div className="md:col-span-2 space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Password*</label>
+                                 <input type="password" placeholder="New login password" value={regForm.password} onChange={e => setRegForm({ ...regForm, password: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary" />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">First Name*</label>
+                                 <input type="text" value={regForm.firstName} onChange={e => setRegForm({ ...regForm, firstName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white font-bold outline-none" />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Middle Name</label>
+                                 <input type="text" value={regForm.middleName} onChange={e => setRegForm({ ...regForm, middleName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white font-bold outline-none" />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Last Name*</label>
+                                 <input type="text" value={regForm.lastName} onChange={e => setRegForm({ ...regForm, lastName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white font-bold outline-none" />
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Section 2: Birth & Contact */}
+                        <div className="space-y-6">
+                           <h5 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Personal Details & Birth</h5>
+                           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                              <div className="md:col-span-3 space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Date of Birth (Day. Month. Year.)*</label>
+                                 <div className="grid grid-cols-3 gap-3">
+                                    <select value={regForm.birthDay} onChange={e => setRegForm({ ...regForm, birthDay: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white font-bold outline-none">
+                                       {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => <option key={d} value={d} className="bg-[#1b180d]">{d}</option>)}
+                                    </select>
+                                    <select value={regForm.birthMonth} onChange={e => setRegForm({ ...regForm, birthMonth: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white font-bold outline-none">
+                                       {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => <option key={m} value={m} className="bg-[#1b180d]">{m}</option>)}
+                                    </select>
+                                    <select value={regForm.birthYear} onChange={e => setRegForm({ ...regForm, birthYear: e.target.value })} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white font-bold outline-none">
+                                       {Array.from({ length: 60 }, (_, i) => String(2015 - i)).map(y => <option key={y} value={y} className="bg-[#1b180d]">{y}</option>)}
+                                    </select>
+                                 </div>
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Phone Number*</label>
+                                 <input type="tel" placeholder="09xx-xxx-xxxx" value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary" />
+                              </div>
+                              <div className="md:col-span-4 space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Current Address*</label>
+                                 <input type="text" placeholder="Full residential address" value={regForm.address} onChange={e => setRegForm({ ...regForm, address: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary" />
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Section 3: Status & Notes */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                           <div className="space-y-6">
+                              <h5 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Marital & Children</h5>
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="space-y-3">
+                                    <p className="text-[9px] font-black text-gray-500 uppercase ml-2">Marital Status</p>
+                                    <div className="flex bg-white/5 rounded-2xl p-1 border border-white/5">
+                                       {['single', 'married'].map(s => (
+                                          <button key={s} onClick={() => setRegForm({ ...regForm, maritalStatus: s })} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${regForm.maritalStatus === s ? 'bg-primary text-[#1b180d]' : 'text-gray-400'}`}>{s}</button>
+                                       ))}
+                                    </div>
+                                 </div>
+                                 <div className="space-y-3">
+                                    <p className="text-[9px] font-black text-gray-500 uppercase ml-2">Children</p>
+                                    <div className="flex bg-white/5 rounded-2xl p-1 border border-white/5">
+                                       {['none', 'yes'].map(s => (
+                                          <button key={s} onClick={() => setRegForm({ ...regForm, childrenStatus: s })} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${regForm.childrenStatus === s ? 'bg-primary text-[#1b180d]' : 'text-gray-400'}`}>{s === 'none' ? 'No' : 'Yes'}</button>
+                                       ))}
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                           <div className="space-y-6">
+                              <h5 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Special Notes</h5>
+                              <textarea placeholder="Any specific details, personality notes, or intake remarks..." value={regForm.specialNotes} onChange={e => setRegForm({ ...regForm, specialNotes: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl px-6 py-4 text-white text-sm outline-none focus:border-primary resize-none" />
+                           </div>
+                        </div>
+                     </div>
+                     <div className="p-10 border-t border-primary/10 flex flex-col md:flex-row gap-6 bg-primary/5">
+                        <button onClick={() => handleRegisterStaff(false)} className="flex-1 py-6 border border-primary/30 text-primary rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-primary/10 transition-all">List as Applicant</button>
+                        <button onClick={() => handleRegisterStaff(true)} className="flex-1 py-6 bg-primary text-[#1b180d] rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Acceptance of Employment</button>
                      </div>
                   </motion.div>
                </div>

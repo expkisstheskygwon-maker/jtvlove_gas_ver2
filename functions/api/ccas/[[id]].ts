@@ -10,7 +10,7 @@ interface Env {
 export const onRequest: PagesFunction<Env> = async (context: any) => {
   const { env, request, params } = context;
   const url = new URL(request.url);
-  
+
   // Robust ID extraction
   const rawId = params.id;
   const id = Array.isArray(rawId) ? String(rawId[0]) : (rawId ? String(rawId) : null);
@@ -98,82 +98,111 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     }
   }
 
-  // POST: Update
-  if (request.method === 'POST' && id) {
+  // POST: Create or Update
+  if (request.method === 'POST') {
     try {
       const body = await request.json();
-      const { 
-        name, nickname, realNameFirst, realNameMiddle, realNameLast, 
-        birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory, 
+      const {
+        id: bodyId, name, nickname, realNameFirst, realNameMiddle, realNameLast,
+        birthday, address, phone, mbti, zodiac, oneLineStory, sns, experienceHistory,
         maritalStatus, childrenStatus, specialNotes, password,
-        image, venueId, languages, isNew, weight, drinking, smoking, pets, specialties
+        image, venueId, languages, isNew, weight, drinking, smoking, pets, specialties,
+        status, grade
       } = body;
 
-      // Force all values to primitives or null for D1 compatibility
-      const paramsList = [
-        name ? String(name) : null,
-        nickname ? String(nickname) : null,
-        realNameFirst ? String(realNameFirst) : null,
-        realNameMiddle ? String(realNameMiddle) : null,
-        realNameLast ? String(realNameLast) : null,
-        birthday ? String(birthday) : null,
-        address ? String(address) : null,
-        phone ? String(phone) : null,
-        mbti ? String(mbti) : null,
-        zodiac ? String(zodiac) : null,
-        oneLineStory ? String(oneLineStory) : null,
-        sns ? JSON.stringify(sns) : null,
-        experienceHistory ? JSON.stringify(experienceHistory) : null,
-        maritalStatus ? String(maritalStatus) : null,
-        childrenStatus ? String(childrenStatus) : null,
-        specialNotes ? String(specialNotes) : null,
-        image ? String(image) : null,
-        venueId ? String(venueId) : null,
-        password ? String(password) : null,
-        languages ? JSON.stringify(languages) : null,
-        isNew ? 1 : 0,
-        weight ? String(weight) : null,
-        drinking ? String(drinking) : null,
-        smoking ? String(smoking) : null,
-        pets ? String(pets) : null,
-        specialties ? JSON.stringify(specialties) : null,
-        String(id) // The ID for WHERE clause
-      ];
+      const targetId = id || bodyId || `cca_${Date.now()}`;
 
-      await env.DB.prepare(`
-        UPDATE ccas SET
-          name = COALESCE(?, name),
-          nickname = COALESCE(?, nickname),
-          real_name_first = COALESCE(?, real_name_first),
-          real_name_middle = COALESCE(?, real_name_middle),
-          real_name_last = COALESCE(?, real_name_last),
-          birthday = COALESCE(?, birthday),
-          address = COALESCE(?, address),
-          phone = COALESCE(?, phone),
-          mbti = COALESCE(?, mbti),
-          zodiac = COALESCE(?, zodiac),
-          one_line_story = COALESCE(?, one_line_story),
-          sns_links = COALESCE(?, sns_links),
-          experience_history = COALESCE(?, experience_history),
-          marital_status = COALESCE(?, marital_status),
-          children_status = COALESCE(?, children_status),
-          special_notes = COALESCE(?, special_notes),
-          image = COALESCE(?, image),
-          venue_id = COALESCE(?, venue_id),
-          password = COALESCE(?, password),
-          languages = COALESCE(?, languages),
-          is_new = COALESCE(?, is_new),
-          weight = COALESCE(?, weight),
-          drinking = COALESCE(?, drinking),
-          smoking = COALESCE(?, smoking),
-          pets = COALESCE(?, pets),
-          specialties = COALESCE(?, specialties)
-        WHERE id = ?
-      `).bind(...paramsList).run();
+      if (!id && !bodyId) {
+        // CREATE
+        await env.DB.prepare(`
+          INSERT INTO ccas (
+            id, name, nickname, real_name_first, real_name_middle, real_name_last,
+            birthday, address, phone, venue_id, image, status, grade,
+            password, marital_status, children_status, special_notes,
+            experience_history, languages, specialties
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          targetId, name || nickname, nickname, realNameFirst, realNameMiddle, realNameLast,
+          birthday, address, phone, venueId || 'v1', image || '', status || 'applicant', grade || 'STAFF',
+          password, maritalStatus, childrenStatus, specialNotes,
+          JSON.stringify(experienceHistory || []), JSON.stringify(languages || []), JSON.stringify(specialties || [])
+        ).run();
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" },
-      });
+        return new Response(JSON.stringify({ success: true, id: targetId }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        // UPDATE
+        const updateId = id || bodyId;
+        const paramsList = [
+          name ? String(name) : null,
+          nickname ? String(nickname) : null,
+          realNameFirst ? String(realNameFirst) : null,
+          realNameMiddle ? String(realNameMiddle) : null,
+          realNameLast ? String(realNameLast) : null,
+          birthday ? String(birthday) : null,
+          address ? String(address) : null,
+          phone ? String(phone) : null,
+          mbti ? String(mbti) : null,
+          zodiac ? String(zodiac) : null,
+          oneLineStory ? String(oneLineStory) : null,
+          sns ? JSON.stringify(sns) : null,
+          experienceHistory ? JSON.stringify(experienceHistory) : null,
+          maritalStatus ? String(maritalStatus) : null,
+          childrenStatus ? String(childrenStatus) : null,
+          specialNotes ? String(specialNotes) : null,
+          image ? String(image) : null,
+          venueId ? String(venueId) : null,
+          password ? String(password) : null,
+          languages ? JSON.stringify(languages) : null,
+          isNew ? 1 : 0,
+          weight ? String(weight) : null,
+          drinking ? String(drinking) : null,
+          smoking ? String(smoking) : null,
+          pets ? String(pets) : null,
+          specialties ? JSON.stringify(specialties) : null,
+          status ? String(status) : null,
+          grade ? String(grade) : null,
+          String(updateId)
+        ];
+
+        await env.DB.prepare(`
+          UPDATE ccas SET
+            name = COALESCE(?, name),
+            nickname = COALESCE(?, nickname),
+            real_name_first = COALESCE(?, real_name_first),
+            real_name_middle = COALESCE(?, real_name_middle),
+            real_name_last = COALESCE(?, real_name_last),
+            birthday = COALESCE(?, birthday),
+            address = COALESCE(?, address),
+            phone = COALESCE(?, phone),
+            mbti = COALESCE(?, mbti),
+            zodiac = COALESCE(?, zodiac),
+            one_line_story = COALESCE(?, one_line_story),
+            sns_links = COALESCE(?, sns_links),
+            experience_history = COALESCE(?, experience_history),
+            marital_status = COALESCE(?, marital_status),
+            children_status = COALESCE(?, children_status),
+            special_notes = COALESCE(?, special_notes),
+            image = COALESCE(?, image),
+            venue_id = COALESCE(?, venue_id),
+            password = COALESCE(?, password),
+            languages = COALESCE(?, languages),
+            is_new = COALESCE(?, is_new),
+            weight = COALESCE(?, weight),
+            drinking = COALESCE(?, drinking),
+            smoking = COALESCE(?, smoking),
+            pets = COALESCE(?, pets),
+            specialties = COALESCE(?, specialties),
+            status = COALESCE(?, status),
+            grade = COALESCE(?, grade)
+          WHERE id = ?
+        `).bind(...paramsList).run();
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     } catch (error: any) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
