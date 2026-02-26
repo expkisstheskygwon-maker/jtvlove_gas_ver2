@@ -7,7 +7,7 @@ const Community: React.FC = () => {
    const [searchParams, setSearchParams] = useSearchParams();
    const boardId = searchParams.get('board') || 'Free Board';
    const [posts, setPosts] = useState<Post[]>([]);
-   const [activeCategory, setActiveCategory] = useState('전체');
+   const [activeCategory, setActiveCategory] = useState('');
    const [isLoading, setIsLoading] = useState(true);
    const [searchTerm, setSearchTerm] = useState('');
    const [searchType, setSearchType] = useState('title');
@@ -26,25 +26,29 @@ const Community: React.FC = () => {
    });
 
    const boards = [
-      { id: 'Free Board', name: '자유 게시판', categories: ['전체', '잡담', '정보', '모임', '질문', 'TEST1'] },
-      { id: 'JTV Review', name: '업소 리뷰', categories: ['전체', '파사이', '말라떼', '퀘존', '마카티'] },
-      { id: 'CCA Review', name: 'CCA 리뷰', categories: ['전체', 'Ace', 'Pro', 'Cute'] },
-      { id: 'Q&A Board', name: '질문 게시판', categories: ['전체', '이용문의', '업소문의', '예약문의'] }
+      { id: 'Free Board', name: '커뮤니티', categories: ['잡담', '정보', '모임', '질문', 'TEST1'] },
+      { id: 'JTV Review', name: '업소 리뷰', categories: ['파사이', '말라떼', '퀘존', '마카티'] },
+      { id: 'CCA Review', name: 'CCA 리뷰', categories: ['Ace', 'Pro', 'Cute'] },
+      { id: 'Q&A Board', name: '질문 게시판', categories: ['이용문의', '업소문의', '예약문의'] }
    ];
 
    const currentBoard = boards.find(b => b.id === boardId) || boards[0];
 
    useEffect(() => {
-      if (!formData.category && currentBoard) {
-         const firstCategory = currentBoard.categories.find(c => c !== '전체') || '일반';
+      if (currentBoard) {
+         const firstCategory = currentBoard.categories[0] || '일반';
+         if (!activeCategory || !currentBoard.categories.includes(activeCategory)) {
+            setActiveCategory(firstCategory);
+         }
          setFormData(prev => ({ ...prev, category: firstCategory, board: boardId }));
       }
    }, [boardId, currentBoard]);
 
    const fetchPosts = async () => {
+      if (!activeCategory) return;
       setIsLoading(true);
       try {
-         const data = await apiService.getPosts(boardId, activeCategory === '전체' ? undefined : activeCategory);
+         const data = await apiService.getPosts(boardId, activeCategory);
          setPosts(data);
       } catch (error) {
          console.error('Fetch posts error:', error);
