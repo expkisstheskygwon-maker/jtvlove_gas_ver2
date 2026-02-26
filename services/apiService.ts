@@ -603,8 +603,10 @@ export const apiService = {
   // Super Admin Partners
   async getSuperVenues(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE}/super/partners?action=listVenues`);
-      return response.ok ? await response.json() : [];
+      const response = await fetch(`${API_BASE}/super-partners?action=listVenues`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('getSuperVenues error:', error);
       return [];
@@ -613,8 +615,10 @@ export const apiService = {
 
   async getSuperCCAs(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE}/super/partners?action=listCCAs`);
-      return response.ok ? await response.json() : [];
+      const response = await fetch(`${API_BASE}/super-partners?action=listCCAs`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('getSuperCCAs error:', error);
       return [];
@@ -623,7 +627,7 @@ export const apiService = {
 
   async getVenueHistory(id: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE}/super/partners?action=venueHistory&id=${id}`);
+      const response = await fetch(`${API_BASE}/super-partners?action=venueHistory&id=${id}`);
       return response.ok ? await response.json() : null;
     } catch (error) {
       console.error('getVenueHistory error:', error);
@@ -633,7 +637,7 @@ export const apiService = {
 
   async getCCAHistory(id: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE}/super/partners?action=ccaHistory&id=${id}`);
+      const response = await fetch(`${API_BASE}/super-partners?action=ccaHistory&id=${id}`);
       return response.ok ? await response.json() : null;
     } catch (error) {
       console.error('getCCAHistory error:', error);
