@@ -311,52 +311,56 @@ const Community: React.FC = () => {
                         />
                      </div>
 
-                     {/* Row 3: Image Upload (Base64) */}
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Image Attachment</label>
-                        <div className="relative group">
-                           <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageChange}
-                              className="hidden"
-                              id="image-upload"
-                           />
-                           <label
-                              htmlFor="image-upload"
-                              className="flex flex-col items-center justify-center w-full py-8 bg-zinc-50 dark:bg-white/5 border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-2xl cursor-pointer hover:border-primary/50 transition-all"
-                           >
-                              {formData.image ? (
-                                 <div className="relative">
-                                    <img src={formData.image} alt="Preview" className="h-32 rounded-xl" />
-                                    <button
-                                       type="button"
-                                       onClick={(e) => { e.preventDefault(); setFormData({ ...formData, image: '' }); }}
-                                       className="absolute -top-2 -right-2 bg-red-500 text-white size-6 rounded-full flex items-center justify-center shadow-lg"
-                                    >
-                                       <span className="material-symbols-outlined text-xs">close</span>
-                                    </button>
-                                 </div>
-                              ) : (
-                                 <>
-                                    <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">add_photo_alternate</span>
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">파일 업로드 (최대 1MB)</span>
-                                 </>
-                              )}
-                           </label>
-                        </div>
-                     </div>
-
-                     {/* Row 4: Content */}
+                     {/* Row 3: Content + Image Upload Button */}
                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Content</label>
-                        <textarea
-                           placeholder="내용을 입력해 주세요..."
-                           rows={6}
-                           value={formData.content}
-                           onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                           className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl px-6 py-5 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-                        ></textarea>
+                        <div className="relative bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                           <textarea
+                              placeholder="내용을 입력해 주세요..."
+                              rows={8}
+                              value={formData.content}
+                              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                              className="w-full bg-transparent px-6 py-5 text-xs font-bold outline-none resize-none min-h-[160px]"
+                           ></textarea>
+
+                           {/* Preview & Action Bar */}
+                           <div className="px-4 py-3 bg-zinc-100/50 dark:bg-white/5 border-t border-zinc-200 dark:border-white/5 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                 {formData.image && (
+                                    <div className="relative group/thumb">
+                                       <img src={formData.image} alt="Preview" className="size-10 rounded-lg object-cover border border-zinc-300 dark:border-white/10" />
+                                       <button
+                                          type="button"
+                                          onClick={() => setFormData({ ...formData, image: '' })}
+                                          className="absolute -top-1 -right-1 bg-red-500 text-white size-4 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                                       >
+                                          <span className="material-symbols-outlined text-[10px]">close</span>
+                                       </button>
+                                    </div>
+                                 )}
+                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                    {formData.image ? 'Image Attached' : 'No images attached'}
+                                 </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                 <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                    id="image-upload-small"
+                                 />
+                                 <label
+                                    htmlFor="image-upload-small"
+                                    className="size-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-gray-400 hover:text-primary hover:border-primary transition-all cursor-pointer"
+                                    title="이미지 첨부"
+                                 >
+                                    <span className="material-symbols-outlined text-xl">add_photo_alternate</span>
+                                 </label>
+                              </div>
+                           </div>
+                        </div>
                      </div>
 
                      <div className="pt-4">
