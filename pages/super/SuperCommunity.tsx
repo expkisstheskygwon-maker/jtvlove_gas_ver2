@@ -24,20 +24,31 @@ const SuperCommunity: React.FC = () => {
    const [editingBoard, setEditingBoard] = useState<BoardConfig | null>(null);
    const [newBoardName, setNewBoardName] = useState('');
 
-   // In a real app, these would come from the database
-   const [boardConfigs, setBoardConfigs] = useState<BoardConfig[]>(() => {
-      const saved = localStorage.getItem('board_configs');
-      return saved ? JSON.parse(saved) : [
-         { id: 'Free Board', name: '커뮤니티' },
-         { id: 'JTV Review', name: '업소 리뷰' },
-         { id: 'CCA Review', name: 'CCA 리뷰' },
-         { id: 'Q&A Board', name: '질문 게시판' }
-      ];
-   });
+   const [boardConfigs, setBoardConfigs] = useState<BoardConfig[]>([]);
+
+   const loadConfigs = async () => {
+      const data = await apiService.getBoardConfigs();
+      if (data && data.length > 0) {
+         setBoardConfigs(data);
+      } else {
+         // Fallback to defaults if DB is empty
+         setBoardConfigs([
+            { id: 'Free Board', name: '커뮤니티' },
+            { id: 'JTV Review', name: '업소 리뷰' },
+            { id: 'CCA Review', name: 'CCA 리뷰' },
+            { id: 'Q&A Board', name: '질문 게시판' }
+         ]);
+      }
+   };
 
    useEffect(() => {
-      localStorage.setItem('board_configs', JSON.stringify(boardConfigs));
-      fetchBoardData();
+      loadConfigs();
+   }, []);
+
+   useEffect(() => {
+      if (boardConfigs.length > 0) {
+         fetchBoardData();
+      }
    }, [boardConfigs]);
 
    const fetchBoardData = async () => {
@@ -68,24 +79,32 @@ const SuperCommunity: React.FC = () => {
       setIsLoading(false);
    };
 
-   const handleCreateOrUpdateBoard = () => {
+   const handleCreateOrUpdateBoard = async () => {
       if (!newBoardName.trim()) return;
 
-      if (editingBoard) {
-         setBoardConfigs(prev => prev.map(b => b.id === editingBoard.id ? { ...b, name: newBoardName } : b));
-      } else {
-         const newId = `Board_${Date.now()}`;
-         setBoardConfigs(prev => [...prev, { id: newId, name: newBoardName }]);
-      }
+      const boardToSave = editingBoard
+         ? { ...editingBoard, name: newBoardName }
+         : { id: `Board_${Date.now()}`, name: newBoardName, categories: [] };
 
-      setIsBoardModalOpen(false);
-      setEditingBoard(null);
-      setNewBoardName('');
+      const success = await apiService.updateBoardConfig(boardToSave);
+      if (success) {
+         loadConfigs();
+         setIsBoardModalOpen(false);
+         setEditingBoard(null);
+         setNewBoardName('');
+      } else {
+         alert('저장에 실패했습니다.');
+      }
    };
 
-   const handleDeleteBoard = (boardId: string) => {
+   const handleDeleteBoard = async (boardId: string) => {
       if (!window.confirm('이 게시판을 삭제하시겠습니까? 연결된 모든 게시글 데이터 접근이 제한될 수 있습니다.')) return;
-      setBoardConfigs(prev => prev.filter(b => b.id !== boardId));
+      const success = await apiService.deleteBoardConfig(boardId);
+      if (success) {
+         loadConfigs();
+      } else {
+         alert('삭제에 실패했습니다.');
+      }
    };
 
    const handleDeletePost = async (postId: string) => {

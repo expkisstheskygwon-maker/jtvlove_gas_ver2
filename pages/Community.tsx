@@ -25,26 +25,36 @@ const Community: React.FC = () => {
       password: ''
    });
 
-   const [boards] = useState(() => {
-      const saved = localStorage.getItem('board_configs');
-      const baseBoards = saved ? JSON.parse(saved) : [
-         { id: 'Free Board', name: '커뮤니티' },
-         { id: 'JTV Review', name: '업소 리뷰' },
-         { id: 'CCA Review', name: 'CCA 리뷰' },
-         { id: 'Q&A Board', name: '질문 게시판' }
-      ];
+   const [boards, setBoards] = useState<any[]>([]);
 
-      // Add default categories for logic compatibility
-      return baseBoards.map((b: any) => ({
-         ...b,
-         categories: b.categories || (
-            b.id === 'Free Board' ? ['잡담', '정보', '모임', '질문', 'TEST1'] :
-               b.id === 'JTV Review' ? ['파사이', '말라떼', '퀘존', '마카티'] :
-                  b.id === 'CCA Review' ? ['Ace', 'Pro', 'Cute'] :
-                     b.id === 'Q&A Board' ? ['이용문의', '업소문의', '예약문의'] : ['일반']
-         )
-      }));
-   });
+   const loadBoards = async () => {
+      try {
+         const data = await apiService.getBoardConfigs();
+         const baseBoards = (data && data.length > 0) ? data : [
+            { id: 'Free Board', name: '커뮤니티' },
+            { id: 'JTV Review', name: '업소 리뷰' },
+            { id: 'CCA Review', name: 'CCA 리뷰' },
+            { id: 'Q&A Board', name: '질문 게시판' }
+         ];
+
+         const boardsWithDefaults = baseBoards.map((b: any) => ({
+            ...b,
+            categories: (b.categories && b.categories.length > 0) ? b.categories : (
+               b.id === 'Free Board' ? ['잡담', '정보', '모임', '질문', 'TEST1'] :
+                  b.id === 'JTV Review' ? ['파사이', '말라떼', '퀘존', '마카티'] :
+                     b.id === 'CCA Review' ? ['Ace', 'Pro', 'Cute'] :
+                        b.id === 'Q&A Board' ? ['이용문의', '업소문의', '예약문의'] : ['일반']
+            )
+         }));
+         setBoards(boardsWithDefaults);
+      } catch (error) {
+         console.error('loadBoards error:', error);
+      }
+   };
+
+   useEffect(() => {
+      loadBoards();
+   }, []);
 
    const currentBoard = boards.find((b: any) => b.id === boardId) || boards[0];
 

@@ -764,5 +764,43 @@ export const apiService = {
       console.error('getCCAHistory error:', error);
       return null;
     }
+  },
+
+  // Board Configs
+  async getBoardConfigs(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/board-configs`);
+      if (!response.ok) throw new Error('Failed to fetch board configs');
+      return await response.json();
+    } catch (error) {
+      console.error('getBoardConfigs error:', error);
+      return [];
+    }
+  },
+
+  async updateBoardConfig(data: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/board-configs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updateBoardConfig error:', error);
+      return false;
+    }
+  },
+
+  async deleteBoardConfig(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/board-configs?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteBoardConfig error:', error);
+      return false;
+    }
   }
 };

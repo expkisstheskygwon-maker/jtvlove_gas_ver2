@@ -320,3 +320,19 @@ CREATE TABLE IF NOT EXISTS cca_employment_history (
 -- Seed some sample employment history
 INSERT OR IGNORE INTO cca_employment_history (id, cca_id, venue_id, join_date, leave_date, status)
 VALUES ('eh1', 'c1', 'v1', '2023-01-01', NULL, 'active');
+
+-- 17. Board Configs Table (게시판/카테고리 설정)
+CREATE TABLE IF NOT EXISTS board_configs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  categories TEXT, -- JSON array string
+  display_order INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 초기 기본 게시판 설정 삽입
+INSERT OR IGNORE INTO board_configs (id, name, categories, display_order) VALUES 
+('Free Board', '커뮤니티', '["잡담", "정보", "모임", "질문", "TEST1"]', 1),
+('JTV Review', '업소 리뷰', '["파사이", "말라떼", "퀘존", "마카티"]', 2),
+('CCA Review', 'CCA 리뷰', '["Ace", "Pro", "Cute"]', 3),
+('Q&A Board', '질문 게시판', '["이용문의", "업소문의", "예약문의"]', 4);
