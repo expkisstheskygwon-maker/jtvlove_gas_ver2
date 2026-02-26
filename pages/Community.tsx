@@ -25,7 +25,12 @@ const Community: React.FC = () => {
       password: ''
    });
 
-   const [boards, setBoards] = useState<any[]>([]);
+   const [boards, setBoards] = useState<any[]>([
+      { id: 'Free Board', name: '커뮤니티', categories: ['잡담', '정보', '모임', '질문', 'TEST1'] },
+      { id: 'JTV Review', name: '업소 리뷰', categories: ['파사이', '말라떼', '퀘존', '마카티'] },
+      { id: 'CCA Review', name: 'CCA 리뷰', categories: ['Ace', 'Pro', 'Cute'] },
+      { id: 'Q&A Board', name: '질문 게시판', categories: ['이용문의', '업소문의', '예약문의'] }
+   ]);
 
    const loadBoards = async () => {
       try {
@@ -58,21 +63,14 @@ const Community: React.FC = () => {
 
    const currentBoard = boards.find((b: any) => b.id === boardId) || boards[0];
 
-   if (!currentBoard) {
-      return (
-         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-            <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Initializing Feed Node...</p>
-         </div>
-      );
-   }
-
    useEffect(() => {
-      const firstCategory = currentBoard?.categories?.[0] || '일반';
-      if (!activeCategory || !currentBoard?.categories?.includes(activeCategory)) {
-         setActiveCategory(firstCategory);
+      if (currentBoard) {
+         const firstCategory = currentBoard?.categories?.[0] || '일반';
+         if (!activeCategory || !currentBoard?.categories?.includes(activeCategory)) {
+            setActiveCategory(firstCategory);
+         }
+         setFormData(prev => ({ ...prev, category: firstCategory, board: boardId }));
       }
-      setFormData(prev => ({ ...prev, category: firstCategory, board: boardId }));
    }, [boardId, currentBoard]);
 
    const fetchPosts = async () => {
@@ -90,6 +88,15 @@ const Community: React.FC = () => {
    useEffect(() => {
       fetchPosts();
    }, [boardId, activeCategory]);
+
+   if (!currentBoard) {
+      return (
+         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+            <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Initializing Feed Node...</p>
+         </div>
+      );
+   }
 
    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -137,8 +144,13 @@ const Community: React.FC = () => {
 
    const formatDate = (dateStr?: string) => {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toISOString().split('T')[0];
+      try {
+         const date = new Date(dateStr.replace(/\./g, '-'));
+         if (isNaN(date.getTime())) return dateStr;
+         return date.toISOString().split('T')[0];
+      } catch (e) {
+         return dateStr || '';
+      }
    };
 
    return (

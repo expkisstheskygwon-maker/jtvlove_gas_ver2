@@ -164,7 +164,7 @@ const PostDetail: React.FC = () => {
                         {post.category || 'GENERAL'}
                      </span>
                      <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
-                        {new Date(post.created_at || Date.now()).toLocaleDateString()}
+                        {post.created_at ? new Date(post.created_at.replace(/\./g, '-')).toLocaleDateString() : (post.date ? post.date : 'DATE UNKNOWN')}
                      </span>
                   </div>
                   <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tight text-zinc-950 dark:text-white uppercase italic">
@@ -251,7 +251,9 @@ const PostDetail: React.FC = () => {
                               <div className="flex items-center justify-between">
                                  <div>
                                     <p className="font-black text-zinc-950 dark:text-white uppercase tracking-tight">{c.author}</p>
-                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{new Date(c.created_at).toLocaleString()}</p>
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                                       {c.created_at ? new Date(c.created_at.replace(/\./g, '-')).toLocaleString() : ''}
+                                    </p>
                                  </div>
                                  <div className="flex items-center gap-4">
                                     <button

@@ -1,5 +1,5 @@
-
 import { Venue, CCA, Post, HeroSection, MediaItem } from '../types';
+import { POSTS, CCAS, VENUES } from '../constants';
 
 /**
  * Cloudflare Pages Functions와 통신하기 위한 API 서비스
@@ -134,7 +134,6 @@ export const apiService = {
       return await response.json();
     } catch (error) {
       console.warn('Using mock data for ccas');
-      const { CCAS } = await import('../constants');
       return CCAS;
     }
   },
@@ -146,7 +145,6 @@ export const apiService = {
       return await response.json();
     } catch (error) {
       console.error('getCCAById error:', error);
-      const { CCAS } = await import('../constants');
       return CCAS.find(c => c.id === id) || null;
     }
   },
@@ -183,7 +181,6 @@ export const apiService = {
       if (!response.ok) throw new Error('Failed to fetch posts');
       return await response.json();
     } catch (error) {
-      const { POSTS } = await import('../constants');
       let data = board ? POSTS.filter(p => p.board === board) : POSTS;
       if (category && category !== '전체') {
         data = data.filter(p => p.category === category);
@@ -199,7 +196,6 @@ export const apiService = {
       const data = await response.json();
       return Array.isArray(data) ? data[0] : data;
     } catch (error) {
-      const { POSTS } = await import('../constants');
       return POSTS.find(p => p.id === id) || null;
     }
   },
