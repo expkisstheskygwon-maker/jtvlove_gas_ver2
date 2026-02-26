@@ -51,23 +51,36 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         try {
             const body = await request.json() as any;
             const {
-                venueId, ccaId, customer_name, reservation_date, reservation_time, customer_note, group_size
+                venueId, ccaId, ccaIds, customer_name, customer_contact, reservation_date, reservation_time, customer_note, group_size, table_id, room_id, status
             } = body;
 
-            if (!venueId || !ccaId || !customer_name || !reservation_date || !reservation_time) {
+            if (!venueId || !customer_name || !reservation_date || !reservation_time) {
                 return new Response(JSON.stringify({ error: "Required fields missing" }), {
                     status: 400,
                     headers: { "Content-Type": "application/json" },
                 });
             }
 
-            const id = `res_${Date.now()}`;
+            const id = body.id || `res_${Date.now()}`;
             await env.DB.prepare(`
                 INSERT INTO reservations (
-                    id, venue_id, cca_id, customer_name, reservation_date, reservation_time, customer_note, group_size, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)
+                    id, venue_id, cca_id, cca_ids, customer_name, customer_contact, reservation_date, reservation_time, customer_note, group_size, table_id, room_id, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
-                id, venueId, ccaId, customer_name, reservation_date, reservation_time, customer_note || '', group_size || 1, new Date().toISOString()
+                id,
+                venueId,
+                ccaId || (ccaIds && ccaIds[0]) || '',
+                JSON.stringify(ccaIds || []),
+                customer_name,
+                customer_contact || '',
+                reservation_date,
+                reservation_time,
+                customer_note || '',
+                group_size || 1,
+                table_id || '',
+                room_id || '',
+                status || 'confirmed',
+                new Date().toISOString()
             ).run();
 
             return new Response(JSON.stringify({ success: true, id }), {
@@ -81,21 +94,53 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         }
     }
 
-    // PATCH: 예약 상태 변경 (확정, 취소, 노쇼 등)
+    // PATCH: 예약 정보 업데이트 (상태, 배정 등 전체 업데이트 지원)
     if (request.method === "PATCH") {
         try {
-            const { id, status } = await request.json() as any;
+            const body = await request.json() as any;
+            const { id } = body;
 
-            if (!id || !status) {
-                return new Response(JSON.stringify({ error: "id and status are required" }), {
+            if (!id) {
+                return new Response(JSON.stringify({ error: "id is required" }), {
                     status: 400,
                     headers: { "Content-Type": "application/json" },
                 });
             }
 
-            await env.DB.prepare(
-                "UPDATE reservations SET status = ? WHERE id = ?"
-            ).bind(status, id).run();
+            // 필드별 동적 업데이트 (간소화된 방식)
+            const updates = [];
+            const params = [];
+
+            const fields = [
+                'status', 'customer_name', 'customer_contact', 'customer_note',
+                'group_size', 'table_id', 'room_id', 'reservation_date', 'reservation_time'
+            ];
+
+            for (const field of fields) {
+                if (body[field] !== undefined) {
+                    updates.push(`${field} = ?`);
+                    params.push(body[field]);
+                }
+            }
+
+            if (body.ccaIds !== undefined) {
+                updates.push(`cca_ids = ?`);
+                params.push(JSON.stringify(body.ccaIds));
+                updates.push(`cca_id = ?`);
+                params.push(body.ccaIds[0] || '');
+            }
+
+            if (updates.length === 0) {
+                return new Response(JSON.stringify({ error: "No fields to update" }), {
+                    status: 400,
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
+            params.push(id);
+            const query = `UPDATE reservations SET ${updates.join(', ')} WHERE id = ?`;
+
+            await env.DB.prepare(query).bind(...params).run();
 
             return new Response(JSON.stringify({ success: true }), {
                 headers: { "Content-Type": "application/json" },

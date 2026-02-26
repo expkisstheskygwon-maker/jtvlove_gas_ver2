@@ -73,20 +73,25 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE TABLE IF NOT EXISTS reservations (
   id TEXT PRIMARY KEY,
   venue_id TEXT,
-  cca_id TEXT,
+  cca_id TEXT, -- Main or first CCA
+  cca_ids TEXT, -- JSON array of CCA IDs
   customer_name TEXT NOT NULL,
+  customer_contact TEXT, -- Kakao, FB, Telegram, Phone etc.
   reservation_time TEXT,
   reservation_date TEXT,
   customer_note TEXT,
   group_size INTEGER DEFAULT 1,
-  status TEXT DEFAULT 'pending',
+  table_id TEXT,
+  room_id TEXT,
+  status TEXT DEFAULT 'pending', -- pending, confirmed, cancelled, no_show, request_change
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Note: If tables already exist, run these manual updates:
--- ALTER TABLE reservations ADD COLUMN customer_note TEXT;
--- ALTER TABLE reservations ADD COLUMN group_size INTEGER DEFAULT 1;
--- ALTER TABLE reservations ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+-- ALTER TABLE reservations ADD COLUMN customer_contact TEXT;
+-- ALTER TABLE reservations ADD COLUMN table_id TEXT;
+-- ALTER TABLE reservations ADD COLUMN room_id TEXT;
+-- ALTER TABLE reservations ADD COLUMN cca_ids TEXT;
 
 -- 5. Site Settings Table
 CREATE TABLE IF NOT EXISTS site_settings (

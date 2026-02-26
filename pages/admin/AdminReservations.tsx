@@ -23,6 +23,7 @@ const AdminReservations: React.FC = () => {
   const [newRes, setNewRes] = useState<Partial<Reservation>>({
     time: '19:00',
     customerName: '',
+    customerContact: '',
     customerNote: '',
     groupSize: 1,
     ccaIds: [],
@@ -171,12 +172,16 @@ const AdminReservations: React.FC = () => {
     try {
       const apiData = {
         venueId: 'v1',
-        ccaId: newRes.ccaIds?.[0] || 'c1',
+        ccaIds: newRes.ccaIds || [],
         customer_name: newRes.customerName as string,
+        customer_contact: newRes.customerContact || '',
         customer_note: newRes.customerNote || '',
         reservation_date: selectedDate,
         reservation_time: newRes.time as string || '19:00',
-        group_size: newRes.groupSize || 1
+        group_size: newRes.groupSize || 1,
+        table_id: newRes.tableId,
+        room_id: newRes.roomId,
+        status: 'confirmed'
       };
 
       const success = await apiService.createCCAReservation(apiData);
@@ -204,6 +209,7 @@ const AdminReservations: React.FC = () => {
         setNewRes({
           time: '19:00',
           customerName: '',
+          customerContact: '',
           customerNote: '',
           groupSize: 1,
           ccaIds: [],
@@ -217,6 +223,42 @@ const AdminReservations: React.FC = () => {
     } catch (err) {
       console.error("Error creating reservation:", err);
       alert("예약 생성 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, status: any) => {
+    try {
+      const success = await apiService.updateCCAReservationStatus(id, status);
+      if (success) {
+        setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      } else {
+        alert("상태 변경에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("오류가 발생했습니다.");
+    }
+  };
+
+  const handleUpdateControl = async (res: Reservation) => {
+    try {
+      const updates = {
+        table_id: res.tableId,
+        room_id: res.roomId,
+        group_size: res.groupSize,
+        status: res.status,
+        ccaIds: res.ccaIds
+      };
+      const success = await apiService.updateCCAReservation(res.id, updates);
+      if (success) {
+        alert("업데이트 되었습니다.");
+        loadData();
+      } else {
+        alert("업데이트에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("오류가 발생했습니다.");
     }
   };
 
@@ -448,12 +490,44 @@ const AdminReservations: React.FC = () => {
                         <div>
                           <h5 className="text-2xl font-black text-white">{res.customerName} <span className="text-primary/50 text-sm italic font-bold">({res.groupSize} Guests)</span></h5>
                           <p className="text-[10px] font-black text-gray-400 mt-2 uppercase tracking-widest flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[14px]">location_on</span>
-                            {res.roomId ? res.roomName : res.tableName || 'Pending Assignment'}
+                            <span className="material-symbols-outlined text-[14px]">call</span>
+                            {res.customerContact || 'No Contact Info'}
                           </p>
+                          <div className="mt-4 flex items-center gap-3">
+                            <select
+                              value={res.tableId ? `table:${res.tableId}` : res.roomId ? `room:${res.roomId}` : ''}
+                              onChange={(e) => {
+                                const [type, id] = e.target.value.split(':');
+                                setReservations(prev => prev.map(r => r.id === res.id ? { ...r, tableId: type === 'table' ? id : '', roomId: type === 'room' ? id : '' } : r));
+                              }}
+                              className="bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white outline-none focus:border-primary"
+                            >
+                              <option value="">Pending Assignment</option>
+                              {ensureArray(venue?.tables).map((t: any) => <option key={t.id} value={`table:${t.id}`}>Table: {t.name}</option>)}
+                              {ensureArray(venue?.rooms).map((r: any) => <option key={r.id} value={`room:${r.id}`}>Room: {r.name}</option>)}
+                            </select>
+                            <input
+                              type="number"
+                              value={res.groupSize}
+                              onChange={(e) => setReservations(prev => prev.map(r => r.id === res.id ? { ...r, groupSize: parseInt(e.target.value) || 1 } : r))}
+                              className="w-16 bg-black/50 border border-white/10 rounded-xl px-2 py-2 text-[10px] font-bold text-white text-center"
+                              placeholder="Size"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div><span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${res.status === 'confirmed' ? 'bg-green-500 text-white' : 'bg-primary text-[#1b180d]'}`}>{res.status}</span></div>
+                      <div className="flex flex-col gap-2">
+                        <select
+                          value={res.status}
+                          onChange={(e) => handleUpdateStatus(res.id, e.target.value)}
+                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border-none cursor-pointer ${res.status === 'confirmed' ? 'bg-green-500 text-white' : res.status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-primary text-[#1b180d]'}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="cancelled">Cancelled</option>
+                          <option value="no_show">No Show</option>
+                        </select>
+                      </div>
                     </div>
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -473,8 +547,12 @@ const AdminReservations: React.FC = () => {
                     </div>
                     {res.customerNote && <div className="p-6 rounded-2xl bg-primary/5 border-l-2 border-primary italic text-gray-500 text-xs leading-relaxed">"{res.customerNote}"</div>}
                     <div className="flex justify-end gap-3">
-                      <button className="px-6 py-3 rounded-xl border border-red-500/20 text-red-500 font-black text-[9px] uppercase hover:bg-red-500 hover:text-white transition-all">Cancel</button>
-                      <button className="px-6 py-3 rounded-xl bg-primary text-[#1b180d] font-black text-[9px] uppercase hover:scale-105 transition-all">Update Control</button>
+                      <button
+                        onClick={() => handleUpdateStatus(res.id, 'cancelled')}
+                        className="px-6 py-3 rounded-xl border border-red-500/20 text-red-500 font-black text-[9px] uppercase hover:bg-red-500 hover:text-white transition-all">Cancel</button>
+                      <button
+                        onClick={() => handleUpdateControl(res)}
+                        className="px-6 py-3 rounded-xl bg-primary text-[#1b180d] font-black text-[9px] uppercase hover:scale-105 transition-all">Update Control</button>
                     </div>
                   </div>
                 ))}
@@ -511,6 +589,7 @@ const AdminReservations: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-8">
                     <div className="space-y-3"><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Customer Name</label><input type="text" value={newRes.customerName} onChange={(e) => setNewRes({ ...newRes, customerName: e.target.value })} placeholder="e.g. Mr. Smith" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all" /></div>
+                    <div className="space-y-3"><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Contact Info (Kakao, FB, TG, Phone)</label><input type="text" value={newRes.customerContact} onChange={(e) => setNewRes({ ...newRes, customerContact: e.target.value })} placeholder="e.g. Kakao: ID123, Phone: 0917..." className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all" /></div>
                     <div className="grid grid-cols-2 gap-6"><div className="space-y-3"><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Guests</label><input type="number" min="1" value={newRes.groupSize} onChange={(e) => setNewRes({ ...newRes, groupSize: parseInt(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all" /></div><div className="space-y-3"><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Selected Time</label><select value={newRes.time} onChange={(e) => setNewRes({ ...newRes, time: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all appearance-none" >{timeSlots.map(t => <option key={t} value={t} className="bg-[#1b180d]">{t}</option>)}</select></div></div>
                     <div className="space-y-3"><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Table / Room</label><select onChange={(e) => { const [type, id] = e.target.value.split(':'); setNewRes({ ...newRes, tableId: type === 'table' ? id : '', roomId: type === 'room' ? id : '' }); }} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-primary outline-none transition-all appearance-none" ><option value="">Standby / Not Assigned</option>
                       {ensureArray(venue?.tables).map((t: any) => <option key={t.id} value={`table:${t.id}`} className="bg-[#1b180d]">Table: {t.name}</option>)}

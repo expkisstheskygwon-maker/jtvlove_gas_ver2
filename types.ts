@@ -118,6 +118,7 @@ export interface Reservation {
   ccaIds?: string[];
   ccaName?: string;
   customerName: string;
+  customerContact?: string;
   customerNote: string;
   customerGrade?: CustomerGrade;
   groupSize: number;

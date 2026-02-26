@@ -424,14 +424,18 @@ export const apiService = {
       if (month) url += `&month=${encodeURIComponent(month)}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch cca reservations');
-      return await response.json();
+      const data = await response.json();
+      return data.map((r: any) => ({
+        ...r,
+        ccaIds: r.cca_ids ? JSON.parse(r.cca_ids) : []
+      }));
     } catch (error) {
       console.error('getCCAReservations error:', error);
       return [];
     }
   },
 
-  async createCCAReservation(data: { venueId: string; ccaId: string; customer_name: string; reservation_date: string; reservation_time: string; customer_note?: string }): Promise<boolean> {
+  async createCCAReservation(data: any): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE}/cca-portal/reservations`, {
         method: 'POST',
@@ -445,18 +449,22 @@ export const apiService = {
     }
   },
 
-  async updateCCAReservationStatus(id: string, status: string): Promise<boolean> {
+  async updateCCAReservation(id: string, updates: any): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE}/cca-portal/reservations`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, ...updates }),
       });
       return response.ok;
     } catch (error) {
-      console.error('updateCCAReservationStatus error:', error);
+      console.error('updateCCAReservation error:', error);
       return false;
     }
+  },
+
+  async updateCCAReservationStatus(id: string, status: string): Promise<boolean> {
+    return this.updateCCAReservation(id, { status });
   },
 
   // CCA Portal Messages
