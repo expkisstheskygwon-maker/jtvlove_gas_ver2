@@ -32,6 +32,15 @@ interface TableRoomItem {
    remarks: string;
 }
 
+const TIME_OPTIONS = Array.from({ length: 24 }).map((_, h) => {
+   const ampm = h < 12 ? '오전' : '오후';
+   let displayHour = h % 12;
+   if (displayHour === 0) displayHour = 12;
+   const value = `${h.toString().padStart(2, '0')}:00`;
+   const label = `${ampm} ${displayHour.toString().padStart(2, '0')}:00`;
+   return { value, label };
+});
+
 const AdminProfile: React.FC = () => {
    const [isLoading, setIsLoading] = useState(true);
    const [activeTab, setActiveTab] = useState('basic');
@@ -97,8 +106,8 @@ const AdminProfile: React.FC = () => {
             name: data.name || '',
             region: data.region || 'MANILA',
             phone: data.phone || '',
-            openTime: data.operating_hours?.open || '',
-            closeTime: data.operating_hours?.close || '',
+            openTime: data.operating_hours?.open ? (data.operating_hours.open.split(':')[0] + ':00') : '19:00',
+            closeTime: data.operating_hours?.close ? (data.operating_hours.close.split(':')[0] + ':00') : '02:00',
             address: data.address || '',
             introduction: data.introduction || '',
             sns: {
@@ -418,21 +427,27 @@ const AdminProfile: React.FC = () => {
                      <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Open Time</label>
-                           <input
-                              type="time"
+                           <select
                               value={basicInfo.openTime}
                               onChange={e => setBasicInfo({ ...basicInfo, openTime: e.target.value })}
-                              className="bg-gray-50 dark:bg-zinc-950 border-none rounded-xl px-4 py-3 font-bold text-sm focus:ring-2 focus:ring-primary/20"
-                           />
+                              className="bg-gray-50 dark:bg-zinc-950 border-none rounded-xl px-4 py-3 font-bold text-sm focus:ring-2 focus:ring-primary/20 appearance-none"
+                           >
+                              {TIME_OPTIONS.map(opt => (
+                                 <option key={opt.value} value={opt.value} className="dark:bg-zinc-900">{opt.label}</option>
+                              ))}
+                           </select>
                         </div>
                         <div className="flex flex-col gap-2">
                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Close Time</label>
-                           <input
-                              type="time"
+                           <select
                               value={basicInfo.closeTime}
                               onChange={e => setBasicInfo({ ...basicInfo, closeTime: e.target.value })}
-                              className="bg-gray-50 dark:bg-zinc-950 border-none rounded-xl px-4 py-3 font-bold text-sm focus:ring-2 focus:ring-primary/20"
-                           />
+                              className="bg-gray-50 dark:bg-zinc-950 border-none rounded-xl px-4 py-3 font-bold text-sm focus:ring-2 focus:ring-primary/20 appearance-none"
+                           >
+                              {TIME_OPTIONS.map(opt => (
+                                 <option key={opt.value} value={opt.value} className="dark:bg-zinc-900">{opt.label}</option>
+                              ))}
+                           </select>
                         </div>
                      </div>
                      <div className="flex flex-col gap-2">
