@@ -49,20 +49,37 @@ const AdminReservations: React.FC = () => {
 
       // Attempt to load reservations from API
       try {
-        const resData = await apiService.getCCAReservations('c1'); // Proxy call
-        if (resData && Array.isArray(resData) && resData.length > 0) {
-          const formatted = resData.map((r: any) => ({
-            id: r.id || `res-${Math.random()}`,
-            venueId: r.venue_id || 'v1',
-            ccaId: r.cca_id,
-            customerName: r.customer_name || 'Guest',
-            customerNote: r.customer_note || '',
-            groupSize: r.group_size || 1,
-            time: r.reservation_time || '19:00',
-            date: r.reservation_date,
-            status: r.status || 'confirmed',
-            shortMessage: r.customer_name || 'Reservation'
-          }));
+        const resData = await apiService.getCCAReservations('c1');
+        if (resData && Array.isArray(resData)) {
+          const now = new Date();
+          const formatted = resData.map((r: any) => {
+            let status = r.status || 'pending';
+            const resDate = getSlotDateTime(r.reservation_date, r.reservation_time);
+
+            // Auto transitions (Only if not already in terminal status)
+            if (status === 'pending' && now > resDate) {
+              status = 'missed';
+            } else if (status === 'confirmed' && now.getTime() > resDate.getTime() + 3600000) {
+              status = 'no_show';
+            }
+
+            return {
+              id: r.id || `res-${Math.random()}`,
+              venueId: r.venue_id || 'v1',
+              ccaId: r.cca_id,
+              ccaIds: r.ccaIds || [],
+              customerName: r.customer_name || 'Guest',
+              customerContact: r.customer_contact || '',
+              customerNote: r.customer_note || '',
+              groupSize: r.group_size || 1,
+              time: r.reservation_time || '19:00',
+              date: r.reservation_date,
+              status: status,
+              tableId: r.table_id || '',
+              roomId: r.room_id || '',
+              shortMessage: r.customer_name || 'Reservation'
+            };
+          });
           setReservations(formatted);
         }
       } catch (resErr) {
@@ -119,6 +136,16 @@ const AdminReservations: React.FC = () => {
       case 'late': return 'bg-red-500 text-white';
       default: return 'bg-gray-100 dark:bg-white/5 text-gray-500';
     }
+  };
+
+  const getSlotDateTime = (dateStr: string, slotTime: string) => {
+    const [h, m] = slotTime.split(':').map(Number);
+    const d = new Date(dateStr);
+    d.setHours(h, m, 0, 0);
+    // If hour is early morning (0-6), it likely belongs to the "business night" of the previous day
+    // But since selectedDate is already the date, we just need to handle the wrap for comparison
+    if (h < 10) d.setDate(d.getDate() + 1);
+    return d;
   };
 
   // --- Time Slot Generation ---
@@ -418,33 +445,48 @@ const AdminReservations: React.FC = () => {
             const requestCount = slotReservations.reduce((acc, r) => acc + (r.ccaIds?.length || (r.ccaId ? 1 : 0)), 0);
             const tableRoomCount = slotReservations.filter(r => r.tableId || r.roomId).length;
             const hasBookings = slotReservations.length > 0;
+            const isAfter = new Date() > getSlotDateTime(selectedDate, time);
 
             return (
               <motion.div layout key={time} className={`group flex items-stretch bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden border-2 transition-all duration-300 ${hasBookings ? 'border-primary/30 shadow-xl' : 'border-primary/5 opacity-70 hover:opacity-100 hover:border-primary/20'}`}>
                 <div className={`w-24 md:w-36 flex flex-col items-center justify-center p-6 ${hasBookings ? 'bg-primary text-[#1b180d]' : 'bg-gray-50 dark:bg-zinc-950 text-gray-400'}`}>
                   <span className="text-xl md:text-3xl font-black">{time}</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest mt-1 opacity-60">{hasBookings ? 'Booked' : 'Free'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest mt-1 opacity-60">{hasBookings ? (isAfter ? 'Finished' : 'Booked') : 'Free'}</span>
                 </div>
                 <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
                   {hasBookings ? (
                     <>
-                      <div className="flex-1 grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Requested Staff</p>
-                          <p className="text-sm font-black text-[#1b180d] dark:text-white flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[16px] text-primary">groups</span>
-                            REQUEST: {requestCount}
+                      <div className="flex-1 grid grid-cols-3 gap-0 border-x border-primary/5">
+                        <div className="px-4 border-r border-primary/5 text-center">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{isAfter ? 'Check-in' : 'Confirmed'}</p>
+                          <p className={`text-xl font-black ${isAfter ? 'text-green-500' : 'text-[#1b180d] dark:text-white'}`}>
+                            {slotReservations.filter(r => r.status === (isAfter ? 'check_in' : 'confirmed')).length}
                           </p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Floor Space</p>
-                          <p className="text-sm font-black text-[#1b180d] dark:text-white flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[16px] text-primary">chair</span>
-                            T/R: {tableRoomCount}
+                        <div className="px-4 border-r border-primary/5 text-center">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{isAfter ? 'No-show' : 'Pending'}</p>
+                          <p className={`text-xl font-black ${isAfter ? 'text-red-400' : 'text-primary'}`}>
+                            {slotReservations.filter(r => r.status === (isAfter ? 'no_show' : 'pending')).length}
+                          </p>
+                        </div>
+                        <div className="px-4 text-center">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Cancelled</p>
+                          <p className="text-xl font-black text-gray-400">
+                            {slotReservations.filter(r => r.status === 'cancelled').length}
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => setShowManagePopup(time)} className="px-6 py-4 bg-[#1b180d] dark:bg-white/5 dark:hover:bg-primary dark:hover:text-[#1b180d] text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 whitespace-nowrap">Details</button>
+                      <div className="flex items-center gap-6 px-4">
+                        <div className="text-center">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Space (T/R)</p>
+                          <p className="text-sm font-black text-white">{tableRoomCount}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">CCA Req</p>
+                          <p className="text-sm font-black text-primary">{requestCount}</p>
+                        </div>
+                        <button onClick={() => setShowManagePopup(time)} className="ml-4 px-6 py-4 bg-[#1b180d] dark:bg-white/5 dark:hover:bg-primary dark:hover:text-[#1b180d] text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 whitespace-nowrap">Details</button>
+                      </div>
                     </>
                   ) : (
                     <div className="flex-1 flex items-center justify-between text-gray-300 dark:text-zinc-700 italic px-4">
@@ -517,16 +559,26 @@ const AdminReservations: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <select
-                          value={res.status}
-                          onChange={(e) => handleUpdateStatus(res.id, e.target.value)}
-                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border-none cursor-pointer ${res.status === 'confirmed' ? 'bg-green-500 text-white' : res.status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-primary text-[#1b180d]'}`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="cancelled">Cancelled</option>
-                          <option value="no_show">No Show</option>
-                        </select>
+                        <div className="flex gap-2">
+                          {res.status !== 'check_in' && res.status !== 'cancelled' && (
+                            <button
+                              onClick={() => handleUpdateStatus(res.id, 'check_in')}
+                              className="px-4 py-2 rounded-xl bg-green-500 text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
+                            >Check In</button>
+                          )}
+                          <select
+                            value={res.status}
+                            onChange={(e) => handleUpdateStatus(res.id, e.target.value)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border-none cursor-pointer ${res.status === 'check_in' || res.status === 'confirmed' ? 'bg-green-500 text-white' : res.status === 'cancelled' || res.status === 'no_show' ? 'bg-red-500 text-white' : 'bg-primary text-[#1b180d]'}`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="check_in">Checked In</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="no_show">No Show</option>
+                            <option value="missed">Missed</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                     <div className="space-y-4">
@@ -547,9 +599,11 @@ const AdminReservations: React.FC = () => {
                     </div>
                     {res.customerNote && <div className="p-6 rounded-2xl bg-primary/5 border-l-2 border-primary italic text-gray-500 text-xs leading-relaxed">"{res.customerNote}"</div>}
                     <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => handleUpdateStatus(res.id, 'cancelled')}
-                        className="px-6 py-3 rounded-xl border border-red-500/20 text-red-500 font-black text-[9px] uppercase hover:bg-red-500 hover:text-white transition-all">Cancel</button>
+                      {(new Date() < getSlotDateTime(res.date, res.time) || res.status === 'pending') && (
+                        <button
+                          onClick={() => handleUpdateStatus(res.id, 'cancelled')}
+                          className="px-6 py-3 rounded-xl border border-red-500/20 text-red-500 font-black text-[9px] uppercase hover:bg-red-500 hover:text-white transition-all">Cancel</button>
+                      )}
                       <button
                         onClick={() => handleUpdateControl(res)}
                         className="px-6 py-3 rounded-xl bg-primary text-[#1b180d] font-black text-[9px] uppercase hover:scale-105 transition-all">Update Control</button>

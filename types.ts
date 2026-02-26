@@ -125,7 +125,7 @@ export interface Reservation {
   time: string;
   endTime?: string;
   date: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'no_show' | 'request_change';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'no_show' | 'request_change' | 'check_in' | 'missed';
   shortMessage: string;
   tableId?: string;
   roomId?: string;
