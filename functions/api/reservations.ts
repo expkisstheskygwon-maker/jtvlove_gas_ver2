@@ -6,15 +6,15 @@ interface Env {
   DB: D1Database;
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost: PagesFunction<Env> = async (context: any) => {
   const { env, request } = context;
-  
+
   try {
     const data: any = await request.json();
     const id = crypto.randomUUID();
 
     await env.DB.prepare(
-      "INSERT INTO reservations (id, venue_id, cca_id, customer_name, reservation_time, reservation_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO reservations (id, venue_id, cca_id, customer_name, reservation_time, reservation_date, customer_note, group_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ).bind(
       id,
       data.venueId,
@@ -22,7 +22,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       data.customerName,
       data.time,
       data.date,
-      'pending'
+      data.customerNote || '',
+      data.groupSize || 1,
+      'pending',
+      new Date().toISOString()
     ).run();
 
     return new Response(JSON.stringify({ success: true, id }), {

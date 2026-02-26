@@ -77,8 +77,16 @@ CREATE TABLE IF NOT EXISTS reservations (
   customer_name TEXT NOT NULL,
   reservation_time TEXT,
   reservation_date TEXT,
-  status TEXT DEFAULT 'pending'
+  customer_note TEXT,
+  group_size INTEGER DEFAULT 1,
+  status TEXT DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Note: If tables already exist, run these manual updates:
+-- ALTER TABLE reservations ADD COLUMN customer_note TEXT;
+-- ALTER TABLE reservations ADD COLUMN group_size INTEGER DEFAULT 1;
+-- ALTER TABLE reservations ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
 
 -- 5. Site Settings Table
 CREATE TABLE IF NOT EXISTS site_settings (

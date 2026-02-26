@@ -51,7 +51,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         try {
             const body = await request.json() as any;
             const {
-                venueId, ccaId, customer_name, reservation_date, reservation_time, customer_note
+                venueId, ccaId, customer_name, reservation_date, reservation_time, customer_note, group_size
             } = body;
 
             if (!venueId || !ccaId || !customer_name || !reservation_date || !reservation_time) {
@@ -64,10 +64,10 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             const id = `res_${Date.now()}`;
             await env.DB.prepare(`
                 INSERT INTO reservations (
-                    id, venue_id, cca_id, customer_name, reservation_date, reservation_time, customer_note, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)
+                    id, venue_id, cca_id, customer_name, reservation_date, reservation_time, customer_note, group_size, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)
             `).bind(
-                id, venueId, ccaId, customer_name, reservation_date, reservation_time, customer_note || '', new Date().toISOString()
+                id, venueId, ccaId, customer_name, reservation_date, reservation_time, customer_note || '', group_size || 1, new Date().toISOString()
             ).run();
 
             return new Response(JSON.stringify({ success: true, id }), {
