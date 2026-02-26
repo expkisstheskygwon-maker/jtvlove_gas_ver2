@@ -25,14 +25,28 @@ const Community: React.FC = () => {
       password: ''
    });
 
-   const boards = [
-      { id: 'Free Board', name: '커뮤니티', categories: ['잡담', '정보', '모임', '질문', 'TEST1'] },
-      { id: 'JTV Review', name: '업소 리뷰', categories: ['파사이', '말라떼', '퀘존', '마카티'] },
-      { id: 'CCA Review', name: 'CCA 리뷰', categories: ['Ace', 'Pro', 'Cute'] },
-      { id: 'Q&A Board', name: '질문 게시판', categories: ['이용문의', '업소문의', '예약문의'] }
-   ];
+   const [boards] = useState(() => {
+      const saved = localStorage.getItem('board_configs');
+      const baseBoards = saved ? JSON.parse(saved) : [
+         { id: 'Free Board', name: '커뮤니티' },
+         { id: 'JTV Review', name: '업소 리뷰' },
+         { id: 'CCA Review', name: 'CCA 리뷰' },
+         { id: 'Q&A Board', name: '질문 게시판' }
+      ];
 
-   const currentBoard = boards.find(b => b.id === boardId) || boards[0];
+      // Add default categories for logic compatibility
+      return baseBoards.map((b: any) => ({
+         ...b,
+         categories: b.categories || (
+            b.id === 'Free Board' ? ['잡담', '정보', '모임', '질문', 'TEST1'] :
+               b.id === 'JTV Review' ? ['파사이', '말라떼', '퀘존', '마카티'] :
+                  b.id === 'CCA Review' ? ['Ace', 'Pro', 'Cute'] :
+                     b.id === 'Q&A Board' ? ['이용문의', '업소문의', '예약문의'] : ['일반']
+         )
+      }));
+   });
+
+   const currentBoard = boards.find((b: any) => b.id === boardId) || boards[0];
 
    useEffect(() => {
       if (currentBoard) {
@@ -88,7 +102,7 @@ const Community: React.FC = () => {
             setFormData({
                title: '',
                board: boardId,
-               category: currentBoard.categories.find(c => c !== '전체') || '일반',
+               category: currentBoard.categories.find((c: string) => c !== '전체') || '일반',
                content: '',
                image: '',
                is_secret: false,
@@ -131,7 +145,7 @@ const Community: React.FC = () => {
          {/* Navigation & Search Panel */}
          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
             <div className="flex flex-wrap gap-1 bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-white/5">
-               {currentBoard.categories.map(cat => (
+               {currentBoard.categories.map((cat: string) => (
                   <button
                      key={cat}
                      onClick={() => setActiveCategory(cat)}
@@ -274,7 +288,7 @@ const Community: React.FC = () => {
                               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                               className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
                            >
-                              {currentBoard.categories.filter(c => c !== '전체').map(c => <option key={c} value={c}>{c}</option>)}
+                              {currentBoard.categories.filter((c: string) => c !== '전체').map((c: string) => <option key={c} value={c}>{c}</option>)}
                            </select>
                         </div>
                         <div className="flex-1 space-y-2">

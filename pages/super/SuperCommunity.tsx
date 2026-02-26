@@ -83,6 +83,11 @@ const SuperCommunity: React.FC = () => {
       setNewBoardName('');
    };
 
+   const handleDeleteBoard = (boardId: string) => {
+      if (!window.confirm('이 게시판을 삭제하시겠습니까? 연결된 모든 게시글 데이터 접근이 제한될 수 있습니다.')) return;
+      setBoardConfigs(prev => prev.filter(b => b.id !== boardId));
+   };
+
    const handleDeletePost = async (postId: string) => {
       if (!window.confirm('관리자 권한으로 이 게시물을 즉시 삭제하시겠습니까?')) return;
       const success = await apiService.deletePost(postId);
@@ -127,7 +132,10 @@ const SuperCommunity: React.FC = () => {
                   <span className="material-symbols-outlined text-sm">settings_backup_restore</span>
                   Rebuild Cache
                </button>
-               <button className="px-8 py-4 bg-red-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all">
+               <button
+                  onClick={() => { setEditingBoard(null); setNewBoardName(''); setIsBoardModalOpen(true); }}
+                  className="px-8 py-4 bg-red-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all text-white"
+               >
                   Create New Board
                </button>
             </div>
@@ -156,8 +164,16 @@ const SuperCommunity: React.FC = () => {
                                        setIsBoardModalOpen(true);
                                     }}
                                     className="size-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                    title="Rename Board"
                                  >
                                     <span className="material-symbols-outlined text-sm text-gray-400">edit</span>
+                                 </button>
+                                 <button
+                                    onClick={() => handleDeleteBoard(board.id)}
+                                    className="size-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-red-500/20 transition-colors group/delboard"
+                                    title="Delete Board"
+                                 >
+                                    <span className="material-symbols-outlined text-sm text-gray-400 group-hover/delboard:text-red-500">delete</span>
                                  </button>
                               </div>
                               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-5 opacity-50">{board.id}</p>
@@ -225,9 +241,12 @@ const SuperCommunity: React.FC = () => {
                      </div>
 
                      <div className="bg-zinc-950/50 p-6 flex gap-4 border-t border-white/5">
-                        <button className="flex-1 py-4 bg-zinc-900/50 border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+                        <button
+                           onClick={() => window.open(`/#/community?board=${board.id}`, '_blank')}
+                           className="flex-1 py-4 bg-zinc-900/50 border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
+                        >
                            <span className="material-symbols-outlined text-sm text-gray-500">article</span>
-                           All Posts
+                           View on Site
                         </button>
                         <button className="flex-1 py-4 bg-zinc-900/50 border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 text-primary">
                            <span className="material-symbols-outlined text-sm">settings</span>
