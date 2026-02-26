@@ -282,10 +282,10 @@ const Community: React.FC = () => {
                                        </span>
                                     )}
                                     <span className={`text-sm font-bold group-hover:text-primary transition-colors flex items-center gap-2 ${post.is_secret ? 'text-gray-400' : 'text-zinc-950 dark:text-white'}`}>
-                                       {post.is_secret && <span className="material-symbols-outlined text-base">lock</span>}
+                                       {!!post.is_secret && <span className="material-symbols-outlined text-base">lock</span>}
                                        {post.is_secret ? '비밀글입니다.' : post.title}
                                     </span>
-                                    {post.commentsCount && post.commentsCount > 0 && (
+                                    {post.commentsCount !== undefined && post.commentsCount > 0 && (
                                        <span className="text-[10px] font-black text-primary px-1.5 py-0.5 bg-primary/10 rounded-full">+{post.commentsCount}</span>
                                     )}
                                     {post.image && <span className="material-symbols-outlined text-base text-gray-300 group-hover:text-primary transition-colors">image</span>}
