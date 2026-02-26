@@ -171,3 +171,24 @@ export interface HeroSection {
   imageUrl: string;
   displayOrder: number;
 }
+
+export interface PointCategory {
+  id: string;
+  venue_id: string;
+  name: string;
+  amount: number;
+  type: 'point' | 'penalty';
+}
+
+export interface PointLog {
+  id: string;
+  cca_id: string;
+  category_id?: string;
+  name: string;
+  amount: number;
+  quantity: number;
+  total: number;
+  description: string;
+  log_date: string;
+  created_at: string;
+}

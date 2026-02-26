@@ -244,3 +244,36 @@ VALUES
   ('r10', 'v1', 'c1', 'Lee Manager', '20:00', '2026-02-25', 'confirmed'),
   ('r11', 'v1', 'c1', 'Mr. Tanaka', '21:30', '2026-02-25', 'pending'),
   ('r12', 'v1', 'c1', 'Kim Director', '22:00', '2026-02-25', 'confirmed');
+
+-- 14. CCA Point Categories (업장별 포인트/패널티 설정)
+CREATE TABLE IF NOT EXISTS cca_point_categories (
+  id TEXT PRIMARY KEY,
+  venue_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  amount REAL NOT NULL, -- 단위 금액 (Pesos)
+  type TEXT DEFAULT 'point', -- 'point' (지급), 'penalty' (공제)
+  FOREIGN KEY (venue_id) REFERENCES venues(id)
+);
+
+-- 15. CCA Point Logs (개별 포인트 발생 기록)
+CREATE TABLE IF NOT EXISTS cca_point_logs (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  category_id TEXT, -- 설정된 카테고리 참조 (삭제 시에도 기록 보존을 위해 ID만 보관)
+  name TEXT NOT NULL, -- 카테고리 이름 백업
+  amount REAL NOT NULL, -- 단위 금액 백업
+  quantity INTEGER DEFAULT 1,
+  total REAL NOT NULL, -- amount * quantity (자동 계산 또는 입력)
+  description TEXT, -- 특이사항
+  log_date TEXT NOT NULL, -- 날짜/시간 (YYYY-MM-DD HH:mm)
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cca_id) REFERENCES ccas(id)
+);
+
+-- 초기 샘플 카테고리
+INSERT OR IGNORE INTO cca_point_categories (id, venue_id, name, amount, type)
+VALUES 
+  ('pc1', 'v1', 'Booking Point', 100, 'point'),
+  ('pc2', 'v1', 'Overtime', 150, 'point'),
+  ('pc3', 'v1', 'Late Arrival', 200, 'penalty'),
+  ('pc4', 'v1', 'Absent without notice', 500, 'penalty');

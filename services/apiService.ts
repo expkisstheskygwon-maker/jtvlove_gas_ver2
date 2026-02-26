@@ -492,4 +492,81 @@ export const apiService = {
       return false;
     }
   },
+
+  // Admin Staff & Points Management
+  async getCCAPointCategories(venueId: string = 'v1'): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/admin/cca-point-categories?venueId=${encodeURIComponent(venueId)}`);
+      return response.ok ? await response.json() : [];
+    } catch (error) {
+      console.error('getCCAPointCategories error:', error);
+      return [];
+    }
+  },
+
+  async saveCCAPointCategory(data: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/admin/cca-point-categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('saveCCAPointCategory error:', error);
+      return false;
+    }
+  },
+
+  async deleteCCAPointCategory(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/admin/cca-point-categories`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteCCAPointCategory error:', error);
+      return false;
+    }
+  },
+
+  async getCCAPointLogs(ccaId: string): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/admin/cca-point-logs?ccaId=${encodeURIComponent(ccaId)}`);
+      return response.ok ? await response.json() : [];
+    } catch (error) {
+      console.error('getCCAPointLogs error:', error);
+      return [];
+    }
+  },
+
+  async addCCAPointLog(data: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/admin/cca-point-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('addCCAPointLog error:', error);
+      return false;
+    }
+  },
+
+  async deleteCCAPointLog(params: { id: string, ccaId: string, total: number, type: 'point' | 'penalty' }): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/admin/cca-point-logs`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteCCAPointLog error:', error);
+      return false;
+    }
+  }
 };
