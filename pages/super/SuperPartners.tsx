@@ -18,6 +18,7 @@ const SuperPartners: React.FC = () => {
 
    // Detail Edit State
    const [editForm, setEditForm] = useState<any>({});
+   const [isCreateMode, setIsCreateMode] = useState(false);
 
    useEffect(() => {
       loadData();
@@ -35,6 +36,16 @@ const SuperPartners: React.FC = () => {
       setLoading(false);
    };
 
+   const handleAddNew = () => {
+      setIsCreateMode(true);
+      if (activeTab === 'venues') {
+         setEditForm({ name: '', region: 'Manila', address: '', phone: '', rating: 0, description: '' });
+      } else {
+         setEditForm({ nickname: '', venue_id: venues[0]?.id || '', birthday: '01. Jan. 2000.', phone: '', description: '', status: 'active', grade: 'PRO' });
+      }
+      setShowDetailModal(true);
+   };
+
    const handleOpenHistory = async (item: any) => {
       setSelectedItem(item);
       setHistoryData(null);
@@ -49,6 +60,7 @@ const SuperPartners: React.FC = () => {
    };
 
    const handleOpenDetail = (item: any) => {
+      setIsCreateMode(false);
       setSelectedItem(item);
       setEditForm({ ...item });
       setShowDetailModal(true);
@@ -56,16 +68,19 @@ const SuperPartners: React.FC = () => {
 
    const handleSaveDetail = async () => {
       if (activeTab === 'venues') {
-         const success = await apiService.updateVenue(selectedItem.id, editForm);
-         if (success) {
-            alert('Venue updated successfully');
+         const result = isCreateMode
+            ? await apiService.createVenue(editForm)
+            : await apiService.updateVenue(selectedItem.id, editForm);
+
+         if ((typeof result === 'boolean' && result) || (typeof result === 'object' && result.success)) {
+            alert(`Venue ${isCreateMode ? 'registered' : 'updated'} successfully`);
             setShowDetailModal(false);
             loadData();
          }
       } else {
-         const success = await apiService.updateCCA({ id: selectedItem.id, ...editForm });
+         const success = await apiService.updateCCA(isCreateMode ? editForm : { id: selectedItem.id, ...editForm });
          if (success) {
-            alert('CCA updated successfully');
+            alert(`CCA ${isCreateMode ? 'registered' : 'updated'} successfully`);
             setShowDetailModal(false);
             loadData();
          }
@@ -77,9 +92,14 @@ const SuperPartners: React.FC = () => {
    return (
       <div className="space-y-10 animate-fade-in relative text-white">
          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex gap-4 p-1.5 bg-zinc-900 rounded-2xl border border-white/5 w-fit">
-               <button onClick={() => setActiveTab('venues')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'venues' ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>Partners (Venues)</button>
-               <button onClick={() => setActiveTab('ccas')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'ccas' ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>CCAs (Staff)</button>
+            <div className="flex flex-wrap items-center gap-6">
+               <div className="flex gap-4 p-1.5 bg-zinc-900 rounded-2xl border border-white/5 w-fit">
+                  <button onClick={() => setActiveTab('venues')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'venues' ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>Partners (Venues)</button>
+                  <button onClick={() => setActiveTab('ccas')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'ccas' ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>CCAs (Staff)</button>
+               </div>
+               <button onClick={handleAddNew} className="bg-white text-black px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">add</span> Register {activeTab === 'venues' ? 'Partner' : 'CCA'}
+               </button>
             </div>
             <div className="flex gap-4">
                <div className="bg-zinc-900 px-6 py-3 rounded-xl border border-white/5 flex items-center gap-4">

@@ -90,5 +90,27 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     }
   }
 
+  // POST: 새로운 업소 등록
+  if (request.method === "POST") {
+    try {
+      const body = await request.json() as any;
+      const { id, name, region, address, phone, description } = body;
+      const targetId = id || `v_${Date.now()}`;
+
+      await env.DB.prepare(
+        `INSERT INTO venues (id, name, region, address, phone, description) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(targetId, name, region, address, phone, description).run();
+
+      return new Response(JSON.stringify({ success: true, id: targetId }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
   return new Response("Method not allowed", { status: 405 });
 };

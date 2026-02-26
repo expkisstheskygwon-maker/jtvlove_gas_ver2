@@ -111,6 +111,21 @@ export const apiService = {
     }
   },
 
+  async createVenue(data: any): Promise<{ success: boolean; id?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/venues`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) return { success: false };
+      return await response.json();
+    } catch (error) {
+      console.error('createVenue error:', error);
+      return { success: false };
+    }
+  },
+
   // CCAs
   async getCCAs(): Promise<CCA[]> {
     try {
