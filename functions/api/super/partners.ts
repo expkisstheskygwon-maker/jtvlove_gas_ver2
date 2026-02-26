@@ -18,7 +18,6 @@ export const onRequest: any = async (context: any) => {
           (SELECT COUNT(*) FROM reservations r WHERE r.venue_id = v.id AND r.reservation_date = ?) as today_reservations,
           (SELECT COUNT(*) FROM ccas c WHERE c.venue_id = v.id AND c.status = 'active') as cca_count
           FROM venues v
-          ORDER BY created_at ASC
         `;
                 const { results } = await env.DB.prepare(query).bind(today).all();
                 return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });
@@ -31,7 +30,6 @@ export const onRequest: any = async (context: any) => {
           (SELECT COUNT(*) FROM reservations r WHERE r.cca_id = c.id AND r.reservation_date = ?) as today_reservations
           FROM ccas c
           LEFT JOIN venues v ON c.venue_id = v.id
-          ORDER BY c.created_at ASC
         `;
                 const { results } = await env.DB.prepare(query).bind(today).all();
                 return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });

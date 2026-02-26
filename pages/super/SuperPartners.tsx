@@ -254,7 +254,7 @@ const SuperPartners: React.FC = () => {
 
          {/* DETAIL EDIT MODAL */}
          <AnimatePresence>
-            {showDetailModal && selectedItem && (
+            {showDetailModal && (
                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowDetailModal(false)} className="absolute inset-0 bg-black/95 backdrop-blur-2xl" />
                   <motion.div initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }} className="bg-[#1b180d] border border-red-500/30 w-full max-w-3xl rounded-[3rem] overflow-hidden shadow-2xl z-10 flex flex-col relative" >
