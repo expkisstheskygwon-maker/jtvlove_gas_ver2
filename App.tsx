@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { apiService } from './services/apiService';
 import Home from './pages/Home';
 import VenueList from './pages/VenueList';
 import VenueDetail from './pages/VenueDetail';
@@ -32,9 +33,28 @@ import SuperHeroManager from './pages/super/SuperHeroManager';
 
 const Navigation = () => {
   const location = useLocation();
-  const isSpecial = location.pathname.startsWith('/admin') || 
-                    location.pathname.startsWith('/cca-portal') || 
-                    location.pathname.startsWith('/super-admin');
+  const [boards, setBoards] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBoards = async () => {
+      const data = await apiService.getBoardConfigs();
+      if (data && data.length > 0) {
+        setBoards(data);
+      } else {
+        setBoards([
+          { id: 'Free Board', name: '커뮤니티' },
+          { id: 'JTV Review', name: '업소 리뷰' },
+          { id: 'CCA Review', name: 'CCA 리뷰' },
+          { id: 'Q&A Board', name: '질문 게시판' }
+        ]);
+      }
+    };
+    fetchBoards();
+  }, []);
+
+  const isSpecial = location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/cca-portal') ||
+    location.pathname.startsWith('/super-admin');
   const isActive = (path: string) => location.pathname === path;
 
   if (isSpecial) return null;
@@ -48,19 +68,39 @@ const Navigation = () => {
               <span className="material-symbols-outlined text-xl fill-1">stars</span>
             </div>
             <h1 className="font-extrabold text-sm tracking-tight leading-none uppercase">
-              필리핀<br/><span className="text-primary">JTV 협회</span>
+              필리핀<br /><span className="text-primary">JTV 협회</span>
             </h1>
           </Link>
           <nav className="flex items-center gap-8">
             <Link to="/" className={`text-sm font-bold transition-colors ${isActive('/') ? 'text-primary' : 'hover:text-primary'}`}>홈</Link>
             <Link to="/venues" className={`text-sm font-bold transition-colors ${isActive('/venues') ? 'text-primary' : 'hover:text-primary'}`}>업소 정보</Link>
             <Link to="/ccas" className={`text-sm font-bold transition-colors ${isActive('/ccas') ? 'text-primary' : 'hover:text-primary'}`}>CCA 리스트</Link>
-            <Link to="/community" className={`text-sm font-bold transition-colors ${isActive('/community') ? 'text-primary' : 'hover:text-primary'}`}>커뮤니티</Link>
+
+            <div className="relative group py-4">
+              <Link to="/community" className={`text-sm font-bold transition-colors flex items-center gap-1 ${location.pathname.startsWith('/community') ? 'text-primary' : 'hover:text-primary'}`}>
+                커뮤니티
+                <span className="material-symbols-outlined text-xs group-hover:rotate-180 transition-transform">expand_more</span>
+              </Link>
+              {/* Dropdown Menu */}
+              <div className="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-2 z-[60]">
+                {boards.map(board => (
+                  <Link
+                    key={board.id}
+                    to={`/community?board=${board.id}`}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/5 text-[11px] font-black uppercase tracking-widest transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm text-primary">forum</span>
+                    {board.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             <Link to="/mypage" className={`text-sm font-bold transition-colors ${isActive('/mypage') ? 'text-primary' : 'hover:text-primary'}`}>마이페이지</Link>
             <div className="flex gap-2">
-               <Link to="/admin" className="text-[10px] font-black bg-zinc-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">업주용</Link>
-               <Link to="/cca-portal" className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">CCA 전용</Link>
-               <Link to="/super-admin" className="text-[10px] font-black bg-red-500/10 text-red-600 px-3 py-1 rounded-full uppercase">관리자</Link>
+              <Link to="/admin" className="text-[10px] font-black bg-zinc-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">업주용</Link>
+              <Link to="/cca-portal" className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">CCA 전용</Link>
+              <Link to="/super-admin" className="text-[10px] font-black bg-red-500/10 text-red-600 px-3 py-1 rounded-full uppercase">관리자</Link>
             </div>
           </nav>
         </div>
@@ -106,10 +146,10 @@ const App: React.FC = () => {
           <Route path="/community" element={<Community />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/mypage" element={<MyPage />} />
-          
+
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayoutRoutes />} />
-          
+
           {/* CCA Portal Routes */}
           <Route path="/cca-portal/*" element={<CCAPortalLayout><CCAPortalRoutes /></CCAPortalLayout>} />
 
@@ -164,7 +204,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <aside className="w-64 bg-background-dark text-white p-6 hidden lg:flex flex-col gap-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-[#1b180d]">
-             <span className="material-symbols-outlined font-black">shield_person</span>
+            <span className="material-symbols-outlined font-black">shield_person</span>
           </div>
           <div>
             <h2 className="font-black text-sm uppercase tracking-tighter">업주용 콘솔</h2>
@@ -172,9 +212,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
         <nav className="flex flex-col gap-2 flex-1">
           {navItems.map(item => (
-            <Link 
-              key={item.path} 
-              to={item.path} 
+            <Link
+              key={item.path}
+              to={item.path}
               className={`flex items-center gap-4 p-4 rounded-xl font-bold transition-all ${location.pathname === item.path ? 'bg-primary text-[#1b180d]' : 'hover:bg-white/5 opacity-70 hover:opacity-100'}`}
             >
               <span className="material-symbols-outlined">{item.icon}</span>
