@@ -221,7 +221,7 @@ export const apiService = {
       return await response.json();
     } catch (error: any) {
       console.error('Create post network/service error:', error);
-      return null;
+      throw error; // 에러를 다시 throw하여 호출 측에서 잡을 수 있게 함
     }
   },
 

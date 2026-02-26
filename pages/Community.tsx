@@ -56,24 +56,27 @@ const Community: React.FC = () => {
       if (!formData.title || !formData.content) return alert('모든 필드를 입력해주세요.');
 
       setIsSubmitting(true);
-      const result = await apiService.createPost({
-         ...formData,
-         author: '길동이', // In a real app, this would be the logged-in user
-         authorAvatar: 'https://picsum.photos/100/100?random=1'
-      });
-
-      if (result) {
-         setFormData({
-            title: '',
-            board: boardId,
-            category: currentBoard.categories.find(c => c !== '전체') || '일반',
-            content: '',
-            image: ''
+      try {
+         const result = await apiService.createPost({
+            ...formData,
+            author: '길동이', // In a real app, this would be the logged-in user
+            authorAvatar: 'https://picsum.photos/100/100?random=1'
          });
-         setIsModalOpen(false);
-         fetchPosts();
-      } else {
-         alert('게시글 등록에 실패했습니다. 다시 시도해주세요.');
+
+         if (result) {
+            setFormData({
+               title: '',
+               board: boardId,
+               category: currentBoard.categories.find(c => c !== '전체') || '일반',
+               content: '',
+               image: ''
+            });
+            setIsModalOpen(false);
+            fetchPosts();
+         }
+      } catch (error: any) {
+         console.error('Submit handling error:', error);
+         alert(`게시글 등록에 실패했습니다.\n사유: ${error.message || '알 수 없는 오류'}`);
       }
       setIsSubmitting(false);
    };
