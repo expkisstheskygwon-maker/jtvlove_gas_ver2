@@ -18,7 +18,7 @@ const Community: React.FC = () => {
    const [formData, setFormData] = useState({
       title: '',
       board: boardId,
-      category: '일반',
+      category: '', // initialized after currentBoard is defined
       content: '',
       image: ''
    });
@@ -31,6 +31,14 @@ const Community: React.FC = () => {
    ];
 
    const currentBoard = boards.find(b => b.id === boardId) || boards[0];
+
+   // Initialize category from board defaults if empty
+   useEffect(() => {
+      if (!formData.category && currentBoard) {
+         const firstCategory = currentBoard.categories.find(c => c !== '전체') || '일반';
+         setFormData(prev => ({ ...prev, category: firstCategory, board: boardId }));
+      }
+   }, [boardId, currentBoard]);
 
    const fetchPosts = async () => {
       setIsLoading(true);
@@ -55,7 +63,13 @@ const Community: React.FC = () => {
       });
 
       if (result) {
-         setFormData({ title: '', board: boardId, category: '일반', content: '', image: '' });
+         setFormData({
+            title: '',
+            board: boardId,
+            category: currentBoard.categories.find(c => c !== '전체') || '일반',
+            content: '',
+            image: ''
+         });
          setIsModalOpen(false);
          fetchPosts();
       } else {

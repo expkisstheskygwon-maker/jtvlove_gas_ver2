@@ -211,10 +211,16 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create post');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Create post server error:', errorData);
+        throw new Error(errorData.error || 'Failed to create post');
+      }
+
       return await response.json();
-    } catch (error) {
-      console.error('Create post failed', error);
+    } catch (error: any) {
+      console.error('Create post network/service error:', error);
       return null;
     }
   },

@@ -57,21 +57,62 @@ export const onRequest: PagesFunction<{ DB: D1Database }> = async (context: any)
   if (request.method === "POST") {
     try {
       const body = await request.json();
-      const id = crypto.randomUUID();
+      if (!body) throw new Error("Request body is empty");
+
+      // ID 생성: crypto.randomUUID() 혹은 폴백
+      let id;
+      try {
+        id = crypto.randomUUID();
+      } catch (e) {
+        id = `p_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
+
       const { board, category, title, author, content, image } = body;
+
+      if (!board || !title || !author || !content) {
+        throw new Error("Missing required fields: board, title, author, or content");
+      }
+
+      if (!env.DB) {
+        throw new Error("D1 Database binding 'DB' is not configured.");
+      }
 
       await env.DB.prepare(
         "INSERT INTO posts (id, board, category, title, author, content, image, views, likes) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)"
-      ).bind(id, board, category || null, title, author, content, image || null).run();
+      ).bind(
+        id,
+        board,
+        category || null,
+        title,
+        author,
+        content,
+        image || null
+      ).run();
 
-      const newPost = { id, board, category, title, author, content, image, views: 0, likes: 0, created_at: new Date().toISOString() };
+      const newPost = {
+        id,
+        board,
+        category,
+        title,
+        author,
+        content,
+        image,
+        views: 0,
+        likes: 0,
+        created_at: new Date().toISOString()
+      };
 
       return new Response(JSON.stringify(newPost), {
         status: 201,
         headers: { "Content-Type": "application/json" },
       });
     } catch (error: any) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      console.error('POST /api/posts error:', error);
+      return new Response(JSON.stringify({
+        error: error.message,
+        stack: error.stack,
+        details: "Database insertion failed. Please check table schema and binding."
+      }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
