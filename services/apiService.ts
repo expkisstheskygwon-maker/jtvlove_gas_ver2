@@ -583,5 +583,46 @@ export const apiService = {
       console.error('deleteCCAPointLog error:', error);
       return false;
     }
+  },
+
+  // Super Admin Partners
+  async getSuperVenues(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/super/partners?action=listVenues`);
+      return response.ok ? await response.json() : [];
+    } catch (error) {
+      console.error('getSuperVenues error:', error);
+      return [];
+    }
+  },
+
+  async getSuperCCAs(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/super/partners?action=listCCAs`);
+      return response.ok ? await response.json() : [];
+    } catch (error) {
+      console.error('getSuperCCAs error:', error);
+      return [];
+    }
+  },
+
+  async getVenueHistory(id: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/super/partners?action=venueHistory&id=${id}`);
+      return response.ok ? await response.json() : null;
+    } catch (error) {
+      console.error('getVenueHistory error:', error);
+      return null;
+    }
+  },
+
+  async getCCAHistory(id: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/super/partners?action=ccaHistory&id=${id}`);
+      return response.ok ? await response.json() : null;
+    } catch (error) {
+      console.error('getCCAHistory error:', error);
+      return null;
+    }
   }
 };

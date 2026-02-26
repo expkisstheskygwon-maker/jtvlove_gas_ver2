@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS venues (
   phone TEXT,
   address TEXT,
   tags TEXT, -- JSON array string
-  features TEXT -- JSON array string
+  features TEXT, -- JSON array string
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. CCAs Table
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS ccas (
   pets TEXT,
   specialties TEXT, -- JSON array string
   password TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (venue_id) REFERENCES venues(id)
 );
 
@@ -277,3 +279,18 @@ VALUES
   ('pc2', 'v1', 'Overtime', 150, 'point'),
   ('pc3', 'v1', 'Late Arrival', 200, 'penalty'),
   ('pc4', 'v1', 'Absent without notice', 500, 'penalty');
+-- 16. CCA Employment History Table (고용 이력)
+CREATE TABLE IF NOT EXISTS cca_employment_history (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  venue_id TEXT NOT NULL,
+  join_date TEXT NOT NULL, -- YYYY-MM-DD
+  leave_date TEXT,         -- YYYY-MM-DD
+  status TEXT,             -- 'active', 'resigned'
+  FOREIGN KEY (cca_id) REFERENCES ccas(id),
+  FOREIGN KEY (venue_id) REFERENCES venues(id)
+);
+
+-- Seed some sample employment history
+INSERT OR IGNORE INTO cca_employment_history (id, cca_id, venue_id, join_date, leave_date, status)
+VALUES ('eh1', 'c1', 'v1', '2023-01-01', NULL, 'active');
