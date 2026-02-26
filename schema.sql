@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS ccas (
 CREATE TABLE IF NOT EXISTS posts (
   id TEXT PRIMARY KEY,
   board TEXT NOT NULL,
+  category TEXT,
   title TEXT NOT NULL,
   author TEXT NOT NULL,
   content TEXT NOT NULL,

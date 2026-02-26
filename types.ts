@@ -137,13 +137,15 @@ export interface Reservation {
 export interface Post {
   id: string;
   board: string;
+  category?: string;
   title: string;
   author: string;
-  authorAvatar: string;
-  date: string;
+  authorAvatar?: string;
+  date?: string;
+  created_at?: string;
   views: number;
   likes: number;
-  commentsCount: number;
+  commentsCount?: number;
   content: string;
   image?: string;
 }

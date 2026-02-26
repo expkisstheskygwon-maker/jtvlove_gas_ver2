@@ -172,16 +172,23 @@ export const apiService = {
   },
 
   // Posts
-  async getPosts(board?: string): Promise<Post[]> {
+  async getPosts(board?: string, category?: string): Promise<Post[]> {
     try {
-      let url = `${API_BASE}/posts`;
-      if (board) url += `?board=${encodeURIComponent(board)}`;
-      const response = await fetch(url);
+      let url = `${API_BASE}/posts?`;
+      const params = new URLSearchParams();
+      if (board) params.append('board', board);
+      if (category) params.append('category', category);
+
+      const response = await fetch(url + params.toString());
       if (!response.ok) throw new Error('Failed to fetch posts');
       return await response.json();
     } catch (error) {
       const { POSTS } = await import('../constants');
-      return board ? POSTS.filter(p => p.board === board) : POSTS;
+      let data = board ? POSTS.filter(p => p.board === board) : POSTS;
+      if (category && category !== '전체') {
+        data = data.filter(p => p.category === category);
+      }
+      return data;
     }
   },
 
