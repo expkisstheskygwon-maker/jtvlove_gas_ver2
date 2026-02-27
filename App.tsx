@@ -9,6 +9,8 @@ import CCAProfile from './pages/CCAProfile';
 import Community from './pages/Community';
 import PostDetail from './pages/PostDetail';
 import MyPage from './pages/MyPage';
+import Login from './pages/Login';
+
 
 // Admin & Portal
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -102,8 +104,27 @@ const Navigation = () => {
               <Link to="/cca-portal" className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-tighter">CCA 전용</Link>
               <Link to="/super-admin" className="text-[10px] font-black bg-red-500/10 text-red-600 px-3 py-1 rounded-full uppercase">관리자</Link>
             </div>
+
+            <Link to="/login" className="ml-4 flex items-center gap-2 px-6 py-2 bg-zinc-900 dark:bg-primary dark:text-[#1b180d] text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:scale-105 active:scale-95 transition-all">
+              <span className="material-symbols-outlined text-lg">login</span>
+              Login
+            </Link>
           </nav>
         </div>
+      </header>
+
+      {/* Mobile Top Header */}
+      <header className="md:hidden sticky top-0 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-primary/10 px-4 h-14 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-primary rounded flex items-center justify-center text-white">
+            <span className="material-symbols-outlined text-sm">stars</span>
+          </div>
+          <span className="font-black text-[10px] uppercase tracking-tighter">JTV LOVE</span>
+        </Link>
+        <Link to="/login" className="flex items-center gap-2 px-4 py-1.5 bg-zinc-900 dark:bg-primary dark:text-[#1b180d] text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
+          <span className="material-symbols-outlined text-sm">login</span>
+          Login
+        </Link>
       </header>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-950 border-t border-primary/10 px-4 py-2 z-50 md:hidden flex items-center justify-between">
@@ -146,6 +167,8 @@ const App: React.FC = () => {
           <Route path="/community" element={<Community />} />
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/login" element={<Login />} />
+
 
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayoutRoutes />} />
