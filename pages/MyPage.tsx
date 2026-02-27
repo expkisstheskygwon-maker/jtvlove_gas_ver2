@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,7 +11,15 @@ const MyPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'info' | 'service' | 'payment'>('info');
 
-  // Stats
+  // Edit States
+  const [editField, setEditField] = useState<'email' | 'phone' | 'password' | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Stats & Modals
+  const [showNotiPopup, setShowNotiPopup] = useState(false);
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
   const [stats, setStats] = useState({
     bookings: 0,
     posts: 0,
@@ -37,12 +44,21 @@ const MyPage: React.FC = () => {
           setUser(authUser);
         }
 
-        // Mock stats
-        setStats({
-          bookings: 0,
-          posts: 0,
-          notifications: 0
-        });
+        const userStats = await apiService.getUserStats(authUser.id, authUser.nickname);
+        if (userStats) {
+          setStats({
+            bookings: userStats.bookings || 0,
+            posts: userStats.posts || 0,
+            notifications: userStats.unread_notifications || userStats.notifications?.length || 0
+          });
+          setNotificationsList(userStats.notifications || []);
+        } else {
+          setStats({
+            bookings: 0,
+            posts: 0,
+            notifications: 0
+          });
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -52,6 +68,50 @@ const MyPage: React.FC = () => {
 
     fetchUserData();
   }, [authUser, navigate]);
+
+  const handleUpdateField = async (field: 'email' | 'phone' | 'password') => {
+    if (!editValue.trim() || !user) return;
+    setIsUpdating(true);
+    try {
+      const result = await apiService.updateUser({ id: user.id, [field]: editValue });
+      if (result.success) {
+        if (field !== 'password') { // keep password hidden in state
+          setUser({ ...user, [field]: editValue });
+        }
+        setEditField(null);
+      } else {
+        alert(result.error || 'Failed to update field');
+      }
+    } catch (err) {
+      alert('An unexpected error occurred');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      setIsUpdating(true);
+      try {
+        const result = await apiService.updateUser({ id: user.id, profile_image: base64String });
+        if (result.success) {
+          setUser({ ...user, profile_image: base64String });
+        } else {
+          alert('Failed to upload image');
+        }
+      } catch (err) {
+        alert('An unexpected error occurred');
+      } finally {
+        setIsUpdating(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   if (loading || !user) return <div className="flex items-center justify-center min-h-[60vh] text-primary animate-pulse font-black uppercase tracking-widest text-xs">Accessing Data...</div>;
 
@@ -70,17 +130,27 @@ const MyPage: React.FC = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-colors duration-500"></div>
 
             <div className="flex flex-col items-center text-center gap-6 mb-10 relative z-10">
-              <div className="relative">
-                <div className="size-28 lg:size-36 rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-800 p-1.5 shadow-2xl ring-1 ring-zinc-200 dark:ring-white/10 group-hover:rotate-3 transition-transform duration-500">
+              <div className="relative group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                />
+                <div className="size-28 lg:size-36 rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-800 p-1.5 shadow-2xl ring-1 ring-zinc-200 dark:ring-white/10 group-hover:rotate-3 transition-transform duration-500 overflow-hidden relative">
                   <div className="w-full h-full rounded-[2rem] overflow-hidden">
                     <img
                       alt={user.nickname}
                       className="w-full h-full object-cover"
-                      src={`https://picsum.photos/seed/${user.id}/300/300`}
+                      src={user.profile_image || `https://picsum.photos/seed/${user.id}/300/300`}
                     />
                   </div>
+                  <div className="absolute inset-1.5 rounded-[2rem] bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                    <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
+                  </div>
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-primary text-[#1b180d] text-[10px] font-black px-4 py-1.5 rounded-full border-4 border-white dark:border-zinc-900 shadow-xl uppercase tracking-widest">
+                <div className="absolute -bottom-2 -right-2 bg-primary text-[#1b180d] text-[10px] font-black px-4 py-1.5 rounded-full border-4 border-white dark:border-zinc-900 shadow-xl uppercase tracking-widest z-10">
                   LV.{user.level || 1}
                 </div>
               </div>
@@ -118,8 +188,8 @@ const MyPage: React.FC = () => {
               <span className="text-[8px] text-zinc-400 font-black uppercase tracking-widest mb-1">Posts</span>
               <span className="text-xl font-black">{stats.posts}</span>
             </button>
-            <button className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-zinc-200 dark:border-white/5 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-all group">
-              <span className="material-symbol-outlined text-primary mb-2 group-hover:scale-110 transition-transform">notifications_active</span>
+            <button onClick={() => setShowNotiPopup(true)} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-zinc-200 dark:border-white/5 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-all group">
+              <span className="material-symbols-outlined text-primary mb-2 group-hover:scale-110 transition-transform">notifications_active</span>
               <span className="text-[8px] text-zinc-400 font-black uppercase tracking-widest mb-1">Inbox</span>
               <span className="text-xl font-black text-primary">{stats.notifications}</span>
             </button>
@@ -166,43 +236,95 @@ const MyPage: React.FC = () => {
                       <span className="text-[8px] font-black text-zinc-300 dark:text-zinc-700 uppercase">ReadOnly</span>
                     </div>
 
-                    <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-white/5 rounded-[2rem] border border-zinc-100 dark:border-transparent">
-                      <div className="flex items-center gap-6">
-                        <div className="size-12 rounded-[1.2rem] bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center text-zinc-400">
+                    <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-white/5 rounded-[2rem] border border-zinc-100 dark:border-transparent transition-all">
+                      <div className="flex items-center gap-6 flex-1">
+                        <div className="size-12 min-w-[3rem] rounded-[1.2rem] bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center text-zinc-400">
                           <span className="material-symbols-outlined">mail</span>
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="text-[8px] font-black text-zinc-400 uppercase mb-1">Email Address (ID)</p>
-                          <p className="text-sm font-black">{user.email}</p>
+                          {editField === 'email' ? (
+                            <input
+                              type="email"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="w-full bg-white dark:bg-zinc-800 px-3 py-1 rounded text-sm font-black border border-zinc-200 dark:border-zinc-700 outline-none focus:border-primary"
+                              autoFocus
+                            />
+                          ) : (
+                            <p className="text-sm font-black truncate max-w-[150px] sm:max-w-xs">{user.email}</p>
+                          )}
                         </div>
                       </div>
-                      <button className="bg-white dark:bg-zinc-800 px-5 py-3 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest border border-primary/20 hover:bg-primary hover:text-white transition-all">Change</button>
+                      {editField === 'email' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditField(null)} className="text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 px-2">Cancel</button>
+                          <button onClick={() => handleUpdateField('email')} disabled={isUpdating} className="bg-primary px-5 py-3 rounded-xl text-[9px] font-black text-[#1b180d] uppercase tracking-widest border border-primary/20 hover:opacity-90 transition-all disabled:opacity-50">Save</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => { setEditField('email'); setEditValue(user.email); }} className="bg-white dark:bg-zinc-800 px-5 py-3 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest border border-primary/20 hover:bg-primary hover:text-white transition-all">Change</button>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-white/5 rounded-[2rem] border border-zinc-100 dark:border-transparent">
-                      <div className="flex items-center gap-6">
-                        <div className="size-12 rounded-[1.2rem] bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center text-zinc-400">
+                    <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-white/5 rounded-[2rem] border border-zinc-100 dark:border-transparent transition-all">
+                      <div className="flex items-center gap-6 flex-1">
+                        <div className="size-12 min-w-[3rem] rounded-[1.2rem] bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center text-zinc-400">
                           <span className="material-symbols-outlined">phone_iphone</span>
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="text-[8px] font-black text-zinc-400 uppercase mb-1">Mobile Phone</p>
-                          <p className="text-sm font-black">{user.phone}</p>
+                          {editField === 'phone' ? (
+                            <input
+                              type="tel"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="w-full bg-white dark:bg-zinc-800 px-3 py-1 rounded text-sm font-black border border-zinc-200 dark:border-zinc-700 outline-none focus:border-primary"
+                              autoFocus
+                            />
+                          ) : (
+                            <p className="text-sm font-black">{user.phone || 'Not set'}</p>
+                          )}
                         </div>
                       </div>
-                      <button className="bg-white dark:bg-zinc-800 px-5 py-3 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest border border-primary/20 hover:bg-primary hover:text-white transition-all">Verify</button>
+                      {editField === 'phone' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditField(null)} className="text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 px-2">Cancel</button>
+                          <button onClick={() => handleUpdateField('phone')} disabled={isUpdating} className="bg-primary px-5 py-3 rounded-xl text-[9px] font-black text-[#1b180d] uppercase tracking-widest border border-primary/20 hover:opacity-90 transition-all disabled:opacity-50">Save</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => { setEditField('phone'); setEditValue(user.phone || ''); }} className="bg-white dark:bg-zinc-800 px-5 py-3 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest border border-primary/20 hover:bg-primary hover:text-white transition-all text-center min-w-[4rem]">Edit</button>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-white/5 rounded-[2rem] border border-zinc-100 dark:border-transparent">
-                      <div className="flex items-center gap-6">
-                        <div className="size-12 rounded-[1.2rem] bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center text-zinc-400">
+                    <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-white/5 rounded-[2rem] border border-zinc-100 dark:border-transparent transition-all">
+                      <div className="flex items-center gap-6 flex-1">
+                        <div className="size-12 min-w-[3rem] rounded-[1.2rem] bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center text-zinc-400">
                           <span className="material-symbols-outlined">lock_reset</span>
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="text-[8px] font-black text-zinc-400 uppercase mb-1">Password Shield</p>
-                          <p className="text-sm font-black">••••••••••••</p>
+                          {editField === 'password' ? (
+                            <input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              placeholder="New password..."
+                              className="w-full bg-white dark:bg-zinc-800 px-3 py-1 rounded text-sm font-black border border-zinc-200 dark:border-zinc-700 outline-none focus:border-primary"
+                              autoFocus
+                            />
+                          ) : (
+                            <p className="text-sm font-black text-zinc-400 truncate max-w-[150px]">••••••••••••</p>
+                          )}
                         </div>
                       </div>
-                      <button className="bg-zinc-900 dark:bg-primary text-white dark:text-[#1b180d] px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-all">Update</button>
+                      {editField === 'password' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditField(null)} className="text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 px-2">Cancel</button>
+                          <button onClick={() => handleUpdateField('password')} disabled={isUpdating || !editValue} className="bg-zinc-900 dark:bg-primary px-5 py-3 rounded-xl text-[9px] font-black text-white dark:text-[#1b180d] uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50">Save</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => { setEditField('password'); setEditValue(''); }} className="bg-zinc-900 dark:bg-primary text-white dark:text-[#1b180d] px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-all text-center min-w-[4rem]">Update</button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -270,13 +392,63 @@ const MyPage: React.FC = () => {
           </div>
 
           <div className="flex justify-center md:justify-end">
-            <button className="py-6 px-10 text-[10px] font-black text-zinc-400 hover:text-red-500 transition-all flex items-center gap-3 group uppercase tracking-[0.2em]">
+            <button onClick={logout} className="py-6 px-10 text-[10px] font-black text-zinc-400 hover:text-red-500 transition-all flex items-center gap-3 group uppercase tracking-[0.2em]">
               <span className="material-symbols-outlined text-lg group-hover:scale-125 transition-transform">logout</span>
               Logout Account
             </button>
           </div>
         </div>
       </div>
+
+      {/* Notifications Modal Popup */}
+      {showNotiPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowNotiPopup(false)}>
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-lg max-h-[80vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined">notifications</span>
+                </div>
+                <div>
+                  <h3 className="font-black text-lg">Inbox</h3>
+                  <p className="text-[10px] uppercase font-black tracking-widest text-zinc-400">Your notifications & messages</p>
+                </div>
+              </div>
+              <button onClick={() => setShowNotiPopup(false)} className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-4 space-y-3">
+              {notificationsList.length > 0 ? (
+                notificationsList.map((noti, i) => (
+                  <div key={noti.id || i} className={`p-4 rounded-xl border ${noti.is_read ? 'bg-zinc-50 dark:bg-zinc-800/50 border-transparent' : 'bg-primary/5 border-primary/20'} flex gap-4`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${noti.is_read ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500' : 'bg-primary text-[#1b180d]'}`}>
+                      <span className="material-symbols-outlined text-[1rem]">
+                        {noti.type === 'notice' ? 'campaign' : 'mail'}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-4 mb-1">
+                        <h4 className={`text-sm font-black ${noti.is_read ? 'text-zinc-600 dark:text-zinc-300' : 'text-zinc-900 dark:text-white'}`}>{noti.title}</h4>
+                        <span className="text-[9px] font-black text-zinc-400 whitespace-nowrap">{new Date(noti.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">{noti.message}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-12 flex flex-col items-center text-zinc-400 text-center">
+                  <span className="material-symbols-outlined text-5xl mb-4 opacity-50">inbox</span>
+                  <p className="text-sm font-bold">No notifications yet.</p>
+                  <p className="text-[10px] uppercase tracking-widest mt-2 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">You're all caught up</p>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Premium Footer */}
       <footer className="mt-24 pt-16 border-t border-zinc-200 dark:border-white/5">

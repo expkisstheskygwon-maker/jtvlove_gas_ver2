@@ -790,6 +790,33 @@ export const apiService = {
     }
   },
 
+  async updateUser(data: any): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/users`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('updateUser error:', error);
+      return { success: false, error: 'Network error occurred' };
+    }
+  },
+
+  async getUserStats(id: string, nickname?: string): Promise<any> {
+    try {
+      let url = `${API_BASE}/user-stats?id=${encodeURIComponent(id)}`;
+      if (nickname) url += `&nickname=${encodeURIComponent(nickname)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Stats not found');
+      return await response.json();
+    } catch (error) {
+      console.error('getUserStats error:', error);
+      return null;
+    }
+  },
+
   async login(data: any): Promise<{ success: boolean; user?: any; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/login`, {

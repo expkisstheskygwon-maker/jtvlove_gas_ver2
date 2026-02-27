@@ -355,6 +355,7 @@ CREATE TABLE IF NOT EXISTS users (
   frame_id TEXT,
   points INTEGER DEFAULT 0,
   role TEXT DEFAULT 'user', -- 'user', 'super_admin'
+  profile_image TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

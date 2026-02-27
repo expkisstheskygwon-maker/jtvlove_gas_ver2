@@ -36,6 +36,55 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
+    if (request.method === 'PATCH') {
+        try {
+            const { id, email, password, phone, profile_image } = await request.json();
+
+            if (!id) {
+                return new Response(JSON.stringify({ error: "User ID missing" }), { status: 400 });
+            }
+
+            // Dynamically build the update query based on provided fields
+            const updates = [];
+            const values = [];
+
+            if (email !== undefined) {
+                updates.push("email = ?");
+                values.push(email);
+            }
+            if (password !== undefined && password.trim() !== "") {
+                updates.push("password = ?");
+                values.push(password);
+            }
+            if (phone !== undefined) {
+                updates.push("phone = ?");
+                values.push(phone);
+            }
+            if (profile_image !== undefined) {
+                updates.push("profile_image = ?");
+                values.push(profile_image);
+            }
+
+            if (updates.length === 0) {
+                return new Response(JSON.stringify({ error: "No fields to update" }), { status: 400 });
+            }
+
+            values.push(id);
+
+            const query = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
+
+            await env.DB.prepare(query).bind(...values).run();
+
+            return new Response(JSON.stringify({ success: true }), {
+                headers: { "Content-Type": "application/json" },
+            });
+        } catch (error: any) {
+            if (error.message.includes("UNIQUE")) {
+                return new Response(JSON.stringify({ error: "Email already exists" }), { status: 400 });
+            }
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
 
     // GET: Single user info (in reality should be authenticated session based)
     if (request.method === 'GET') {
@@ -57,6 +106,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 realName: user.real_name,
                 totalXp: user.total_xp,
                 dailyXp: user.daily_xp,
+                profile_image: user.profile_image,
                 nextLevelXp,
                 quests: user.quests ? JSON.parse(user.quests) : []
             };
