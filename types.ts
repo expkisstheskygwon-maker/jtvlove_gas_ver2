@@ -206,3 +206,51 @@ export interface PointLog {
   log_date: string;
   created_at: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  nickname: string;
+  realName: string;
+  phone?: string;
+  level: number;
+  totalXp: number;
+  streak: number;
+  lastLogin?: string;
+  dailyXp: number;
+  quests?: any[];
+  badgeId?: string;
+  frameId?: string;
+  points: number;
+  role: 'user' | 'super_admin';
+  createdAt: string;
+}
+
+export interface UserNotification {
+  id: string;
+  userId: string;
+  type: 'system' | 'private';
+  senderName?: string;
+  title: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface UserPointLog {
+  id: string;
+  userId: string;
+  amount: number;
+  type: 'charge' | 'use' | 'refund' | 'admin_adjust';
+  description?: string;
+  createdAt: string;
+}
+
+export interface UserXpLog {
+  id: string;
+  userId: string;
+  xpAmount: number;
+  activity: 'login' | 'streak' | 'view' | 'read' | 'comment' | 'like' | 'share' | 'quest';
+  logDate: string;
+  createdAt: string;
+}

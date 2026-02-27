@@ -336,3 +336,59 @@ INSERT OR IGNORE INTO board_configs (id, name, categories, display_order) VALUES
 ('JTV Review', '업소 리뷰', '["파사이", "말라떼", "퀘존", "마카티"]', 2),
 ('CCA Review', 'CCA 리뷰', '["Ace", "Pro", "Cute"]', 3),
 ('Q&A Board', '질문 게시판', '["이용문의", "업소문의", "예약문의"]', 4);
+
+-- 18. Users Table
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  nickname TEXT NOT NULL,
+  real_name TEXT NOT NULL,
+  phone TEXT,
+  level INTEGER DEFAULT 1,
+  total_xp INTEGER DEFAULT 0,
+  streak INTEGER DEFAULT 0,
+  last_login TEXT, -- YYYY-MM-DD
+  daily_xp INTEGER DEFAULT 0,
+  quests TEXT, -- JSON array of daily missions
+  badge_id TEXT,
+  frame_id TEXT,
+  points INTEGER DEFAULT 0,
+  role TEXT DEFAULT 'user', -- 'user', 'super_admin'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 19. User Notifications & Messages Table
+CREATE TABLE IF NOT EXISTS user_notifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL, -- 'system', 'private'
+  sender_name TEXT,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_read INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 20. User Point Logs Table
+CREATE TABLE IF NOT EXISTS user_point_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  type TEXT NOT NULL, -- 'charge', 'use', 'refund', 'admin_adjust'
+  description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 21. User XP Logs Table (Strict 150XP limit enforcement)
+CREATE TABLE IF NOT EXISTS user_xp_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  xp_amount INTEGER NOT NULL,
+  activity TEXT NOT NULL, -- 'login', 'streak', 'view', 'read', 'comment', 'like', 'share', 'quest'
+  log_date TEXT NOT NULL, -- YYYY-MM-DD
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
