@@ -8,8 +8,10 @@ import CCAList from './pages/CCAList';
 import CCAProfile from './pages/CCAProfile';
 import Community from './pages/Community';
 import PostDetail from './pages/PostDetail';
+
 import MyPage from './pages/MyPage';
 import Login from './pages/Login';
+import Register from './pages/Register';
 
 
 // Admin & Portal
@@ -168,7 +170,7 @@ const App: React.FC = () => {
           <Route path="/community/post/:id" element={<PostDetail />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/login" element={<Login />} />
-
+          <Route path="/register" element={<Register />} />
 
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayoutRoutes />} />

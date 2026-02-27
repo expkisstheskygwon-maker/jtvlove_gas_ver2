@@ -752,12 +752,39 @@ export const apiService = {
     }
   },
 
+
   async getCCAHistory(id: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/super-partners?action=ccaHistory&id=${id}`);
       return response.ok ? await response.json() : null;
     } catch (error) {
       console.error('getCCAHistory error:', error);
+      return null;
+    }
+  },
+
+  // Users
+  async register(data: any): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('register error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getUser(id: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/users?id=${encodeURIComponent(id)}`);
+      if (!response.ok) throw new Error('User not found');
+      return await response.json();
+    } catch (error) {
+      console.error('getUser error:', error);
       return null;
     }
   },
@@ -800,3 +827,4 @@ export const apiService = {
     }
   }
 };
+
