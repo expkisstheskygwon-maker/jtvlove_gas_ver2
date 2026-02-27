@@ -1,21 +1,37 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { apiService } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Placeholder for login logic
-        setTimeout(() => {
+        setError('');
+
+        try {
+            const result = await apiService.login({ email, password });
+            if (result.success && result.user) {
+                // Check if user is stringified or object
+                const userData = typeof result.user === 'string' ? JSON.parse(result.user) : result.user;
+                login(userData);
+                navigate('/mypage');
+            } else {
+                setError(result.error || 'Login failed');
+            }
+        } catch (err: any) {
+            setError(err.message || 'An unexpected error occurred');
+        } finally {
             setIsLoading(false);
-            navigate('/mypage');
-        }, 1500);
+        }
     };
 
     const handleGoogleLogin = () => {
@@ -38,6 +54,12 @@ const Login: React.FC = () => {
                         <h2 className="text-3xl font-black tracking-tighter mb-2">Member Portal</h2>
                         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Elite Access Authorization</p>
                     </div>
+
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold p-4 rounded-xl mb-6 relative z-10 text-center animate-fade-in">
+                            {error}
+                        </div>
+                    )}
 
                     <form onSubmit={handleLogin} className="space-y-6 relative z-10">
                         <div className="space-y-2">

@@ -778,6 +778,7 @@ export const apiService = {
     }
   },
 
+
   async getUser(id: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/users?id=${encodeURIComponent(id)}`);
@@ -786,6 +787,20 @@ export const apiService = {
     } catch (error) {
       console.error('getUser error:', error);
       return null;
+    }
+  },
+
+  async login(data: any): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('login error:', error);
+      return { success: false, error: 'Network error occurred' };
     }
   },
 

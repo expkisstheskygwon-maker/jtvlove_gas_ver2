@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const MyPage: React.FC = () => {
-  // Current user context (Mocking user login for now)
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
+
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'info' | 'service' | 'payment'>('info');
@@ -17,29 +20,28 @@ const MyPage: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!authUser) {
+      navigate('/login');
+      return;
+    }
+
     const fetchUserData = async () => {
-      // In a real app, this would get the logged-in user's ID from a secure source
-      // Using 'u_admin' as a test ID or fetching first user if exists
       try {
-        // Mocking user fetching - in real logic we'd have an auth token
-        const data: any = {
-          id: 'u1',
-          email: 'minjun.kim@example.com',
-          nickname: '김민준',
-          realName: '김민준',
-          phone: '010-1234-5678',
-          level: 12,
-          totalXp: 1540,
-          nextLevelXp: 2000,
-          streak: 8,
-          points: 2500,
-          activityDays: 245
-        };
-        setUser(data);
+        const fullUser = await apiService.getUser(authUser.id);
+        if (fullUser) {
+          setUser({
+            ...fullUser,
+            realName: fullUser.real_name || authUser.realName,
+          });
+        } else {
+          setUser(authUser);
+        }
+
+        // Mock stats
         setStats({
-          bookings: 24,
-          posts: 156,
-          notifications: 3
+          bookings: 0,
+          posts: 0,
+          notifications: 0
         });
       } catch (err) {
         console.error(err);
@@ -49,11 +51,13 @@ const MyPage: React.FC = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [authUser, navigate]);
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh] text-primary animate-pulse font-black uppercase tracking-widest text-xs">Accessing Data...</div>;
+  if (loading || !user) return <div className="flex items-center justify-center min-h-[60vh] text-primary animate-pulse font-black uppercase tracking-widest text-xs">Accessing Data...</div>;
 
-  const xpPercentage = Math.min(100, Math.floor((user.totalXp / user.nextLevelXp) * 100));
+  const currentXp = user.totalXp || 0;
+  const nextLevelXp = user.nextLevelXp || Math.floor(80 * Math.pow(1.05, (user.level || 1) - 1));
+  const xpPercentage = Math.min(100, Math.floor((currentXp / nextLevelXp) * 100));
 
   return (
     <div className="max-w-7xl mx-auto w-full p-4 lg:p-8 pb-24 lg:pb-12 animate-fade-in text-zinc-900 dark:text-zinc-100">
@@ -77,27 +81,27 @@ const MyPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="absolute -bottom-2 -right-2 bg-primary text-[#1b180d] text-[10px] font-black px-4 py-1.5 rounded-full border-4 border-white dark:border-zinc-900 shadow-xl uppercase tracking-widest">
-                  LV.{user.level}
+                  LV.{user.level || 1}
                 </div>
               </div>
 
               <div>
                 <h2 className="text-3xl font-black mb-1.5 tracking-tighter">{user.nickname}</h2>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">커뮤니티 활동 {user.activityDays}일째</p>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">커뮤니티 활동 {user.activityDays || 1}일째</p>
               </div>
             </div>
 
             {/* XP Progress Section */}
             <div className="space-y-4 relative z-10 bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-white/5">
               <div className="flex justify-between items-end">
-                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Progress to Level {user.level + 1}</span>
+                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Progress to Level {(user.level || 1) + 1}</span>
                 <span className="text-sm font-black text-primary">{xpPercentage}%</span>
               </div>
               <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2.5 overflow-hidden shadow-inner p-0.5">
                 <div className="bg-primary h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,215,0,0.5)]" style={{ width: `${xpPercentage}%` }}></div>
               </div>
               <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 text-center uppercase tracking-tighter">
-                다음 레벨까지 얼마 남지 않았어요! ({user.totalXp}/{user.nextLevelXp} XP)
+                다음 레벨까지 얼마 남지 않았어요! ({currentXp}/{nextLevelXp} XP)
               </p>
             </div>
           </div>
@@ -239,7 +243,7 @@ const MyPage: React.FC = () => {
                     <span className="material-symbols-outlined text-[120px]">currency_exchange</span>
                   </div>
                   <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Total Balance</p>
-                  <h4 className="text-5xl font-black mb-8 tracking-tighter">{user.points.toLocaleString()}<span className="text-sm text-zinc-400 ml-2 uppercase tracking-widest font-bold">P</span></h4>
+                  <h4 className="text-5xl font-black mb-8 tracking-tighter">{(user.points || 0).toLocaleString()}<span className="text-sm text-zinc-400 ml-2 uppercase tracking-widest font-bold">P</span></h4>
 
                   <div className="flex gap-3 relative z-10">
                     <button className="bg-primary text-[#1b180d] px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all">Add Points</button>
