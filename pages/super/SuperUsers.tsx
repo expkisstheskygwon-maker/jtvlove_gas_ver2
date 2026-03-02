@@ -33,7 +33,7 @@ const SuperUsers: React.FC = () => {
    };
 
    const filteredUsers = users.filter(u =>
-      (u.nickname || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.nickname || u.nickname_bkp || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.real_name || '').toLowerCase().includes(searchTerm.toLowerCase())
    );
@@ -47,8 +47,9 @@ const SuperUsers: React.FC = () => {
             await fetchUsers();
             alert("변경되었습니다.");
          }
-      } catch (err) {
-         alert("실패했습니다.");
+      } catch (err: any) {
+         console.error("Update Action Failed:", err);
+         alert(`실패했습니다: ${err.message || "알 수 없는 오류"}`);
       } finally {
          setIsUpdating(false);
       }
@@ -155,43 +156,49 @@ const SuperUsers: React.FC = () => {
                      </div>
                   </div>
 
-                  <div className="px-8 pb-8 flex gap-2">
-                     <button
-                        onClick={() => handlePointAdjust(user.id, user.points || 0)}
-                        className="flex-1 py-4 bg-zinc-800 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-black transition-all border border-white/5"
-                     >
-                        Adjust Points
-                     </button>
-                     <button
-                        onClick={() => setSelectedUser(user)}
-                        className="flex-1 py-4 bg-red-600/10 text-red-500 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-500/20"
-                     >
-                        Manage Access
-                     </button>
-                  </div>
+                  {/* Main Card Buttons Removed - Moved to Overlay */}
 
                   {/* Overlay Panel (Admin only quick actions) */}
-                  <div className="absolute inset-0 bg-red-700 translate-y-full group-hover:translate-y-0 transition-transform duration-500 p-10 flex flex-col justify-center gap-4">
-                     <h5 className="font-black uppercase tracking-[0.3em] text-center mb-4 text-white">Core Privilege Control</h5>
+                  <div className="absolute inset-0 bg-red-700 translate-y-full group-hover:translate-y-0 transition-transform duration-500 p-8 flex flex-col justify-center gap-2">
+                     <h5 className="font-black uppercase tracking-[0.3em] text-center mb-2 text-white text-[10px]">Core Privilege Control</h5>
+
+                     <div className="grid grid-cols-2 gap-2">
+                        <button
+                           onClick={() => handlePointAdjust(user.id, user.points || 0)}
+                           className="py-3 bg-black/40 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black/60 text-white border border-white/10"
+                        >
+                           Adjust Points
+                        </button>
+                        <button
+                           onClick={() => setSelectedUser(user)}
+                           className="py-3 bg-black/40 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black/60 text-white border border-white/10"
+                        >
+                           Manage Access
+                        </button>
+                     </div>
+
                      <button
                         onClick={() => handleQuickAction(user.id, { status: user.status === 'banned' ? 'active' : 'banned' })}
-                        className="w-full py-4 bg-black/40 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black/60 text-white"
+                        className="w-full py-3 bg-black/40 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black/60 text-white border border-white/10"
                      >
                         {user.status === 'banned' ? 'Restore Activity' : 'Ban User Activity'}
                      </button>
+
                      <button
                         onClick={() => handleQuickAction(user.id, { role: user.role === 'super_admin' ? 'user' : 'super_admin' })}
-                        className="w-full py-4 bg-black/40 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black/60 text-white"
+                        className="w-full py-3 bg-black/40 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black/60 text-white border border-white/10"
                      >
                         {user.role === 'super_admin' ? 'Revoke Admin' : 'Change Role to ADMIN'}
                      </button>
+
                      <button
                         onClick={() => handlePasswordReset(user.id)}
-                        className="w-full py-4 bg-white text-black rounded-2xl text-[9px] font-black uppercase tracking-widest"
+                        className="w-full py-3 bg-white text-black rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-gray-100"
                      >
                         Reset Password
                      </button>
-                     <p className="text-[8px] text-white/50 text-center font-bold uppercase mt-4">Critical Action Required</p>
+
+                     <p className="text-[7px] text-white/50 text-center font-bold uppercase mt-2">Critical Action Required</p>
                   </div>
                </div>
             ))}
