@@ -626,6 +626,20 @@ export const apiService = {
     }
   },
 
+  async createCCA(data: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/ccas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('createCCA error:', error);
+      return false;
+    }
+  },
+
   async updateCCAMessageStatus(id: string, updates: { is_read?: boolean; replied?: boolean; reply_text?: string }): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE}/cca-portal/messages`, {

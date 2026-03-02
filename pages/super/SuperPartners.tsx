@@ -4,6 +4,15 @@ import { apiService } from '../../services/apiService';
 import { Venue, CCA } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const TIME_OPTIONS = Array.from({ length: 24 }).map((_, h) => {
+   const ampm = h < 12 ? '오전' : '오후';
+   let displayHour = h % 12;
+   if (displayHour === 0) displayHour = 12;
+   const value = `${h.toString().padStart(2, '0')}:00`;
+   const label = `${ampm} ${displayHour.toString().padStart(2, '0')}:00`;
+   return { value, label };
+});
+
 const SuperPartners: React.FC = () => {
    const [activeTab, setActiveTab] = useState<'venues' | 'ccas'>('venues');
    const [venues, setVenues] = useState<any[]>([]);
@@ -151,23 +160,69 @@ const SuperPartners: React.FC = () => {
       setIsSaving(true);
       try {
          if (activeTab === 'venues') {
+            // Map to DB columns explicitly to avoid legacy key conflicts
+            const updates = {
+               name: editForm.name,
+               region: editForm.region,
+               phone: editForm.phone,
+               address: editForm.address,
+               introduction: editForm.introduction,
+               image: editForm.image,
+               banner_image: editForm.banner_image,
+               sns: editForm.sns,
+               operating_hours: editForm.operating_hours,
+               showUpTime: editForm.showUpTime,
+               media: editForm.media,
+               tags: editForm.tags,
+               menu: editForm.menu,
+               tables: editForm.tables,
+               rooms: editForm.rooms,
+               rating: editForm.rating || 0,
+               description: editForm.introduction || editForm.description || ''
+            };
+
             const result = isCreateMode
-               ? await apiService.createVenue(editForm)
-               : await apiService.updateVenue(selectedItem?.id, editForm);
+               ? await apiService.createVenue(updates)
+               : await apiService.updateVenue(selectedItem?.id, updates);
 
             if ((typeof result === 'boolean' && result) || (typeof result === 'object' && result.success)) {
                alert(`Venue ${isCreateMode ? 'registered' : 'updated'} successfully`);
                setShowDetailModal(false);
                loadData();
+            } else {
+               alert("Failed to save venue details. Please check the connection.");
             }
          } else {
-            const success = await apiService.updateCCA(isCreateMode ? editForm : { id: selectedItem?.id, ...editForm });
-            if (success) {
-               alert(`CCA ${isCreateMode ? 'registered' : 'updated'} successfully`);
+            // CCA Save Logic
+            const ccaData = {
+               ...editForm,
+               venue_id: editForm.venueId,
+               real_name_first: editForm.realNameFirst,
+               real_name_middle: editForm.realNameMiddle,
+               real_name_last: editForm.realNameLast,
+               one_line_story: editForm.oneLineStory,
+               marital_status: editForm.maritalStatus,
+               children_status: editForm.childrenStatus
+            };
+            // Remove UI-only camelCase fields before sending to backend
+            delete ccaData.venueId;
+            delete ccaData.realNameFirst;
+            delete ccaData.realNameMiddle;
+            delete ccaData.realNameLast;
+            delete ccaData.oneLineStory;
+            delete ccaData.maritalStatus;
+            delete ccaData.childrenStatus;
+
+            const result = isCreateMode
+               ? await apiService.createCCA(ccaData)
+               : await apiService.updateCCA(ccaData);
+
+            if (result) {
+               alert(`CCA profile ${isCreateMode ? 'created' : 'synchronized'} successfully`);
                setShowDetailModal(false);
                loadData();
             } else {
-               alert("Operation failed on server side.");
+               alert("Failed to synchronize CCA master data.");
             }
          }
       } catch (err: any) {
@@ -377,7 +432,7 @@ const SuperPartners: React.FC = () => {
                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                           <div className="space-y-4">
                                              <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Venue Name</label>
-                                             <input type="text" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" placeholder="Golden Palace JTV" />
+                                             <input type="text" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" placeholder="업체명을 입력하세요..." />
                                           </div>
                                           <div className="space-y-4">
                                              <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Region</label>
@@ -395,11 +450,15 @@ const SuperPartners: React.FC = () => {
                                           <div className="grid grid-cols-2 gap-4">
                                              <div className="space-y-4">
                                                 <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Open</label>
-                                                <input type="time" value={editForm.operating_hours?.open || '19:00'} onChange={e => setEditForm({ ...editForm, operating_hours: { ...editForm.operating_hours, open: e.target.value } })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" />
+                                                <select value={editForm.operating_hours?.open || '19:00'} onChange={e => setEditForm({ ...editForm, operating_hours: { ...editForm.operating_hours, open: e.target.value } })} className="w-full bg-zinc-900 border border-white/10 rounded-2xl px-6 py-5 text-white font-black appearance-none focus:ring-2 focus:ring-red-500/20">
+                                                   {TIME_OPTIONS.map(opt => <option key={opt.value} value={opt.value} className="bg-black text-white">{opt.label}</option>)}
+                                                </select>
                                              </div>
                                              <div className="space-y-4">
                                                 <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Close</label>
-                                                <input type="time" value={editForm.operating_hours?.close || '02:00'} onChange={e => setEditForm({ ...editForm, operating_hours: { ...editForm.operating_hours, close: e.target.value } })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" />
+                                                <select value={editForm.operating_hours?.close || '02:00'} onChange={e => setEditForm({ ...editForm, operating_hours: { ...editForm.operating_hours, close: e.target.value } })} className="w-full bg-zinc-900 border border-white/10 rounded-2xl px-6 py-5 text-white font-black appearance-none focus:ring-2 focus:ring-red-500/20">
+                                                   {TIME_OPTIONS.map(opt => <option key={opt.value} value={opt.value} className="bg-black text-white">{opt.label}</option>)}
+                                                </select>
                                              </div>
                                           </div>
                                        </div>
