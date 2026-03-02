@@ -20,6 +20,7 @@ const SuperPartners: React.FC = () => {
    const [editForm, setEditForm] = useState<any>({});
    const [isCreateMode, setIsCreateMode] = useState(false);
    const [isSaving, setIsSaving] = useState(false);
+   const [venueActiveTab, setVenueActiveTab] = useState<'basic' | 'media' | 'menu' | 'tables_rooms'>('basic');
 
    useEffect(() => {
       loadData();
@@ -45,7 +46,26 @@ const SuperPartners: React.FC = () => {
    const handleAddNew = () => {
       setIsCreateMode(true);
       if (activeTab === 'venues') {
-         setEditForm({ name: '', region: 'Manila', address: '', phone: '', rating: 0, description: '' });
+         setEditForm({
+            name: '',
+            region: 'MANILA',
+            address: '',
+            phone: '',
+            rating: 0,
+            description: '',
+            introduction: '',
+            sns: { telegram: '', facebook: '', kakao: '', band: '', instagram: '', discord: '' },
+            operating_hours: { open: '19:00', close: '02:00' },
+            showUpTime: { first: '19:30', last: '21:00' },
+            image: '',
+            banner_image: '',
+            media: [],
+            tags: ['Main Dishes', 'Set Menu', 'Premium Drinks', 'Side Dishes'],
+            menu: [],
+            tables: [],
+            rooms: []
+         });
+         setVenueActiveTab('basic');
       } else {
          const firstVenueId = venues && venues.length > 0 ? venues[0].id : '';
          setEditForm({
@@ -96,7 +116,6 @@ const SuperPartners: React.FC = () => {
       setSelectedItem(item);
 
       // Map backend snake_case to frontend camelCase for the form if needed
-      // Though getSuperCCAs already brings c.*
       const mappedItem = {
          ...item,
          venueId: item.venue_id,
@@ -108,11 +127,25 @@ const SuperPartners: React.FC = () => {
          childrenStatus: item.children_status,
          specialties: typeof item.specialties === 'string' ? JSON.parse(item.specialties) : (item.specialties || []),
          languages: typeof item.languages === 'string' ? JSON.parse(item.languages) : (item.languages || []),
+
+         // Venue fields
+         sns: typeof item.sns === 'string' ? JSON.parse(item.sns) : (item.sns || { telegram: '', facebook: '', kakao: '', band: '', instagram: '', discord: '' }),
+         operating_hours: typeof item.operating_hours === 'string' ? JSON.parse(item.operating_hours) : (item.operating_hours || { open: '19:00', close: '02:00' }),
+         showUpTime: typeof item.showUpTime === 'string' ? JSON.parse(item.showUpTime) : (item.showUpTime || { first: '19:30', last: '21:00' }),
+         media: typeof item.media === 'string' ? JSON.parse(item.media) : (item.media || []),
+         tags: typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || ['Main Dishes', 'Set Menu', 'Premium Drinks', 'Side Dishes']),
+         menu: typeof item.menu === 'string' ? JSON.parse(item.menu) : (item.menu || []),
+         tables: typeof item.tables === 'string' ? JSON.parse(item.tables) : (item.tables || []),
+         rooms: typeof item.rooms === 'string' ? JSON.parse(item.rooms) : (item.rooms || []),
+         banner_image: item.banner_image || '',
+         introduction: item.introduction || item.description || ''
       };
 
       setEditForm(mappedItem);
+      setVenueActiveTab('basic');
       setShowDetailModal(true);
    };
+
 
    const handleSaveDetail = async () => {
       setIsSaving(true);
@@ -323,28 +356,245 @@ const SuperPartners: React.FC = () => {
                      </div>
                      <div className="flex-1 overflow-y-auto p-10">
                         {activeTab === 'venues' ? (
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              <div className="space-y-3">
-                                 <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Venue Name</label>
-                                 <input type="text" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600" />
+                           <div className="space-y-12">
+                              {/* Venue Sub-tabs */}
+                              <div className="flex flex-wrap gap-4 p-1.5 bg-black/40 rounded-3xl border border-white/5 w-fit mx-auto lg:mx-0">
+                                 {(['basic', 'media', 'menu', 'tables_rooms'] as const).map(t => (
+                                    <button
+                                       key={t}
+                                       onClick={() => setVenueActiveTab(t)}
+                                       className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${venueActiveTab === t ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-gray-500 hover:text-white'}`}
+                                    >
+                                       {t.replace('_', ' & ')}
+                                    </button>
+                                 ))}
                               </div>
-                              <div className="space-y-3">
-                                 <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Region</label>
-                                 <select value={editForm.region || 'Manila'} onChange={e => setEditForm({ ...editForm, region: e.target.value })} className="w-full bg-zinc-900 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600">
-                                    <option value="Manila">Manila</option>
-                                    <option value="Clark/Angeles">Clark/Angeles</option>
-                                    <option value="Cebu">Cebu</option>
-                                    <option value="Others">Others</option>
-                                 </select>
-                              </div>
-                              <div className="space-y-3">
-                                 <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Contact</label>
-                                 <input type="text" value={editForm.phone || ''} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600" />
-                              </div>
-                              <div className="space-y-3">
-                                 <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Full Address</label>
-                                 <input type="text" value={editForm.address || ''} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600" />
-                              </div>
+
+                              {/* Tab Content: BASIC */}
+                              {venueActiveTab === 'basic' && (
+                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 animate-fade-in">
+                                    <div className="lg:col-span-2 space-y-10">
+                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                          <div className="space-y-4">
+                                             <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Venue Name</label>
+                                             <input type="text" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" placeholder="Golden Palace JTV" />
+                                          </div>
+                                          <div className="space-y-4">
+                                             <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Region</label>
+                                             <select value={editForm.region || 'MANILA'} onChange={e => setEditForm({ ...editForm, region: e.target.value })} className="w-full bg-zinc-900 border border-white/10 rounded-2xl px-6 py-5 text-white font-black">
+                                                <option value="MANILA">MANILA</option>
+                                                <option value="CLARK">CLARK/ANGELES</option>
+                                                <option value="CEBU">CEBU</option>
+                                                <option value="ETC">OTHERS</option>
+                                             </select>
+                                          </div>
+                                          <div className="space-y-4">
+                                             <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Main Phone</label>
+                                             <input type="text" value={editForm.phone || ''} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" />
+                                          </div>
+                                          <div className="grid grid-cols-2 gap-4">
+                                             <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Open</label>
+                                                <input type="time" value={editForm.operating_hours?.open || '19:00'} onChange={e => setEditForm({ ...editForm, operating_hours: { ...editForm.operating_hours, open: e.target.value } })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" />
+                                             </div>
+                                             <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Close</label>
+                                                <input type="time" value={editForm.operating_hours?.close || '02:00'} onChange={e => setEditForm({ ...editForm, operating_hours: { ...editForm.operating_hours, close: e.target.value } })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" />
+                                             </div>
+                                          </div>
+                                       </div>
+                                       <div className="space-y-4">
+                                          <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Full Address</label>
+                                          <textarea value={editForm.address || ''} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-bold h-24" />
+                                       </div>
+                                       <div className="space-y-4">
+                                          <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Shop Introduction</label>
+                                          <textarea value={editForm.introduction || ''} onChange={e => setEditForm({ ...editForm, introduction: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-bold h-32" maxLength={300} />
+                                       </div>
+
+                                       <div className="space-y-6">
+                                          <h6 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] border-b border-white/5 pb-2">SNS & Social Archives</h6>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                             {['Telegram', 'Facebook', 'Kakao', 'Band', 'Instagram', 'Discord'].map(sns => (
+                                                <div key={sns} className="space-y-2">
+                                                   <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-2">{sns}</label>
+                                                   <input type="text" value={editForm.sns?.[sns.toLowerCase()] || ''} onChange={e => setEditForm({ ...editForm, sns: { ...editForm.sns, [sns.toLowerCase()]: e.target.value } })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold text-xs" placeholder={`${sns} Link/ID`} />
+                                                </div>
+                                             ))}
+                                          </div>
+                                       </div>
+                                    </div>
+
+                                    <div className="space-y-10">
+                                       <div className="space-y-4">
+                                          <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Venue Logo (Square)</label>
+                                          <div className="relative group aspect-square rounded-[3rem] border-2 border-dashed border-white/10 overflow-hidden bg-black/40 flex items-center justify-center">
+                                             {editForm.image ? (
+                                                <img src={editForm.image} className="size-full object-cover" />
+                                             ) : (
+                                                <span className="material-symbols-outlined text-4xl text-gray-700">store</span>
+                                             )}
+                                             <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                                <span className="text-[10px] font-black uppercase tracking-widest bg-white text-black px-6 py-3 rounded-2xl">Upload Logo</span>
+                                                <input type="file" className="hidden" accept="image/*" onChange={e => {
+                                                   const file = e.target.files?.[0];
+                                                   if (file) {
+                                                      const reader = new FileReader();
+                                                      reader.onloadend = () => setEditForm({ ...editForm, image: reader.result as string });
+                                                      reader.readAsDataURL(file);
+                                                   }
+                                                }} />
+                                             </label>
+                                          </div>
+                                       </div>
+
+                                       <div className="space-y-4">
+                                          <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Hero Banner (Wide)</label>
+                                          <div className="relative group aspect-[2/1] rounded-[3rem] border-2 border-dashed border-white/10 overflow-hidden bg-black/40 flex items-center justify-center">
+                                             {editForm.banner_image ? (
+                                                <img src={editForm.banner_image} className="size-full object-cover" />
+                                             ) : (
+                                                <span className="material-symbols-outlined text-4xl text-gray-700">featured_video</span>
+                                             )}
+                                             <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                                <span className="text-[10px] font-black uppercase tracking-widest bg-white text-black px-6 py-3 rounded-2xl">Upload Banner</span>
+                                                <input type="file" className="hidden" accept="image/*" onChange={e => {
+                                                   const file = e.target.files?.[0];
+                                                   if (file) {
+                                                      const reader = new FileReader();
+                                                      reader.onloadend = () => setEditForm({ ...editForm, banner_image: reader.result as string });
+                                                      reader.readAsDataURL(file);
+                                                   }
+                                                }} />
+                                             </label>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              )}
+
+                              {/* Tab Content: MEDIA */}
+                              {venueActiveTab === 'media' && (
+                                 <div className="space-y-10 animate-fade-in">
+                                    <div className="flex items-center justify-between">
+                                       <h6 className="text-xs font-black uppercase tracking-widest">Gallery & Neural Archives</h6>
+                                       <label className="bg-white text-black px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:bg-red-600 hover:text-white transition-all">
+                                          + Upload Neural Media
+                                          <input type="file" multiple className="hidden" accept="image/*" onChange={e => {
+                                             const files = Array.from(e.target.files || []);
+                                             files.forEach(f => {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                   setEditForm((prev: any) => ({
+                                                      ...prev,
+                                                      media: [...(prev.media || []), { id: Date.now() + Math.random(), type: 'image', url: reader.result as string, isExposed: true }]
+                                                   }));
+                                                };
+                                                reader.readAsDataURL(f);
+                                             });
+                                          }} />
+                                       </label>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                       {(editForm.media || []).map((m: any, idx: number) => (
+                                          <div key={idx} className="group relative aspect-square rounded-[2rem] overflow-hidden border border-white/10">
+                                             <img src={m.url} className="size-full object-cover" />
+                                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                                <button onClick={() => setEditForm({ ...editForm, media: editForm.media.filter((_: any, i: number) => i !== idx) })} className="size-10 bg-red-600 rounded-full flex items-center justify-center"><span className="material-symbols-outlined text-sm">delete</span></button>
+                                             </div>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
+                              )}
+
+                              {/* Tab Content: MENU */}
+                              {venueActiveTab === 'menu' && (
+                                 <div className="space-y-12 animate-fade-in">
+                                    <div className="bg-black/40 rounded-[2.5rem] p-10 border border-white/10 space-y-8">
+                                       <div className="flex items-center justify-between">
+                                          <h6 className="text-xs font-black uppercase tracking-widest">Menu Categories</h6>
+                                          <button onClick={() => {
+                                             const cat = prompt("Enter new category name:");
+                                             if (cat) setEditForm({ ...editForm, tags: [...(editForm.tags || []), cat] });
+                                          }} className="text-red-500 font-black text-[10px] uppercase underline">+ Add Category</button>
+                                       </div>
+                                       <div className="flex flex-wrap gap-4">
+                                          {(editForm.tags || []).map((tag: string) => (
+                                             <div key={tag} className="group bg-white/5 border border-white/10 px-6 py-4 rounded-2xl flex items-center gap-4 hover:border-red-500/50 transition-all">
+                                                <span className="text-xs font-black tracking-tight">{tag}</span>
+                                                <button onClick={() => setEditForm({ ...editForm, tags: editForm.tags.filter((t: string) => t !== tag) })} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500"><span className="material-symbols-outlined text-sm">close</span></button>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                       {(editForm.menu || []).map((m: any, idx: number) => (
+                                          <div key={idx} className="bg-black/40 p-6 rounded-[2rem] border border-white/5 flex gap-6 items-center group">
+                                             <img src={m.image} className="size-24 rounded-2xl object-cover" />
+                                             <div className="flex-1">
+                                                <h5 className="font-black text-sm uppercase italic">{m.name}</h5>
+                                                <p className="text-red-500 font-black text-xs mt-1">PHP {m.price}</p>
+                                                <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">{m.category}</p>
+                                             </div>
+                                             <button onClick={() => setEditForm({ ...editForm, menu: editForm.menu.filter((_: any, i: number) => i !== idx) })} className="opacity-0 group-hover:opacity-100 transition-opacity size-10 bg-white/5 hover:bg-red-600 rounded-full flex items-center justify-center"><span className="material-symbols-outlined text-sm">delete</span></button>
+                                          </div>
+                                       ))}
+                                       <button onClick={() => {
+                                          const name = prompt("Dish Name?");
+                                          const price = prompt("Price (PHP)?");
+                                          const category = prompt("Category?", editForm.tags?.[0] || "");
+                                          if (name && price) {
+                                             setEditForm({ ...editForm, menu: [...(editForm.menu || []), { id: Date.now(), name, price, category, image: '' }] });
+                                          }
+                                       }} className="rounded-[2.5rem] border-2 border-dashed border-white/10 hover:border-red-600/50 transition-all flex flex-col items-center justify-center p-10 gap-3 grayscale hover:grayscale-0">
+                                          <span className="material-symbols-outlined text-3xl">restaurant_menu</span>
+                                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Append New Neural Delicacy</span>
+                                       </button>
+                                    </div>
+                                 </div>
+                              )}
+
+                              {/* Tab Content: TABLES & ROOMS */}
+                              {venueActiveTab === 'tables_rooms' && (
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-fade-in">
+                                    <div className="space-y-8">
+                                       <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                          <h6 className="text-xs font-black uppercase tracking-widest text-red-500">Deployment Tables</h6>
+                                          <button onClick={() => {
+                                             const name = prompt("Table Name?");
+                                             if (name) setEditForm({ ...editForm, tables: [...(editForm.tables || []), { id: Date.now(), name, number: '0', capacity: '4', image: '' }] });
+                                          }} className="text-[10px] font-black underline">+ Deploy Unit</button>
+                                       </div>
+                                       <div className="space-y-4">
+                                          {(editForm.tables || []).map((t: any, idx: number) => (
+                                             <div key={idx} className="bg-black/40 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                                                <span className="text-xs font-black uppercase italic">{t.name} (Cap: {t.capacity})</span>
+                                                <button onClick={() => setEditForm({ ...editForm, tables: editForm.tables.filter((_: any, i: number) => i !== idx) })} className="text-gray-500 hover:text-red-500"><span className="material-symbols-outlined text-sm">delete</span></button>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                    <div className="space-y-8">
+                                       <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                          <h6 className="text-xs font-black uppercase tracking-widest text-primary">Private VIP Rooms</h6>
+                                          <button onClick={() => {
+                                             const name = prompt("Room Name?");
+                                             if (name) setEditForm({ ...editForm, rooms: [...(editForm.rooms || []), { id: Date.now(), name, number: '0', capacity: '10', image: '' }] });
+                                          }} className="text-[10px] font-black underline">+ Sync Node</button>
+                                       </div>
+                                       <div className="space-y-4">
+                                          {(editForm.rooms || []).map((r: any, idx: number) => (
+                                             <div key={idx} className="bg-black/40 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                                                <span className="text-xs font-black uppercase italic">{r.name} (Cap: {r.capacity})</span>
+                                                <button onClick={() => setEditForm({ ...editForm, rooms: editForm.rooms.filter((_: any, i: number) => i !== idx) })} className="text-gray-500 hover:text-red-500"><span className="material-symbols-outlined text-sm">delete</span></button>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 </div>
+                              )}
                            </div>
                         ) : (
                            <div className="flex flex-col lg:flex-row gap-12">

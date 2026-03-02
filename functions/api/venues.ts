@@ -94,12 +94,20 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   if (request.method === "POST") {
     try {
       const body = await request.json() as any;
-      const { id, name, region, address, phone, description } = body;
+      const { id, ...data } = body;
       const targetId = id || `v_${Date.now()}`;
 
+      const keys = Object.keys(data);
+      const columns = ['id', ...keys].join(", ");
+      const placeholders = ['?', ...keys.map(() => "?")].join(", ");
+      const values = [targetId, ...keys.map(key => {
+        const val = data[key];
+        return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
+      })];
+
       await env.DB.prepare(
-        `INSERT INTO venues (id, name, region, address, phone, description) VALUES (?, ?, ?, ?, ?, ?)`
-      ).bind(targetId, name, region, address, phone, description).run();
+        `INSERT INTO venues (${columns}) VALUES (${placeholders})`
+      ).bind(...values).run();
 
       return new Response(JSON.stringify({ success: true, id: targetId }), {
         headers: { "Content-Type": "application/json" },
