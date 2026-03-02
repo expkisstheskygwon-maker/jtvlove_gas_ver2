@@ -35,6 +35,7 @@ import SuperPartners from './pages/super/SuperPartners';
 import SuperCommunity from './pages/super/SuperCommunity';
 import SuperUsers from './pages/super/SuperUsers';
 import SuperHeroManager from './pages/super/SuperHeroManager';
+import SuperNotice from './pages/super/SuperNotice';
 
 const Navigation = () => {
   const location = useLocation();
@@ -234,6 +235,7 @@ const SuperAdminRoutes = () => (
     <Route path="/hero" element={<SuperHeroManager />} />
     <Route path="/community" element={<SuperCommunity />} />
     <Route path="/users" element={<SuperUsers />} />
+    <Route path="/notices" element={<SuperNotice />} />
   </Routes>
 );
 

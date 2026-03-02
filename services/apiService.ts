@@ -907,7 +907,7 @@ export const apiService = {
     }
   },
 
-  async getSiteDoc(type: 'guidelines' | 'terms'): Promise<any> {
+  async getSiteDoc(type: 'guidelines' | 'terms' | 'privacy'): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/site-docs?type=${encodeURIComponent(type)}`);
       if (!response.ok) throw new Error('Document not found');
@@ -964,6 +964,68 @@ export const apiService = {
       console.error('adminResetPassword error:', error);
       return { success: false };
     }
+  },
+
+  // Admin Content Management (Notices, Events, FAQ)
+  async getAdminContent(board?: string): Promise<any[]> {
+    let url = `${API_BASE}/super/content`;
+    if (board) url += `?board=${encodeURIComponent(board)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to fetch admin content');
+    }
+    return await response.json();
+  },
+
+  async saveAdminContent(data: any): Promise<{ success: boolean; id?: string }> {
+    const response = await fetch(`${API_BASE}/super/content`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to save admin content');
+    }
+    return await response.json();
+  },
+
+  async updateAdminContent(id: string, updates: any): Promise<boolean> {
+    const response = await fetch(`${API_BASE}/super/content`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to update admin content');
+    }
+    return response.ok;
+  },
+
+  async deleteAdminContent(id: string): Promise<boolean> {
+    const response = await fetch(`${API_BASE}/super/content?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to delete admin content');
+    }
+    return response.ok;
+  },
+
+  async updateAdminSiteDoc(type: string, content: string): Promise<boolean> {
+    const response = await fetch(`${API_BASE}/site-docs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, content }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to update site doc');
+    }
+    return response.ok;
   }
 };
 
