@@ -5,6 +5,7 @@ import { apiService } from '../../services/apiService';
 const SuperUsers: React.FC = () => {
    const [users, setUsers] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
    const [searchTerm, setSearchTerm] = useState('');
    const [selectedUser, setSelectedUser] = useState<any | null>(null);
    const [isUpdating, setIsUpdating] = useState(false);
@@ -15,10 +16,16 @@ const SuperUsers: React.FC = () => {
 
    const fetchUsers = async () => {
       setLoading(true);
+      setError(null);
       try {
          const data = await apiService.getAdminUsers();
-         setUsers(data);
-      } catch (err) {
+         if (Array.isArray(data)) {
+            setUsers(data);
+         } else if ((data as any).error) {
+            setError((data as any).error);
+         }
+      } catch (err: any) {
+         setError(err.message || "Failed to load database");
          console.error(err);
       } finally {
          setLoading(false);
@@ -74,6 +81,15 @@ const SuperUsers: React.FC = () => {
 
    if (loading) return <div className="p-20 text-center animate-pulse font-black text-red-500 uppercase tracking-widest">Loading User Database...</div>;
 
+   if (error) return (
+      <div className="p-20 text-center space-y-4">
+         <span className="material-symbols-outlined text-5xl text-red-500">error</span>
+         <p className="text-xl font-black text-white uppercase italic">Critical Database Error</p>
+         <p className="text-sm text-zinc-500 font-bold uppercase tracking-widest">{error}</p>
+         <button onClick={fetchUsers} className="bg-primary text-black px-6 py-3 rounded-xl font-black uppercase text-[10px]">Retry Synchronize</button>
+      </div>
+   );
+
    return (
       <div className="space-y-12 animate-fade-in pb-20">
          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -116,7 +132,7 @@ const SuperUsers: React.FC = () => {
                            <div className="flex items-center gap-2">
                               <h4 className="text-xl font-black text-white">{user.nickname}</h4>
                               <span className="text-[8px] bg-primary/20 text-primary px-2 py-0.5 rounded font-black uppercase">LV.{user.level}</span>
-                              {user.role === 'admin' && <span className="text-[8px] bg-red-600 text-white px-2 py-0.5 rounded font-black uppercase tracking-tighter">MASTER</span>}
+                              {user.role === 'super_admin' && <span className="text-[8px] bg-red-600 text-white px-2 py-0.5 rounded font-black uppercase tracking-tighter">MASTER</span>}
                            </div>
                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mt-1">{user.email}</p>
                            <p className="text-xs text-zinc-400 mt-2 font-bold">본명: {user.real_name}</p>
@@ -164,10 +180,10 @@ const SuperUsers: React.FC = () => {
                         {user.status === 'banned' ? 'Restore Activity' : 'Ban User Activity'}
                      </button>
                      <button
-                        onClick={() => handleQuickAction(user.id, { role: user.role === 'admin' ? 'user' : 'admin' })}
+                        onClick={() => handleQuickAction(user.id, { role: user.role === 'super_admin' ? 'user' : 'super_admin' })}
                         className="w-full py-4 bg-black/40 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black/60 text-white"
                      >
-                        {user.role === 'admin' ? 'Revoke Admin' : 'Change Role to ADMIN'}
+                        {user.role === 'super_admin' ? 'Revoke Admin' : 'Change Role to ADMIN'}
                      </button>
                      <button
                         onClick={() => handlePasswordReset(user.id)}

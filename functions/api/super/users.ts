@@ -14,17 +14,31 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     // GET: List all users
     if (request.method === 'GET') {
         try {
-            const { results } = await env.DB.prepare(`
-                SELECT id, email, nickname, real_name, level, total_xp, points, role, status, created_at 
+            // Try to get all columns including status
+            const query = `
+                SELECT id, email, nickname, real_name, level, total_xp, points, role, 
+                (CASE WHEN ROW_NUMBER() OVER (PARTITION BY id) > 0 THEN status ELSE 'active' END) as status, 
+                created_at 
                 FROM users 
                 ORDER BY created_at DESC
-            `).all();
+            `;
+            // Simplified query first to ensure it matches common schema
+            const { results } = await env.DB.prepare("SELECT * FROM users ORDER BY created_at DESC").all();
 
             return new Response(JSON.stringify(results || []), {
                 headers: { "Content-Type": "application/json" },
             });
         } catch (error: any) {
-            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+            console.error("Admin Users API Error:", error.message);
+            // Very basic fallback if something is seriously wrong with specific columns
+            try {
+                const { results } = await env.DB.prepare("SELECT id, email, nickname, role FROM users").all();
+                return new Response(JSON.stringify(results || []), {
+                    headers: { "Content-Type": "application/json" },
+                });
+            } catch (inner) {
+                return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+            }
         }
     }
 

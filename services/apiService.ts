@@ -931,28 +931,25 @@ export const apiService = {
 
   // Admin User Management
   async getAdminUsers(): Promise<any[]> {
-    try {
-      const response = await fetch(`${API_BASE}/super/users`);
-      if (!response.ok) throw new Error('Failed to fetch admin users');
-      return await response.json();
-    } catch (error) {
-      console.error('getAdminUsers error:', error);
-      return [];
+    const response = await fetch(`${API_BASE}/super/users`);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to fetch admin users');
     }
+    return await response.json();
   },
 
   async updateAdminUser(id: string, updates: any): Promise<boolean> {
-    try {
-      const response = await fetch(`${API_BASE}/super/users`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, updates }),
-      });
-      return response.ok;
-    } catch (error) {
-      console.error('updateAdminUser error:', error);
-      return false;
+    const response = await fetch(`${API_BASE}/super/users`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to update user');
     }
+    return response.ok;
   },
 
   async adminResetPassword(userId: string, tempPassword?: string): Promise<any> {
