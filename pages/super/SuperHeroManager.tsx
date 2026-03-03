@@ -57,20 +57,26 @@ const SuperHeroManager: React.FC = () => {
   const handleChange = (index: number, field: keyof HeroSection, value: any) => {
     const newSections = [...heroSections];
     newSections[index] = { ...newSections[index], [field]: value };
-    
-    // CCA 선택 시 기본값 설정
+
+    // CCA 선택 시 기본값 설정 (CCA가 변경되면 링크를 항상 업데이트)
     if (field === 'ccaId' && value) {
       const selectedCca = ccas.find(c => c.id === value);
       if (selectedCca) {
-        if (!newSections[index].title) newSections[index].title = `인기 ${selectedCca.name}`;
+        if (!newSections[index].title) newSections[index].title = `인기 ${selectedCca.nickname || selectedCca.name}`;
         if (!newSections[index].content) newSections[index].content = selectedCca.description;
         if (!newSections[index].badge2) newSections[index].badge2 = selectedCca.venueName;
-        if (!newSections[index].buttonLink) newSections[index].buttonLink = `/ccas/${selectedCca.id}`;
+        // 항상 CCA ID 기반으로 링크 갱신
+        newSections[index].buttonLink = `/ccas/${selectedCca.id}`;
+        // 이미지가 없으면 CCA 이미지 자동 적용
+        if (!newSections[index].imageUrl && selectedCca.image) {
+          newSections[index].imageUrl = selectedCca.image;
+        }
       }
     }
-    
+
     setHeroSections(newSections);
   };
+
 
   const handleImageUpload = async (index: number, file: File) => {
     const url = await apiService.uploadImage(file);
@@ -115,7 +121,7 @@ const SuperHeroManager: React.FC = () => {
           <h2 className="text-3xl font-black tracking-tight mb-2 uppercase">Hero Section Manager</h2>
           <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">Dynamic Main Banner Configuration (Max 5)</p>
         </div>
-        <button 
+        <button
           onClick={handleAddSection}
           disabled={heroSections.length >= 5}
           className="px-6 py-3 bg-primary text-[#1b180d] rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50"
@@ -133,7 +139,7 @@ const SuperHeroManager: React.FC = () => {
       <div className="space-y-8">
         {heroSections.map((section, index) => (
           <div key={section.id} className="bg-zinc-900 p-8 rounded-[2rem] border border-white/5 relative group">
-            <button 
+            <button
               onClick={() => handleRemoveSection(index)}
               className="absolute top-6 right-6 size-8 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
             >
@@ -145,7 +151,7 @@ const SuperHeroManager: React.FC = () => {
               <div className="lg:col-span-2 space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Target CCA (Promotion)</label>
-                  <select 
+                  <select
                     value={section.ccaId}
                     onChange={(e) => handleChange(index, 'ccaId', e.target.value)}
                     className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:ring-1 focus:ring-primary"
@@ -160,8 +166,8 @@ const SuperHeroManager: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Badge 1 (Max 10)</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       maxLength={10}
                       value={section.badge1}
                       onChange={(e) => handleChange(index, 'badge1', e.target.value)}
@@ -171,8 +177,8 @@ const SuperHeroManager: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Badge 2 (Max 10)</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       maxLength={10}
                       value={section.badge2}
                       onChange={(e) => handleChange(index, 'badge2', e.target.value)}
@@ -183,8 +189,8 @@ const SuperHeroManager: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Main Title</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={section.title}
                     onChange={(e) => handleChange(index, 'title', e.target.value)}
                     className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 text-lg font-black text-white focus:ring-1 focus:ring-primary"
@@ -193,7 +199,7 @@ const SuperHeroManager: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Description Content</label>
-                  <textarea 
+                  <textarea
                     rows={3}
                     value={section.content}
                     onChange={(e) => handleChange(index, 'content', e.target.value)}
@@ -204,21 +210,34 @@ const SuperHeroManager: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Button Text</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={section.buttonText}
                       onChange={(e) => handleChange(index, 'buttonText', e.target.value)}
                       className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:ring-1 focus:ring-primary"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Button Link (Auto-generated from CCA)</label>
-                    <input 
-                      type="text" 
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                      Button Link
+                      {section.ccaId && <span className="text-primary ml-2">(CCA 선택 시 자동 생성)</span>}
+                    </label>
+                    <input
+                      type="text"
                       value={section.buttonLink}
                       onChange={(e) => handleChange(index, 'buttonLink', e.target.value)}
+                      placeholder="예: /ccas/cca_id 또는 /venues/v1"
                       className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:ring-1 focus:ring-primary"
                     />
+                    {section.buttonLink && (
+                      <div className="flex items-center gap-2 text-[10px]">
+                        <span className="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+                        <span className="text-green-400 font-bold">연결됨: {section.buttonLink}</span>
+                        {section.ccaId && (
+                          <span className="text-zinc-500">→ {ccas.find(c => c.id === section.ccaId)?.nickname || ccas.find(c => c.id === section.ccaId)?.name || ''}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -228,22 +247,22 @@ const SuperHeroManager: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Custom Image (PNG/JPG - Max 700KB)</label>
                   <div className="flex flex-col gap-4">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={(e) => e.target.files?.[0] && handleImageUpload(index, e.target.files[0])}
                       className="hidden"
                       id={`file-upload-${index}`}
                     />
-                    <label 
+                    <label
                       htmlFor={`file-upload-${index}`}
                       className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-xl text-xs font-bold text-center cursor-pointer transition-colors flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-sm">upload</span>
                       이미지 업로드
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={section.imageUrl}
                       onChange={(e) => handleChange(index, 'imageUrl', e.target.value)}
                       placeholder="또는 이미지 URL 입력"
@@ -268,14 +287,14 @@ const SuperHeroManager: React.FC = () => {
 
         {heroSections.length === 0 && (
           <div className="py-20 bg-zinc-900/50 rounded-[2rem] border border-dashed border-zinc-800 flex flex-col items-center justify-center gap-4">
-             <span className="material-symbols-outlined text-4xl text-zinc-700">view_carousel</span>
-             <p className="text-sm font-bold text-zinc-500">No hero slides configured. Default CCA hero will be used.</p>
+            <span className="material-symbols-outlined text-4xl text-zinc-700">view_carousel</span>
+            <p className="text-sm font-bold text-zinc-500">No hero slides configured. Default CCA hero will be used.</p>
           </div>
         )}
       </div>
 
       <div className="sticky bottom-8 z-50 bg-primary p-1 rounded-[2.5rem] shadow-[0_10px_50px_rgba(238,189,43,0.4)] transition-transform hover:scale-[1.01] active:scale-[0.99]">
-        <button 
+        <button
           onClick={handleSave}
           disabled={isSaving}
           className="w-full py-6 bg-black rounded-[2.4rem] font-black uppercase text-sm tracking-[0.3em] hover:bg-transparent transition-all flex items-center justify-center gap-4 disabled:opacity-50 text-white"
