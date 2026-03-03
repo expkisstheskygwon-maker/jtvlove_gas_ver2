@@ -8,12 +8,32 @@ CREATE TABLE IF NOT EXISTS venues (
   reviews_count INTEGER DEFAULT 0,
   description TEXT,
   image TEXT,
+  banner_image TEXT,
   phone TEXT,
   address TEXT,
+  introduction TEXT,
   tags TEXT, -- JSON array string
   features TEXT, -- JSON array string
+  sns TEXT, -- JSON object string
+  operating_hours TEXT, -- JSON object string
+  showUpTime TEXT, -- JSON object string
+  media TEXT, -- JSON array string
+  menu TEXT, -- JSON array string
+  tables TEXT, -- JSON array string
+  rooms TEXT, -- JSON array string
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Note: If venues table already exists, run these manual updates:
+-- ALTER TABLE venues ADD COLUMN introduction TEXT;
+-- ALTER TABLE venues ADD COLUMN banner_image TEXT;
+-- ALTER TABLE venues ADD COLUMN sns TEXT;
+-- ALTER TABLE venues ADD COLUMN operating_hours TEXT;
+-- ALTER TABLE venues ADD COLUMN showUpTime TEXT;
+-- ALTER TABLE venues ADD COLUMN media TEXT;
+-- ALTER TABLE venues ADD COLUMN menu TEXT;
+-- ALTER TABLE venues ADD COLUMN tables TEXT;
+-- ALTER TABLE venues ADD COLUMN rooms TEXT;
 
 -- 2. CCAs Table
 CREATE TABLE IF NOT EXISTS ccas (

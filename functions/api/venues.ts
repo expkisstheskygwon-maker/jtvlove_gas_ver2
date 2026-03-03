@@ -6,6 +6,12 @@ interface Env {
   DB: D1Database;
 }
 
+const VENUE_COLUMNS = [
+  'id', 'name', 'region', 'rating', 'reviews_count', 'description', 'image', 'banner_image',
+  'phone', 'address', 'introduction', 'tags', 'features', 'sns', 'operating_hours',
+  'showUpTime', 'media', 'menu', 'tables', 'rooms'
+];
+
 export const onRequest: PagesFunction<Env> = async (context: any) => {
   const { env, request } = context;
   const url = new URL(request.url);
@@ -62,7 +68,9 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         return new Response(JSON.stringify({ error: "Venue ID is required" }), { status: 400 });
       }
 
-      const keys = Object.keys(updates);
+      // Filter updates to include only valid columns
+      const keys = Object.keys(updates).filter(key => VENUE_COLUMNS.includes(key));
+
       if (keys.length === 0) {
         return new Response(JSON.stringify({ success: true }), {
           headers: { "Content-Type": "application/json" },
@@ -72,7 +80,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       const setClause = keys.map(key => `${key} = ?`).join(", ");
       const values = keys.map(key => {
         const val = updates[key];
-        return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
+        return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val ?? null;
       });
 
       await env.DB.prepare(
@@ -97,12 +105,20 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       const { id, ...data } = body;
       const targetId = id || `v_${Date.now()}`;
 
-      const keys = Object.keys(data);
+      // Filter data to include only valid columns
+      const filteredData: any = {};
+      Object.keys(data).forEach(key => {
+        if (VENUE_COLUMNS.includes(key) && key !== 'id') {
+          filteredData[key] = data[key];
+        }
+      });
+
+      const keys = Object.keys(filteredData);
       const columns = ['id', ...keys].join(", ");
       const placeholders = ['?', ...keys.map(() => "?")].join(", ");
       const values = [targetId, ...keys.map(key => {
-        const val = data[key];
-        return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
+        const val = filteredData[key];
+        return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val ?? null;
       })];
 
       await env.DB.prepare(
