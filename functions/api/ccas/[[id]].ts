@@ -245,7 +245,19 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         return new Response(JSON.stringify({ error: "CCA ID is required" }), { status: 400 });
       }
 
-      await env.DB.prepare("DELETE FROM ccas WHERE id = ?").bind(id).run();
+      // Manual cascade deletion to avoid foreign key constraints
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM gallery WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM cca_holidays WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM cca_sold_out WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM cca_attendance WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM customer_messages WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM admin_messages WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM cca_point_logs WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM cca_employment_history WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM reservations WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM ccas WHERE id = ?").bind(id)
+      ]);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { "Content-Type": "application/json" },

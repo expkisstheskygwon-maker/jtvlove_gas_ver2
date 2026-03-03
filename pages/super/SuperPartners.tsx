@@ -240,17 +240,17 @@ const SuperPartners: React.FC = () => {
 
       setLoading(true);
       try {
-         const success = activeTab === 'venues'
+         const result = activeTab === 'venues'
             ? await apiService.deleteVenue(item.id)
             : await apiService.deleteCCA(item.id);
 
-         if (success) {
+         if (result.success) {
             alert("Deleted successfully from the neural archives.");
             loadData();
          } else {
-            alert("Deletion failed. Please check the network bridge.");
+            alert(`Deletion failed: ${result.error || 'Please check the network bridge.'}`);
          }
-      } catch (err) {
+      } catch (err: any) {
          console.error("Delete error", err);
          alert("A critical error occurred during the deletion sequence.");
       } finally {

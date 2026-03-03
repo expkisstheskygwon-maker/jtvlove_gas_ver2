@@ -143,7 +143,22 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         return new Response(JSON.stringify({ error: "Venue ID is required" }), { status: 400 });
       }
 
-      await env.DB.prepare("DELETE FROM venues WHERE id = ?").bind(idParam).run();
+      // Manual cascade deletion to avoid foreign key constraints
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM gallery WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_holidays WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_sold_out WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM customer_messages WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_point_logs WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM venue_notices WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM admin_messages WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_attendance WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_employment_history WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM reservations WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_point_categories WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM ccas WHERE venue_id = ?").bind(idParam),
+        env.DB.prepare("DELETE FROM venues WHERE id = ?").bind(idParam)
+      ]);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { "Content-Type": "application/json" },

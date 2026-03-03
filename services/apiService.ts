@@ -126,15 +126,17 @@ export const apiService = {
     }
   },
 
-  async deleteVenue(id: string): Promise<boolean> {
+  async deleteVenue(id: string): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/venues?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
-      return response.ok;
-    } catch (error) {
+      if (response.ok) return { success: true };
+      const data = await response.json().catch(() => ({}));
+      return { success: false, error: data.error || 'Failed to delete' };
+    } catch (error: any) {
       console.error('deleteVenue error:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   },
 
@@ -210,15 +212,17 @@ export const apiService = {
     }
   },
 
-  async deleteCCA(id: string): Promise<boolean> {
+  async deleteCCA(id: string): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/ccas/${id}`, {
         method: 'DELETE',
       });
-      return response.ok;
-    } catch (error) {
+      if (response.ok) return { success: true };
+      const data = await response.json().catch(() => ({}));
+      return { success: false, error: data.error || 'Failed to delete' };
+    } catch (error: any) {
       console.error('deleteCCA error:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   },
 
