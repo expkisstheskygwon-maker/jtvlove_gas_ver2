@@ -166,6 +166,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           f_realNameLast,
           birthday || '',
           address || '',
+          phone || '',
           f_venueId,
           image || '',
           status || 'active',
