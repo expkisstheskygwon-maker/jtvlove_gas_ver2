@@ -14,10 +14,23 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     }
 
     try {
-        const { email, password, ccaId } = await request.json();
+        const { email, password, ccaId, isSuperAdmin } = await request.json();
 
         if (!password) {
             return new Response(JSON.stringify({ error: 'Password required' }), { status: 400 });
+        }
+
+        // Handle Super Admin Login (Password Only)
+        if (isSuperAdmin) {
+            const superAdmin = await env.DB.prepare("SELECT id, email, nickname, role, real_name, level, total_xp, points, profile_image FROM users WHERE role = 'super_admin' AND password = ?").bind(password).first();
+
+            if (!superAdmin) {
+                return new Response(JSON.stringify({ error: 'Invalid super admin password' }), { status: 401 });
+            }
+
+            return new Response(JSON.stringify({ success: true, user: superAdmin, venueId: null }), {
+                headers: { 'Content-Type': 'application/json' },
+            });
         }
 
         // Handle CCA Login

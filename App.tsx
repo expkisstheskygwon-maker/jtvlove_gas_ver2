@@ -38,6 +38,7 @@ import SuperAdminLayout from './pages/super/SuperAdminLayout';
 import SuperDashboard from './pages/super/SuperDashboard';
 import SuperSiteSettings from './pages/super/SuperSiteSettings';
 import SuperPartners from './pages/super/SuperPartners';
+import SuperLogin from './pages/super/SuperLogin';
 import SuperCommunity from './pages/super/SuperCommunity';
 import SuperUsers from './pages/super/SuperUsers';
 import SuperHeroManager from './pages/super/SuperHeroManager';
@@ -301,13 +302,38 @@ const App: React.FC = () => {
           {/* CCA Portal Routes */}
           <Route path="/cca-portal/*" element={<CCAPortalLayout><CCAPortalRoutes /></CCAPortalLayout>} />
 
+          {/* Super Admin Auth */}
+          <Route path="/super-admin/login" element={<SuperLogin />} />
+
           {/* Super Admin Routes */}
-          <Route path="/super-admin/*" element={<SuperAdminLayout><SuperAdminRoutes /></SuperAdminLayout>} />
+          <Route path="/super-admin/*" element={
+            <SuperAdminProtectedRoute>
+              <SuperAdminLayout>
+                <SuperAdminRoutes />
+              </SuperAdminLayout>
+            </SuperAdminProtectedRoute>
+          } />
         </Routes>
         <FooterWrapper />
       </div>
     </Router>
   );
+};
+
+const CCAPortalProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user || user.role !== 'cca') {
+    return <Navigate to="/cca-portal/login" replace />;
+  }
+  return <>{children}</>;
+};
+
+const SuperAdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user || user.role !== 'super_admin') {
+    return <Navigate to="/super-admin/login" replace />;
+  }
+  return <>{children}</>;
 };
 
 const AdminLayoutRoutes = () => (

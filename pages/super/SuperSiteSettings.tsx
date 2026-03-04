@@ -25,6 +25,15 @@ const SuperSiteSettings: React.FC = () => {
   });
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
+  // Password Change State
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordMessage, setPasswordMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+
   useEffect(() => {
     const loadSettings = async () => {
       setIsLoading(true);
@@ -75,6 +84,36 @@ const SuperSiteSettings: React.FC = () => {
       setIsSaving(false);
       // 창을 닫지 않고 일정 시간 후 메시지만 제거
       setTimeout(() => setMessage(null), 5000);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage({ text: 'New passwords do not match.', type: 'error' });
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordMessage({ text: 'New password must be at least 6 characters.', type: 'error' });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordMessage(null);
+
+    try {
+      const result = await apiService.changeSuperAdminPassword(passwordForm.currentPassword, passwordForm.newPassword);
+      if (result.success) {
+        setPasswordMessage({ text: 'Password successfully updated.', type: 'success' });
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        setPasswordMessage({ text: result.error || 'Failed to update password.', type: 'error' });
+      }
+    } catch (err: any) {
+      setPasswordMessage({ text: err.message || 'An error occurred while changing password.', type: 'error' });
+    } finally {
+      setIsChangingPassword(false);
+      setTimeout(() => setPasswordMessage(null), 5000);
     }
   };
 
@@ -359,6 +398,65 @@ const SuperSiteSettings: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Security Settings (Change Password) */}
+      <div className="bg-zinc-900 p-10 rounded-[2.5rem] border border-red-500/20 space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="size-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]"><span className="material-symbols-outlined">lock</span></div>
+            <h3 className="text-xl font-black">Security Settings</h3>
+          </div>
+          {passwordMessage && (
+            <div className={`px-4 py-2 rounded-xl text-xs font-bold animate-fade-in border ${passwordMessage.type === 'success' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+              {passwordMessage.text}
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={handlePasswordChange} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Current Password</label>
+              <input
+                type="password"
+                required
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 font-bold text-sm focus:ring-1 focus:ring-red-500 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">New Password</label>
+              <input
+                type="password"
+                required
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 font-bold text-sm focus:ring-1 focus:ring-red-500 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Confirm Password</label>
+              <input
+                type="password"
+                required
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 font-bold text-sm focus:ring-1 focus:ring-red-500 text-white"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isChangingPassword}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors disabled:opacity-50"
+            >
+              {isChangingPassword ? 'UPDATING...' : 'UPDATE PASSWORD'}
+            </button>
+          </div>
+        </form>
       </div>
 
       <div className="sticky bottom-8 z-50 bg-red-600 p-1 rounded-[2.5rem] shadow-[0_10px_50px_rgba(220,38,38,0.4)] transition-transform hover:scale-[1.01] active:scale-[0.99]">

@@ -959,6 +959,36 @@ export const apiService = {
     }
   },
 
+  async superLogin(password: string): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isSuperAdmin: true, password }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('superLogin error:', error);
+      return { success: false, error: 'Network error occurred' };
+    }
+  },
+
+  async changeSuperAdminPassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/super/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data.success) return { success: true };
+      return { success: false, error: data.error || 'Failed to change password' };
+    } catch (error: any) {
+      console.error('changeSuperAdminPassword error:', error);
+      return { success: false, error: 'Network error occurred' };
+    }
+  },
+
   // Board Configs
   async getBoardConfigs(): Promise<any[]> {
     try {
