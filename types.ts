@@ -49,6 +49,7 @@ export type CustomerGrade = 'VIP' | 'EXCELLENT' | 'GENERAL' | 'WARNING';
 export interface CCA {
   id: string;
   name: string;
+  email?: string;
   nickname?: string;
   realNameFirst?: string;
   realNameMiddle?: string;
