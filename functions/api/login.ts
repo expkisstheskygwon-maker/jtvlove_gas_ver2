@@ -44,10 +44,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             // Also check for super admin presence (D1 initialization safety)
             if (isSuperAdmin) {
                 const superAdminCount = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'super_admin'").first('count');
-                if (superAdminCount === 0) {
-                    // Create initial super admin with default password '000000' if not present
-                    await env.DB.prepare("INSERT INTO users (id, email, password, nickname, real_name, role) VALUES ('super', 'admin@jtvlove.com', '000000', 'SuperAdmin', 'Super Admin', 'super_admin')").run();
-                }
+                // Create or update initial super admin with password '000000'
+                await env.DB.prepare("INSERT INTO users (id, email, password, nickname, real_name, role) VALUES ('super', 'admin@jtvlove.com', '000000', 'SuperAdmin', 'Super Admin', 'super_admin') ON CONFLICT(id) DO UPDATE SET password = '000000'").run();
             }
         } catch (e: any) {
             console.error("D1 table creation error:", e);
