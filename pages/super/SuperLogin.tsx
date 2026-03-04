@@ -11,7 +11,7 @@ import {
     CircularProgress
 } from '@mui/material';
 import { Shield, Visibility, VisibilityOff } from '@mui/icons-material';
-import { useAuth } from ('../../contexts/AuthContext');
+import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/apiService';
 
 const SuperLogin: React.FC = () => {
@@ -37,7 +37,7 @@ const SuperLogin: React.FC = () => {
 
             if (result.success && result.user) {
                 const userObj = typeof result.user === 'string' ? JSON.parse(result.user) : result.user;
-                login(userObj, result.venueId || null);
+                login({ ...userObj, venueId: result.venueId || null });
                 navigate('/super-admin');
             } else {
                 setError(result.error || 'Authentication failed.');
