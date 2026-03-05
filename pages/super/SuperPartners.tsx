@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/apiService';
 import { Venue, CCA } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 
 const TIME_OPTIONS = Array.from({ length: 24 }).map((_, h) => {
    const ampm = h < 12 ? '오전' : '오후';
@@ -347,6 +348,74 @@ const SuperPartners: React.FC = () => {
 
       setEditForm({ ...editForm, menu: newMenu });
       setShowMenuModal(false);
+   };
+
+   const handleFileUploadMenu = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+         try {
+            const bstr = evt.target?.result;
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            const wsname = wb.SheetNames[0];
+            const ws = wb.Sheets[wsname];
+            const data = XLSX.utils.sheet_to_json(ws);
+
+            const newMenuPaths: any[] = [];
+            let currentTags = [...(editForm.tags || [])];
+
+            data.forEach((row: any) => {
+               // Assuming standard columns: Category, Name, Price, Promotion
+               const category = row['Category'] || row['카테고리'] || currentTags[0] || 'Uncategorized';
+               const name = row['Name'] || row['메뉴명'] || row['이름'];
+               const price = row['Price'] || row['가격'];
+               const promotion = row['Promotion'] || row['프로모션'] || '';
+
+               if (!name || price === undefined) return; // Skip invalid rows
+
+               if (!currentTags.includes(category)) {
+                  currentTags.push(category);
+               }
+
+               newMenuPaths.push({
+                  id: Date.now() + Math.random(),
+                  category,
+                  name: String(name),
+                  price: String(price),
+                  promotion: String(promotion),
+                  image: ''
+               });
+            });
+
+            if (newMenuPaths.length > 0) {
+               setEditForm((prev: any) => ({
+                  ...prev,
+                  tags: currentTags,
+                  menu: [...(prev.menu || []), ...newMenuPaths]
+               }));
+               alert(`Successfully processed \${newMenuPaths.length} menu items.`);
+            } else {
+               alert("No valid menu items found in the file. Please check the template format.");
+            }
+         } catch (error) {
+            console.error("Error parsing Excel/CSV file", error);
+            alert("Failed to parse the file. Please make sure it's a valid Excel or CSV file.");
+         }
+      };
+      reader.readAsBinaryString(file);
+      e.target.value = ''; // Reset file input
+   };
+
+   const downloadMenuTemplate = () => {
+      const ws = XLSX.utils.json_to_sheet([
+         { Category: 'Main Dishes', Name: 'Sample Dish', Price: '1000', Promotion: '10% OFF' },
+         { Category: 'Premium Drinks', Name: 'Hennessy XO', Price: '15000', Promotion: '' }
+      ]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "MenuTemplate");
+      XLSX.writeFile(wb, "menu_template.xlsx");
    };
 
    // Unit (Table/Room) Handlers
@@ -703,10 +772,19 @@ const SuperPartners: React.FC = () => {
                                     <div className="bg-black/40 rounded-[2.5rem] p-10 border border-white/10 space-y-8">
                                        <div className="flex items-center justify-between">
                                           <h6 className="text-xs font-black uppercase tracking-widest">Menu Categories</h6>
-                                          <button onClick={() => {
-                                             const cat = prompt("Enter new category name:");
-                                             if (cat) setEditForm({ ...editForm, tags: [...(editForm.tags || []), cat] });
-                                          }} className="text-red-500 font-black text-[10px] uppercase underline">+ Add Category</button>
+                                          <div className="flex gap-4">
+                                             <button onClick={downloadMenuTemplate} className="text-gray-400 hover:text-white font-black text-[10px] uppercase underline flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[12px]">download</span> Template
+                                             </button>
+                                             <label className="text-red-500 hover:text-red-400 font-black text-[10px] uppercase underline cursor-pointer flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[12px]">upload_file</span> CSV/Excel Upload
+                                                <input type="file" className="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUploadMenu} />
+                                             </label>
+                                             <button onClick={() => {
+                                                const cat = prompt("Enter new category name:");
+                                                if (cat) setEditForm({ ...editForm, tags: [...(editForm.tags || []), cat] });
+                                             }} className="text-red-500 font-black text-[10px] uppercase underline">+ Add Category</button>
+                                          </div>
                                        </div>
                                        <div className="flex flex-wrap gap-4">
                                           {(editForm.tags || []).map((tag: string) => (

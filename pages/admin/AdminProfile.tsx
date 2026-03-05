@@ -1,9 +1,9 @@
-/** force deploy: Updated time selection to 1-hour intervals (AM/PM) */
 import React, { useState, useRef, useEffect } from 'react';
 import { VENUES } from '../../constants';
 import { apiService } from '../../services/apiService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 interface MediaItem {
    id: string;
@@ -317,6 +317,71 @@ const AdminProfile: React.FC = () => {
 
    const deleteTable = (id: string) => setTables(tables.filter(t => t.id !== id));
    const deleteRoom = (id: string) => setRooms(rooms.filter(r => r.id !== id));
+
+   const handleFileUploadMenu = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+         try {
+            const bstr = evt.target?.result;
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            const wsname = wb.SheetNames[0];
+            const ws = wb.Sheets[wsname];
+            const data = XLSX.utils.sheet_to_json(ws);
+
+            const newMenuItemsList: MenuItem[] = [];
+            let currentCategories = [...categories];
+
+            data.forEach((row: any) => {
+               const category = row['Category'] || row['카테고리'] || currentCategories[0] || 'Uncategorized';
+               const name = row['Name'] || row['메뉴명'] || row['이름'];
+               const price = row['Price'] || row['가격'];
+               const promotion = row['Promotion'] || row['프로모션'] || '';
+
+               if (!name || price === undefined) return; // Skip invalid rows
+
+               if (!currentCategories.includes(category)) {
+                  currentCategories.push(category);
+               }
+
+               newMenuItemsList.push({
+                  id: Date.now().toString() + Math.random().toString(),
+                  category,
+                  name: String(name),
+                  price: String(price),
+                  promotion: String(promotion),
+                  image: '',
+                  isEvent: false
+               });
+            });
+
+            if (newMenuItemsList.length > 0) {
+               setCategories(currentCategories);
+               setMenuItems(prev => [...prev, ...newMenuItemsList]);
+               alert(`Successfully processed \${newMenuItemsList.length} menu items.`);
+            } else {
+               alert("No valid menu items found in the file. Please check the template format.");
+            }
+         } catch (error) {
+            console.error("Error parsing Excel/CSV file", error);
+            alert("Failed to parse the file. Please make sure it's a valid Excel or CSV file.");
+         }
+      };
+      reader.readAsBinaryString(file);
+      e.target.value = ''; // Reset file input
+   };
+
+   const downloadMenuTemplate = () => {
+      const ws = XLSX.utils.json_to_sheet([
+         { Category: 'Main Dishes', Name: 'Sample Dish', Price: '1000', Promotion: '10% OFF' },
+         { Category: 'Premium Drinks', Name: 'Hennessy XO', Price: '15000', Promotion: '' }
+      ]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "MenuTemplate");
+      XLSX.writeFile(wb, "menu_template.xlsx");
+   };
 
    const handleMediaSelectForTableRoom = (url: string) => {
       if (showMediaPicker.type === 'table') {
@@ -650,10 +715,19 @@ const AdminProfile: React.FC = () => {
                <div className="bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-primary/10 shadow-sm space-y-6">
                   <div className="flex items-center justify-between">
                      <h3 className="text-sm font-black text-primary uppercase tracking-widest">Category Management</h3>
-                     <button className="text-[10px] font-black underline" onClick={() => {
-                        const name = prompt('New Category Name?');
-                        if (name) setCategories([...categories, name]);
-                     }}>+ NEW CATEGORY</button>
+                     <div className="flex gap-4">
+                        <button onClick={downloadMenuTemplate} className="text-gray-400 hover:text-primary font-black text-[10px] uppercase underline flex items-center gap-1">
+                           <span className="material-symbols-outlined text-[12px]">download</span> Template
+                        </button>
+                        <label className="text-primary hover:text-primary/80 font-black text-[10px] uppercase underline cursor-pointer flex items-center gap-1">
+                           <span className="material-symbols-outlined text-[12px]">upload_file</span> CSV/Excel Upload
+                           <input type="file" className="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUploadMenu} />
+                        </label>
+                        <button className="text-[10px] font-black underline text-primary" onClick={() => {
+                           const name = prompt('New Category Name?');
+                           if (name) setCategories([...categories, name]);
+                        }}>+ NEW CATEGORY</button>
+                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
                      {categories.map(cat => (
