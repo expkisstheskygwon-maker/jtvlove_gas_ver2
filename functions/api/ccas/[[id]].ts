@@ -290,6 +290,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         env.DB.prepare("DELETE FROM cca_point_logs WHERE cca_id = ?").bind(id),
         env.DB.prepare("DELETE FROM cca_employment_history WHERE cca_id = ?").bind(id),
         env.DB.prepare("DELETE FROM reservations WHERE cca_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM hero_sections WHERE cca_id = ?").bind(id),
         env.DB.prepare("DELETE FROM ccas WHERE id = ?").bind(id)
       ]);
 

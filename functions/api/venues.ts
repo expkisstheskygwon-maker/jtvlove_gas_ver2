@@ -144,19 +144,28 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       }
 
       // Manual cascade deletion to avoid foreign key constraints
+      // We must delete records from all tables that reference ccas belonging to this venue
       await env.DB.batch([
+        // 1. Delete records referencing CCAs of this venue (across all venues)
         env.DB.prepare("DELETE FROM gallery WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
         env.DB.prepare("DELETE FROM cca_holidays WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
         env.DB.prepare("DELETE FROM cca_sold_out WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
         env.DB.prepare("DELETE FROM customer_messages WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
         env.DB.prepare("DELETE FROM cca_point_logs WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM admin_messages WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_attendance WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM cca_employment_history WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+        env.DB.prepare("DELETE FROM hero_sections WHERE cca_id IN (SELECT id FROM ccas WHERE venue_id = ?)").bind(idParam),
+
+        // 2. Delete venue-specific records
         env.DB.prepare("DELETE FROM venue_notices WHERE venue_id = ?").bind(idParam),
-        env.DB.prepare("DELETE FROM admin_messages WHERE venue_id = ?").bind(idParam),
-        env.DB.prepare("DELETE FROM cca_attendance WHERE venue_id = ?").bind(idParam),
-        env.DB.prepare("DELETE FROM cca_employment_history WHERE venue_id = ?").bind(idParam),
         env.DB.prepare("DELETE FROM reservations WHERE venue_id = ?").bind(idParam),
         env.DB.prepare("DELETE FROM cca_point_categories WHERE venue_id = ?").bind(idParam),
+
+        // 3. Delete the CCAs themselves
         env.DB.prepare("DELETE FROM ccas WHERE venue_id = ?").bind(idParam),
+
+        // 4. Finally delete the venue
         env.DB.prepare("DELETE FROM venues WHERE id = ?").bind(idParam)
       ]);
 
