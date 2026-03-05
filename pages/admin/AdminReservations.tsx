@@ -37,7 +37,7 @@ const AdminReservations: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!user || user.role !== 'venue_admin' || !user.venueId) {
+    if (!user || (user.role !== 'venue_admin' && user.role !== 'super_admin') || !user.venueId) {
       navigate('/admin/login');
       return;
     }

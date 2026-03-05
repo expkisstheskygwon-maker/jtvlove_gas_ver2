@@ -48,7 +48,7 @@ const CCAProfileSettings: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user || !user.ccaId) {
+    if (!user || (user.role !== 'cca' && user.role !== 'super_admin') || !user.ccaId) {
       navigate('/cca-portal/login');
       return;
     }

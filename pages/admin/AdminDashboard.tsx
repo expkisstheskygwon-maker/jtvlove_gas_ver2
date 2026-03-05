@@ -12,7 +12,7 @@ const AdminDashboard: React.FC = () => {
    const [isLoading, setIsLoading] = useState(true);
 
    useEffect(() => {
-      if (!user || user.role !== 'venue_admin' || !user.venueId) {
+      if (!user || (user.role !== 'venue_admin' && user.role !== 'super_admin') || !user.venueId) {
          navigate('/admin/login');
          return;
       }

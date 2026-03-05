@@ -343,7 +343,7 @@ const App: React.FC = () => {
 
 const CCAPortalProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  if (!user || user.role !== 'cca') {
+  if (!user || (user.role !== 'cca' && user.role !== 'super_admin')) {
     return <Navigate to="/cca-portal/login" replace />;
   }
   return <>{children}</>;
@@ -388,6 +388,7 @@ const SuperAdminRoutes = () => (
 );
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const location = useLocation();
   const navItems = [
     { path: '/admin', name: '대시보드', icon: 'dashboard' },
@@ -405,6 +406,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
           <div>
             <h2 className="font-black text-sm uppercase tracking-tighter">업주용 콘솔</h2>
+            {user?.role === 'super_admin' && (
+              <Link to="/super-admin" className="text-[9px] font-black text-primary hover:underline">◀ 슈퍼관리자 홈으로</Link>
+            )}
           </div>
         </div>
         <nav className="flex flex-col gap-2 flex-1">

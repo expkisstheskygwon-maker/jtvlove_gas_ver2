@@ -22,7 +22,7 @@ const CCAGalleryManager: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user || !user.ccaId) {
+    if (!user || (user.role !== 'cca' && user.role !== 'super_admin') || !user.ccaId) {
       navigate('/cca-portal/login');
       return;
     }

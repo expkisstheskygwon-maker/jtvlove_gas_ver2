@@ -100,7 +100,7 @@ const AdminProfile: React.FC = () => {
    const [showMediaPicker, setShowMediaPicker] = useState<{ active: boolean; type: 'table' | 'room' }>({ active: false, type: 'table' });
 
    useEffect(() => {
-      if (!user || user.role !== 'venue_admin' || !user.venueId) {
+      if (!user || (user.role !== 'venue_admin' && user.role !== 'super_admin') || !user.venueId) {
          navigate('/admin/login');
          return;
       }

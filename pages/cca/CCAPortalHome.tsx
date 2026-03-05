@@ -27,7 +27,7 @@ const CCAPortalHome: React.FC = () => {
    }, [user?.ccaId]);
 
    useEffect(() => {
-      if (!user || !user.ccaId) {
+      if (!user || (user.role !== 'cca' && user.role !== 'super_admin') || !user.ccaId) {
          navigate('/cca-portal/login');
          return;
       }

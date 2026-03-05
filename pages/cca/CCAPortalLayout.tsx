@@ -1,8 +1,10 @@
 
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+   const { user } = useAuth();
    const location = useLocation();
    const navigate = useNavigate();
 
@@ -30,7 +32,12 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                <div className="size-10 bg-gradient-to-br from-primary to-yellow-600 rounded-full flex items-center justify-center text-white shadow-lg">
                   <span className="material-symbols-outlined text-xl">sparkles</span>
                </div>
-               <h1 className="text-lg font-black tracking-tight uppercase">CCA Portal</h1>
+               <div>
+                  <h1 className="text-lg font-black tracking-tight uppercase">CCA Portal</h1>
+                  {user?.role === 'super_admin' && (
+                     <Link to="/super-admin" className="text-[10px] font-black text-primary hover:underline block -mt-1">◀ Return to Super Admin</Link>
+                  )}
+               </div>
             </div>
             <div className="flex items-center gap-3">
                <button className="material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors">notifications</button>
