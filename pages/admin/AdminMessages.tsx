@@ -198,12 +198,21 @@ const AdminMessages: React.FC = () => {
                                 </div>
 
                                 {selectedMsg.sender_type === 'system' && (
-                                    <div className="flex justify-center pt-2">
+                                    <div className="flex flex-col items-center gap-4 bg-blue-500/5 p-6 rounded-2xl border border-blue-500/10">
+                                        <div className="size-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
+                                            <span className="material-symbols-outlined text-xl">support_agent</span>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-sm font-black text-gray-800 dark:text-gray-200">슈퍼관리자에게는 직접 답장할 수 없습니다</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">
+                                                Please use the 1:1 System Inquiry for requests
+                                            </p>
+                                        </div>
                                         <Link
                                             to="/admin/inquiry"
-                                            className="flex items-center gap-2 px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                            className="px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-2"
                                         >
-                                            <span className="material-symbols-outlined text-lg">support_agent</span>
+                                            <span className="material-symbols-outlined text-lg">edit_note</span>
                                             시스템 1:1 문의 접수하기
                                         </Link>
                                     </div>

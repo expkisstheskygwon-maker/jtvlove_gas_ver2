@@ -652,31 +652,54 @@ const MyPage: React.FC = () => {
                             </div>
                           )}
 
-                          {/* Reply Area */}
-                          {msgTab === 'inbox' && selectedMsg.sender_type !== 'system' && !selectedMsg.replied && (
-                            <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-white/5">
-                              <textarea
-                                rows={3}
-                                value={replyText}
-                                onChange={(e) => setReplyText(e.target.value)}
-                                placeholder="답장을 입력하세요..."
-                                className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none transition-all resize-none"
-                              />
-                              <div className="flex justify-between items-center">
-                                <button
-                                  onClick={() => handleDeleteMessage(selectedMsg.id)}
-                                  className="px-4 py-2 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 rounded-xl transition-colors"
-                                >
-                                  삭제
-                                </button>
-                                <button
-                                  onClick={() => handleReplyMessage(selectedMsg.id)}
-                                  disabled={replying || !replyText.trim()}
-                                  className="px-8 py-3 bg-primary text-[#1b180d] rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all"
-                                >
-                                  {replying ? '전송 중...' : '답장 보내기'}
-                                </button>
-                              </div>
+                          {/* Reply Area / System Info */}
+                          {msgTab === 'inbox' && (
+                            <div className="space-y-4 pt-6 border-t border-zinc-100 dark:border-white/5">
+                              {selectedMsg.sender_type === 'system' ? (
+                                <div className="flex flex-col items-center gap-4 bg-blue-500/5 p-8 rounded-3xl border border-blue-500/10">
+                                  <div className="size-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
+                                    <span className="material-symbols-outlined text-2xl">support_agent</span>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-sm font-black text-zinc-800 dark:text-zinc-200">슈퍼관리자에게는 직접 답장할 수 없습니다</p>
+                                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1 italic">
+                                      Please use the 1:1 Query Center for requests
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => { setActiveTab('service'); handleShowInquiry(); }}
+                                    className="px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-2"
+                                  >
+                                    <span className="material-symbols-outlined text-lg">edit_note</span>
+                                    1:1 문의 센터 바로가기
+                                  </button>
+                                </div>
+                              ) : !selectedMsg.replied ? (
+                                <div className="space-y-3">
+                                  <textarea
+                                    rows={3}
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    placeholder="답장을 입력하세요..."
+                                    className="w-full bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none transition-all resize-none"
+                                  />
+                                  <div className="flex justify-between items-center">
+                                    <button
+                                      onClick={() => handleDeleteMessage(selectedMsg.id)}
+                                      className="px-4 py-2 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 rounded-xl transition-colors"
+                                    >
+                                      삭제
+                                    </button>
+                                    <button
+                                      onClick={() => handleReplyMessage(selectedMsg.id)}
+                                      disabled={replying || !replyText.trim()}
+                                      className="px-8 py-3 bg-primary text-[#1b180d] rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all"
+                                    >
+                                      {replying ? '전송 중...' : '답장 보내기'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : null}
                             </div>
                           )}
                         </div>
