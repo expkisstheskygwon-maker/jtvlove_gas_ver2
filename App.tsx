@@ -44,6 +44,7 @@ import SuperCommunity from './pages/super/SuperCommunity';
 import SuperUsers from './pages/super/SuperUsers';
 import SuperHeroManager from './pages/super/SuperHeroManager';
 import SuperNotice from './pages/super/SuperNotice';
+import SuperMessages from './pages/super/SuperMessages';
 
 // Venue Admin Auth & Selector
 import VenueAdminLogin from './pages/admin/VenueAdminLogin';
@@ -395,6 +396,7 @@ const SuperAdminRoutes = () => (
     <Route path="/hero" element={<SuperHeroManager />} />
     <Route path="/community" element={<SuperCommunity />} />
     <Route path="/users" element={<SuperUsers />} />
+    <Route path="/messages" element={<SuperMessages />} />
     <Route path="/notices" element={<SuperNotice />} />
   </Routes>
 );

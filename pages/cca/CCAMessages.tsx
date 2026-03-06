@@ -16,9 +16,10 @@ const CCAMessages: React.FC = () => {
 
     // Compose state
     const [showCompose, setShowCompose] = useState(false);
-    const [composeReceiverId, setComposeReceiverId] = useState('');
-    const [composeReceiverName, setComposeReceiverName] = useState('');
-    const [composeReceiverType, setComposeReceiverType] = useState('venue_admin');
+    const [composeReceiverType, setComposeReceiverType] = useState('user');
+    const [composeSearchTerm, setComposeSearchTerm] = useState('');
+    const [composeSearchResults, setComposeSearchResults] = useState<any[]>([]);
+    const [composeSelectedUser, setComposeSelectedUser] = useState<any | null>(null);
     const [composeSubject, setComposeSubject] = useState('');
     const [composeContent, setComposeContent] = useState('');
     const [composeSending, setComposeSending] = useState(false);
@@ -55,8 +56,20 @@ const CCAMessages: React.FC = () => {
         fetchMessages();
     };
 
+    const handleSearchUser = async () => {
+        if (!composeSearchTerm.trim()) {
+            alert('검색어를 입력하세요.');
+            return;
+        }
+        const results = await apiService.searchMessageRecipients(composeSearchTerm, composeReceiverType);
+        if (!results || results.length === 0) {
+            alert('검색 결과가 없습니다.');
+        }
+        setComposeSearchResults(results || []);
+    };
+
     const handleSendCompose = async () => {
-        if (!composeReceiverId || !composeContent.trim()) {
+        if (!composeSelectedUser || !composeContent.trim()) {
             alert('수신자와 내용을 입력해주세요.');
             return;
         }
@@ -65,9 +78,9 @@ const CCAMessages: React.FC = () => {
             sender_id: ccaId,
             sender_type: 'cca',
             sender_name: ccaName,
-            receiver_id: composeReceiverId,
+            receiver_id: composeSelectedUser.id,
             receiver_type: composeReceiverType,
-            receiver_name: composeReceiverName,
+            receiver_name: composeSelectedUser.name,
             subject: composeSubject,
             content: composeContent,
         });
@@ -77,8 +90,9 @@ const CCAMessages: React.FC = () => {
             setShowCompose(false);
             setComposeContent('');
             setComposeSubject('');
-            setComposeReceiverId('');
-            setComposeReceiverName('');
+            setComposeSearchTerm('');
+            setComposeSearchResults([]);
+            setComposeSelectedUser(null);
             fetchMessages();
         } else {
             alert('전송 실패: ' + (result.error || ''));
@@ -223,64 +237,102 @@ const CCAMessages: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">수신자 유형</label>
-                            <select
-                                value={composeReceiverType}
-                                onChange={(e) => setComposeReceiverType(e.target.value)}
-                                className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none"
-                            >
-                                <option value="venue_admin">🏢 업체 관리자</option>
-                                <option value="user">👤 고객</option>
-                            </select>
-                        </div>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">수신자 유형</label>
+                                <div className="flex gap-2">
+                                    {[
+                                        { val: 'user', label: '👤 일반 회원' },
+                                        { val: 'venue_admin', label: '🏪 업체 관리자' },
+                                        { val: 'system', label: '💻 시스템 관리자' }
+                                    ].map(type => (
+                                        <button
+                                            key={type.val}
+                                            onClick={() => {
+                                                setComposeReceiverType(type.val);
+                                                setComposeSearchResults([]);
+                                                if (type.val === 'system') {
+                                                    setComposeSelectedUser({ id: 'super', name: '슈퍼관리자 (시스템 관리팀)', type: 'system' });
+                                                } else {
+                                                    setComposeSelectedUser(null);
+                                                }
+                                            }}
+                                            className={`flex-1 min-w-[100px] py-3 px-2 rounded-xl text-[10px] font-black tracking-tighter uppercase transition-colors border ${composeReceiverType === type.val ? 'bg-primary/10 border-primary text-primary' : 'bg-transparent border-gray-200 dark:border-white/10 text-gray-500 hover:border-gray-300'}`}
+                                        >
+                                            {type.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">수신자 ID</label>
-                            <input
-                                type="text"
-                                value={composeReceiverId}
-                                onChange={(e) => setComposeReceiverId(e.target.value)}
-                                placeholder="수신자 ID를 입력하세요"
-                                className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">수신자 이름</label>
-                            <input
-                                type="text"
-                                value={composeReceiverName}
-                                onChange={(e) => setComposeReceiverName(e.target.value)}
-                                placeholder="수신자 이름을 입력하세요"
-                                className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none"
-                            />
-                        </div>
+                            {!composeSelectedUser ? (
+                                <div className="space-y-2 border border-gray-200 dark:border-white/5 rounded-2xl p-4 bg-gray-50 dark:bg-white/5">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">수신자 닉네임 / 업체명 검색</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={composeSearchTerm}
+                                            onChange={(e) => setComposeSearchTerm(e.target.value)}
+                                            placeholder="검색어를 입력하세요..."
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
+                                            className="flex-1 bg-white dark:bg-zinc-800 rounded-xl px-4 py-3 text-sm font-bold border border-gray-200 dark:border-white/10 outline-none focus:border-primary"
+                                        />
+                                        <button
+                                            onClick={handleSearchUser}
+                                            className="px-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-colors"
+                                        >
+                                            검색
+                                        </button>
+                                    </div>
+                                    {composeSearchResults.length > 0 && (
+                                        <div className="mt-3 max-h-40 overflow-y-auto space-y-2">
+                                            {composeSearchResults.map(user => (
+                                                <div key={user.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-white/10 rounded-xl hover:border-primary cursor-pointer transition-colors" onClick={() => setComposeSelectedUser(user)}>
+                                                    <p className="font-bold text-sm tracking-tighter">{user.name}</p>
+                                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">선택</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between bg-primary/10 border border-primary/20 p-4 rounded-2xl">
+                                    <div>
+                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">선택된 수신자</p>
+                                        <p className="font-black tracking-tighter">{composeSelectedUser.name}</p>
+                                    </div>
+                                    <button onClick={() => setComposeSelectedUser(null)} className="text-[10px] font-black bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-primary/20 text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                                        다시 검색
+                                    </button>
+                                </div>
+                            )}
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">제목</label>
-                            <input
-                                type="text"
-                                value={composeSubject}
-                                onChange={(e) => setComposeSubject(e.target.value)}
-                                placeholder="제목 (선택사항)"
-                                className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none"
-                            />
-                        </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">제목</label>
+                                <input
+                                    type="text"
+                                    value={composeSubject}
+                                    onChange={(e) => setComposeSubject(e.target.value)}
+                                    placeholder="제목 (선택사항)"
+                                    className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none"
+                                />
+                            </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">내용 *</label>
-                            <textarea
-                                rows={4}
-                                value={composeContent}
-                                onChange={(e) => setComposeContent(e.target.value)}
-                                placeholder="메시지 내용을 입력하세요..."
-                                className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-4 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none resize-none"
-                            />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">내용 *</label>
+                                <textarea
+                                    rows={4}
+                                    value={composeContent}
+                                    onChange={(e) => setComposeContent(e.target.value)}
+                                    placeholder="메시지 내용을 입력하세요..."
+                                    className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-4 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none resize-none"
+                                />
+                            </div>
                         </div>
 
                         <button
                             onClick={handleSendCompose}
-                            disabled={composeSending || !composeContent.trim() || !composeReceiverId}
+                            disabled={composeSending || !composeContent.trim() || !composeSelectedUser}
                             className="w-full py-4 bg-primary text-[#1b180d] rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg disabled:opacity-50 hover:scale-[1.02] active:scale-95 transition-all"
                         >
                             {composeSending ? '전송 중...' : '메시지 보내기'}

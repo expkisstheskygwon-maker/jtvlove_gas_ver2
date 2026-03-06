@@ -952,19 +952,28 @@ const MyPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="overflow-y-auto pr-2 space-y-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest pl-1">수신자 유형</label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {[
                     { val: 'user', label: '👤 일반 회원' },
                     { val: 'cca', label: '💃 스태프 (CCA)' },
-                    { val: 'venue_admin', label: '🏪 업체 관리자' }
+                    { val: 'venue_admin', label: '🏪 업체 관리자' },
+                    { val: 'system', label: '💻 시스템 관리자' }
                   ].map(type => (
                     <button
                       key={type.val}
-                      onClick={() => { setComposeRecType(type.val); setComposeSearchResults([]); setComposeSelectedUser(null); }}
-                      className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black tracking-tighter uppercase transition-colors border ${composeRecType === type.val ? 'bg-primary/10 border-primary text-primary' : 'bg-transparent border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-300'}`}
+                      onClick={() => {
+                        setComposeRecType(type.val);
+                        setComposeSearchResults([]);
+                        if (type.val === 'system') {
+                          setComposeSelectedUser({ id: 'super', name: '슈퍼관리자 (시스템 관리팀)', type: 'system' });
+                        } else {
+                          setComposeSelectedUser(null);
+                        }
+                      }}
+                      className={`flex-1 min-w-[100px] py-3 px-2 rounded-xl text-[10px] font-black tracking-tighter uppercase transition-colors border ${composeRecType === type.val ? 'bg-primary/10 border-primary text-primary' : 'bg-transparent border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-300'}`}
                     >
                       {type.label}
                     </button>
