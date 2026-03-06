@@ -200,7 +200,7 @@ const CCAMessages: React.FC = () => {
                                 {selectedMsg.sender_type === 'system' && (
                                     <div className="flex justify-center pt-2">
                                         <Link
-                                            to="/cca/inquiry"
+                                            to="/cca-portal/inquiry"
                                             className="flex items-center gap-2 px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
                                         >
                                             <span className="material-symbols-outlined text-lg">support_agent</span>
