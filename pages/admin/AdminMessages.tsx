@@ -1,3 +1,4 @@
+// Last updated: 2026-03-06 20:25 (Unified nickname search)
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/apiService';
 import { useAuth } from '../../contexts/AuthContext';
