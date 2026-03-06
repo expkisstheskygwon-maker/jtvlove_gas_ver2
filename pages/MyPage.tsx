@@ -1,4 +1,4 @@
-// Latest Fixes: 2026-03-06 21:00 (Dynamic Labels & Search)
+// Latest Fixes: 2026-03-06 22:00 (Inquiry Response Display Fix)
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -48,6 +48,7 @@ const MyPage: React.FC = () => {
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [inquiryForm, setInquiryForm] = useState({ title: '', content: '' });
+  const [expandedInquiryId, setExpandedInquiryId] = useState<string | null>(null);
   const [showDocModal, setShowDocModal] = useState(false);
   const [docData, setDocData] = useState({ title: '', content: '' });
 
@@ -846,21 +847,79 @@ const MyPage: React.FC = () => {
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Previous Inquiries</h4>
                 {inquiries.length > 0 ? inquiries.map((inq, i) => (
-                  <div key={i} className="p-5 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-white/5 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <h5 className="text-sm font-black">{inq.title}</h5>
-                      <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${inq.status === 'answered' ? 'bg-green-500/10 text-green-500' : 'bg-primary/20 text-primary-dark font-black'}`}>
-                        {inq.status}
-                      </span>
+                  <div key={inq.id || i} className={`rounded-2xl bg-white dark:bg-zinc-800 border transition-all duration-300 overflow-hidden ${inq.status === 'answered' ? 'border-green-500/20' : 'border-zinc-100 dark:border-white/5'}`}>
+                    {/* Inquiry Header - Clickable */}
+                    <div
+                      className="p-5 cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors"
+                      onClick={() => setExpandedInquiryId(expandedInquiryId === (inq.id || i.toString()) ? null : (inq.id || i.toString()))}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`size-8 rounded-lg flex items-center justify-center shrink-0 ${inq.status === 'answered' ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
+                            <span className="material-symbols-outlined text-sm">
+                              {inq.status === 'answered' ? 'mark_chat_read' : 'pending'}
+                            </span>
+                          </div>
+                          <h5 className="text-sm font-black truncate">{inq.title}</h5>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                          <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${inq.status === 'answered' ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                            {inq.status === 'answered' ? '답변완료' : '대기중'}
+                          </span>
+                          <span className={`material-symbols-outlined text-zinc-400 text-sm transition-transform duration-300 ${expandedInquiryId === (inq.id || i.toString()) ? 'rotate-180' : ''}`}>
+                            expand_more
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-[9px] font-bold text-zinc-400 mt-2 pl-11">
+                        {new Date(inq.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                     </div>
-                    <p className="text-xs text-zinc-500 leading-relaxed">{inq.content}</p>
-                    {inq.response && (
-                      <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border-l-4 border-primary">
-                        <p className="text-[8px] font-black uppercase text-primary mb-1">Admin Response</p>
-                        <p className="text-xs italic leading-relaxed">{inq.response}</p>
+
+                    {/* Expanded Content */}
+                    {expandedInquiryId === (inq.id || i.toString()) && (
+                      <div className="px-5 pb-5 space-y-4 animate-fade-in border-t border-zinc-100 dark:border-white/5">
+                        {/* My Question */}
+                        <div className="pt-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="material-symbols-outlined text-sm text-zinc-400">person</span>
+                            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">My Question</p>
+                          </div>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl">{inq.content}</p>
+                        </div>
+
+                        {/* Admin Response */}
+                        {inq.answer ? (
+                          <div className="relative">
+                            <div className="absolute left-4 top-0 h-4 w-px bg-green-500/30"></div>
+                            <div className="mt-2 p-4 bg-green-500/5 dark:bg-green-500/10 rounded-xl border border-green-500/15 shadow-sm">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="size-6 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-green-500 text-sm">support_agent</span>
+                                </div>
+                                <p className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest">System Response</p>
+                                {inq.responded_at && (
+                                  <p className="text-[8px] font-bold text-green-500/60 ml-auto">
+                                    {new Date(inq.responded_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">{inq.answer}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 p-4 bg-orange-500/5 rounded-xl border border-orange-500/10">
+                            <div className="size-8 rounded-lg bg-orange-500/10 flex items-center justify-center animate-pulse">
+                              <span className="material-symbols-outlined text-orange-500 text-sm">hourglass_top</span>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black text-orange-600 dark:text-orange-400">답변 대기 중</p>
+                              <p className="text-[9px] font-bold text-zinc-400">관리자가 확인 후 답변드리겠습니다</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                    <p className="text-[8px] font-black text-zinc-300 uppercase">{new Date(inq.created_at).toLocaleDateString()}</p>
                   </div>
                 )) : <div className="py-10 text-center text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em]">No inquiry history found</div>}
               </div>
