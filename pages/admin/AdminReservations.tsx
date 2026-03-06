@@ -427,11 +427,11 @@ const AdminReservations: React.FC = () => {
           <div className="flex items-center gap-1 bg-gray-50 dark:bg-zinc-950 p-2 rounded-[2rem] border border-primary/5 relative z-10">
             <div className="px-8 py-3 border-r border-primary/10 text-center">
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Requests</p>
-              <p className="text-2xl font-black text-white">{dayReservations.reduce((acc, r) => acc + (r.ccaIds?.length || (r.ccaId ? 1 : 0)), 0)}</p>
+              <p className="text-2xl font-black text-primary">{dayReservations.reduce((acc, r) => acc + (r.ccaIds?.length || (r.ccaId ? 1 : 0)), 0)}</p>
             </div>
             <div className="px-8 py-3 text-center">
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Inventory</p>
-              <p className="text-2xl font-black text-white">{dayReservations.filter(r => r.tableId || r.roomId).length}</p>
+              <p className="text-2xl font-black text-primary">{dayReservations.filter(r => r.tableId || r.roomId).length}</p>
             </div>
           </div>
         </header>
