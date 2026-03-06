@@ -180,7 +180,7 @@ const SuperMessages: React.FC = () => {
                                 </div>
                                 {selectedMsg.replied === 1 && selectedMsg.reply_text && (
                                     <div className="mt-4 border-l-4 border-red-500 bg-red-900/10 p-4 rounded-r-xl">
-                                        <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-2">My Reply</p>
+                                        <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-2">From 슈퍼관리자</p>
                                         <p className="text-xs text-gray-300 font-mono">{selectedMsg.reply_text}</p>
                                     </div>
                                 )}

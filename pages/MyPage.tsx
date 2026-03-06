@@ -646,7 +646,7 @@ const MyPage: React.FC = () => {
                           {selectedMsg.replied === 1 && selectedMsg.reply_text && (
                             <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
                               <p className="text-[10px] font-black text-primary uppercase mb-2 tracking-widest">
-                                💬 {msgTab === 'inbox' ? '나의 답장' : `${selectedMsg.receiver_name}님의 답장`}
+                                💬 {msgTab === 'inbox' ? `From ${user.nickname}` : `${selectedMsg.receiver_name}님의 답장`}
                               </p>
                               <p className="text-sm">{selectedMsg.reply_text}</p>
                             </div>
