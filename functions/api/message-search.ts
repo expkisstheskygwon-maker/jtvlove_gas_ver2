@@ -1,4 +1,4 @@
-// functions/api/message-search.ts - 수신자 검색 API
+// functions/api/message-search.ts - 수신자 검색 API (Latest Fixes: 2026-03-06 21:00)
 interface Env { DB: any; }
 
 export const onRequest: any = async (context: any) => {

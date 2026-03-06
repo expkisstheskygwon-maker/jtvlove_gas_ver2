@@ -1,4 +1,4 @@
-// Last updated: 2026-03-06 20:25 (Unified nickname search)
+// Latest Fixes: 2026-03-06 21:00 (System Badges & Inquiry Button)
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../../services/apiService';

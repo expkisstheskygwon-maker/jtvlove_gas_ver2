@@ -1,4 +1,4 @@
-// Last updated: 2026-03-06 20:25 (Nicknames only/System direct disabled)
+// Latest Fixes: 2026-03-06 21:00 (Dynamic Labels & Search)
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
