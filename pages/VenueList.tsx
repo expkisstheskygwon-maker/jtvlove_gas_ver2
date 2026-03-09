@@ -6,8 +6,8 @@ import { Venue } from '../types'; // assuming types exist from other usages
 import { VENUES as MOCK_VENUES } from '../constants';
 
 const VenueList: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('Manila');
-  const regions = ['Manila', 'Clark/Angeles', 'Cebu', 'Others'];
+  const [activeTab, setActiveTab] = useState('ALL');
+  const regions = ['ALL', 'Manila', 'Clark/Angeles', 'Cebu', 'Others'];
 
   const [venues, setVenues] = useState<any[]>([]);
   const [heroSettings, setHeroSettings] = useState({
@@ -44,6 +44,8 @@ const VenueList: React.FC = () => {
 
   // activeTab에 따른 필터링 (Others인 경우 정의된 필터가 아닌 나머지를 보여줌)
   const filteredVenues = venues.filter(venue => {
+    if (activeTab === 'ALL') return true;
+
     const region = (venue.region || '').toUpperCase();
     const tabUpper = activeTab.toUpperCase();
 
