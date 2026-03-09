@@ -78,6 +78,18 @@ const CCAProfile: React.FC = () => {
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState(false);
 
+  // Prevent background scrolling when modals are open
+  useEffect(() => {
+    if (lightboxMedia || showRequestModal || showMsgModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [lightboxMedia, showRequestModal, showMsgModal]);
+
   useEffect(() => {
     const loadData = async () => {
       if (!id) return;
@@ -483,14 +495,14 @@ const CCAProfile: React.FC = () => {
           <button className="absolute top-6 right-6 size-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
             <span className="material-symbols-outlined text-2xl">close</span>
           </button>
-          <div className="max-w-4xl max-h-[85vh] w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full h-full max-w-5xl max-h-[90vh] flex flex-col items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
             {lightboxMedia.type === 'photo' ? (
-              <img src={lightboxMedia.url} alt={lightboxMedia.caption || ''} className="w-full h-full object-contain rounded-2xl" />
+              <img src={lightboxMedia.url} alt={lightboxMedia.caption || ''} className="max-w-full max-h-full w-auto object-contain rounded-2xl shadow-2xl" />
             ) : (
-              <video src={lightboxMedia.url} controls autoPlay className="w-full h-full object-contain rounded-2xl" />
+              <video src={lightboxMedia.url} controls autoPlay className="max-w-full max-h-full w-auto object-contain rounded-2xl shadow-2xl" />
             )}
             {lightboxMedia.caption && (
-              <p className="text-center text-white/70 text-sm font-bold mt-4">{lightboxMedia.caption}</p>
+              <p className="text-center text-white/70 text-sm font-bold mt-4 shrink-0">{lightboxMedia.caption}</p>
             )}
           </div>
         </div>
