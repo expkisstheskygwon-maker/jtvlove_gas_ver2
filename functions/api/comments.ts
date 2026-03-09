@@ -63,6 +63,14 @@ export const onRequest = async (context: any) => {
                 throw new Error("Missing required fields");
             }
 
+            // Check if user is banned
+            const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ? OR nickname = ?").bind(author, author).first();
+            if (userCheck && userCheck.status === 'banned') {
+                return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다. 댓글을 작성할 수 없습니다." }), {
+                    status: 403, headers: { "Content-Type": "application/json" },
+                });
+            }
+
             const id = `c_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
             await env.DB.prepare(
@@ -90,6 +98,14 @@ export const onRequest = async (context: any) => {
         if (!id || !action) return new Response("ID and action required", { status: 400 });
 
         try {
+            // Check if user is banned
+            const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ?").bind(userId).first();
+            if (userCheck && userCheck.status === 'banned') {
+                return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다." }), {
+                    status: 403, headers: { "Content-Type": "application/json" },
+                });
+            }
+
             // Check if comment exists and get author
             const comment = await env.DB.prepare("SELECT author FROM post_comments WHERE id = ?").bind(id).first();
             if (!comment) return new Response("Comment not found", { status: 404 });

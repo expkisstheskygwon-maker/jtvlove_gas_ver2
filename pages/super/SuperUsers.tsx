@@ -55,6 +55,26 @@ const SuperUsers: React.FC = () => {
       }
    };
 
+   const handleDeleteUser = async (userId: string, nickname: string) => {
+      const confirmText = prompt(`유저 "${nickname}"을(를) 삭제하려면 "DELETE"를 입력하세요.\n\n⚠️ 삭제된 유저는 로그인이 불가합니다.\n(데이터는 보존됩니다)`);
+      if (confirmText !== 'DELETE') {
+         if (confirmText !== null) alert('삭제가 취소되었습니다. "DELETE"를 정확히 입력해야 합니다.');
+         return;
+      }
+      setIsUpdating(true);
+      try {
+         const success = await apiService.updateAdminUser(userId, { status: 'deleted' });
+         if (success) {
+            await fetchUsers();
+            alert(`${nickname} 유저가 삭제되었습니다.`);
+         }
+      } catch (err: any) {
+         alert(`실패했습니다: ${err.message || "알 수 없는 오류"}`);
+      } finally {
+         setIsUpdating(false);
+      }
+   };
+
    const handlePointAdjust = async (userId: string, currentPoints: number) => {
       const amount = prompt("조정할 포인트 양을 입력하세요 (예: 1000 또는 -500):", "0");
       if (amount && !isNaN(Number(amount))) {
@@ -77,6 +97,22 @@ const SuperUsers: React.FC = () => {
          } finally {
             setIsUpdating(false);
          }
+      }
+   };
+
+   const getStatusColor = (status: string) => {
+      switch (status) {
+         case 'banned': return 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]';
+         case 'deleted': return 'bg-zinc-500 shadow-[0_0_15px_rgba(113,113,122,0.6)]';
+         default: return 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]';
+      }
+   };
+
+   const getStatusBadge = (status: string) => {
+      switch (status) {
+         case 'banned': return <span className="text-[7px] bg-red-600 text-white px-2 py-0.5 rounded font-black uppercase tracking-tighter ml-2">BANNED</span>;
+         case 'deleted': return <span className="text-[7px] bg-zinc-600 text-white px-2 py-0.5 rounded font-black uppercase tracking-tighter ml-2">DELETED</span>;
+         default: return null;
       }
    };
 
@@ -118,10 +154,11 @@ const SuperUsers: React.FC = () => {
          {/* User Grid Cards */}
          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {filteredUsers.map(user => (
-               <div key={user.id} className="bg-zinc-900 rounded-[2.5rem] border border-white/5 space-y-6 relative group overflow-hidden shadow-2xl">
+               <div key={user.id} className={`bg-zinc-900 rounded-[2.5rem] border space-y-6 relative group overflow-hidden shadow-2xl ${user.status === 'deleted' ? 'border-zinc-700 opacity-60' : user.status === 'banned' ? 'border-red-900/50' : 'border-white/5'}`}>
                   {/* Status Glow */}
-                  <div className="absolute top-0 right-0 p-8">
-                     <span className={`size-3 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.6)] ${user.status === 'banned' ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                  <div className="absolute top-0 right-0 p-8 flex items-center gap-2">
+                     {getStatusBadge(user.status || 'active')}
+                     <span className={`size-3 rounded-full ${getStatusColor(user.status || 'active')}`}></span>
                   </div>
 
                   <div className="p-8 pb-10">
@@ -157,12 +194,14 @@ const SuperUsers: React.FC = () => {
 
                      {/* Premium Footer Decoration */}
                      <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-center opacity-30">
-                        <p className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Security Status: Identified</p>
-                        <span className="material-symbols-outlined text-[10px] text-zinc-500">verified_user</span>
+                        <p className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">
+                           {user.status === 'banned' ? 'Status: Activity Banned' : user.status === 'deleted' ? 'Status: Account Deleted' : 'Security Status: Identified'}
+                        </p>
+                        <span className="material-symbols-outlined text-[10px] text-zinc-500">
+                           {user.status === 'banned' ? 'block' : user.status === 'deleted' ? 'person_off' : 'verified_user'}
+                        </span>
                      </div>
                   </div>
-
-                  {/* Main Card Buttons Removed - Moved to Overlay */}
 
                   {/* Overlay Panel (Admin only quick actions) */}
                   <div className="absolute inset-0 bg-red-700 translate-y-full group-hover:translate-y-0 transition-transform duration-500 p-8 flex flex-col justify-center gap-2">
@@ -185,9 +224,9 @@ const SuperUsers: React.FC = () => {
 
                      <button
                         onClick={() => handleQuickAction(user.id, { status: user.status === 'banned' ? 'active' : 'banned' })}
-                        className="w-full py-3 bg-black/40 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black/60 text-white border border-white/10"
+                        className={`w-full py-3 rounded-xl text-[8px] font-black uppercase tracking-widest border border-white/10 ${user.status === 'banned' ? 'bg-green-600/60 hover:bg-green-600/80' : 'bg-black/40 hover:bg-black/60'} text-white`}
                      >
-                        {user.status === 'banned' ? 'Restore Activity' : 'Ban User Activity'}
+                        {user.status === 'banned' ? '✓ Restore Activity' : 'Ban User Activity'}
                      </button>
 
                      <button
@@ -204,7 +243,23 @@ const SuperUsers: React.FC = () => {
                         Reset Password
                      </button>
 
-                     <p className="text-[7px] text-white/50 text-center font-bold uppercase mt-2">Critical Action Required</p>
+                     {user.status === 'deleted' ? (
+                        <button
+                           onClick={() => handleQuickAction(user.id, { status: 'active' })}
+                           className="w-full py-3 bg-green-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-green-700 border border-green-400/30"
+                        >
+                           ↑ Restore Deleted User
+                        </button>
+                     ) : (
+                        <button
+                           onClick={() => handleDeleteUser(user.id, user.nickname)}
+                           className="w-full py-3 bg-zinc-800 text-red-400 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-red-900 hover:text-white border border-red-900/30"
+                        >
+                           ✕ Delete User
+                        </button>
+                     )}
+
+                     <p className="text-[7px] text-white/50 text-center font-bold uppercase mt-1">Critical Action Required</p>
                   </div>
                </div>
             ))}
@@ -276,6 +331,21 @@ const SuperUsers: React.FC = () => {
                      >
                         {selectedUser.status === 'banned' ? 'RESTORE USER ACCESS' : 'SUSPEND USER PERMANENTLY'}
                      </button>
+                     {selectedUser.status === 'deleted' ? (
+                        <button
+                           onClick={() => handleQuickAction(selectedUser.id, { status: 'active' })}
+                           className="w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-green-600 text-white hover:bg-green-700 transition-all"
+                        >
+                           RESTORE DELETED USER
+                        </button>
+                     ) : (
+                        <button
+                           onClick={() => handleDeleteUser(selectedUser.id, selectedUser.nickname)}
+                           className="w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-zinc-800 text-red-400 hover:bg-red-900 hover:text-white transition-all border border-red-900/30"
+                        >
+                           ✕ DELETE USER ACCOUNT
+                        </button>
+                     )}
                   </div>
                </div>
             </div>

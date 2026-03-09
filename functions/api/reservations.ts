@@ -17,6 +17,17 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       const data: any = await request.json();
       const id = data.id || crypto.randomUUID();
 
+      // Check if user is banned
+      const requestUserId = data.userId || data.user_id;
+      if (requestUserId) {
+        const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ?").bind(requestUserId).first();
+        if (userCheck && userCheck.status === 'banned') {
+          return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다. 예약할 수 없습니다." }), {
+            status: 403, headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+
       await env.DB.prepare(
         "INSERT INTO reservations (id, venue_id, cca_id, cca_ids, customer_name, customer_contact, reservation_time, reservation_date, customer_note, group_size, table_id, room_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
       ).bind(

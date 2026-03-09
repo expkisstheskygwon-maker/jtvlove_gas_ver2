@@ -127,6 +127,12 @@ export const onRequest: PagesFunction<{ DB: D1Database }> = async (context: any)
           await env.DB.prepare("UPDATE posts SET views = views + 1 WHERE id = ?").bind(id).run();
         }
       } else if (action === "like") {
+        // Check if user is banned
+        const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ?").bind(userId).first();
+        if (userCheck && userCheck.status === 'banned') {
+          return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다." }), { status: 403, headers: { "Content-Type": "application/json" } });
+        }
+
         // Check if already liked
         const existing = await env.DB.prepare(
           "SELECT 1 FROM post_likes WHERE post_id = ? AND (user_id = ? OR ip_address = ?)"
@@ -190,6 +196,14 @@ export const onRequest: PagesFunction<{ DB: D1Database }> = async (context: any)
         throw new Error("Missing required fields: board, title, author, or content");
       }
 
+      // Check if user is banned
+      const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ? OR nickname = ?").bind(author, author).first();
+      if (userCheck && userCheck.status === 'banned') {
+        return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다. 글을 작성할 수 없습니다." }), {
+          status: 403, headers: { "Content-Type": "application/json" },
+        });
+      }
+
       await env.DB.prepare(
         "INSERT INTO posts (id, board, category, title, author, content, image, is_secret, password, views, likes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)"
       ).bind(
@@ -227,6 +241,17 @@ export const onRequest: PagesFunction<{ DB: D1Database }> = async (context: any)
 
       if (!title || !content) {
         throw new Error("Title and content are required");
+      }
+
+      // Check if user is banned (get author from post)
+      const post = await env.DB.prepare("SELECT author FROM posts WHERE id = ?").bind(id).first();
+      if (post) {
+        const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ? OR nickname = ?").bind(post.author, post.author).first();
+        if (userCheck && userCheck.status === 'banned') {
+          return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다." }), {
+            status: 403, headers: { "Content-Type": "application/json" },
+          });
+        }
       }
 
       await env.DB.prepare(

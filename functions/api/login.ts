@@ -57,7 +57,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
         // Handle Super Admin Login (Password Only)
         if (isSuperAdmin) {
-            const superAdmin = await env.DB.prepare("SELECT id, email, nickname, role, real_name, level, total_xp, points, profile_image FROM users WHERE role = 'super_admin' AND password = ?").bind(password).first();
+            const superAdmin = await env.DB.prepare("SELECT id, email, nickname, role, real_name, level, total_xp, points, profile_image, COALESCE(status, 'active') as status FROM users WHERE role = 'super_admin' AND password = ?").bind(password).first();
 
             if (!superAdmin) {
                 return new Response(JSON.stringify({ error: 'Invalid super admin password' }), { status: 401 });
@@ -100,10 +100,15 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         }
 
         // In a real application, password should be hashed and verified!
-        const user = await env.DB.prepare('SELECT id, email, nickname, role, real_name, level, total_xp, points, profile_image FROM users WHERE email = ? AND password = ?').bind(email, password).first();
+        const user = await env.DB.prepare('SELECT id, email, nickname, role, real_name, level, total_xp, points, profile_image, COALESCE(status, \'active\') as status FROM users WHERE email = ? AND password = ?').bind(email, password).first() as any;
 
         if (!user) {
             return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
+        }
+
+        // Block deleted users from logging in
+        if (user.status === 'deleted') {
+            return new Response(JSON.stringify({ error: '계정이 삭제되었습니다. 관리자에게 문의하세요.' }), { status: 403 });
         }
 
         let venueId = null;

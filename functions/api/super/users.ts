@@ -11,26 +11,25 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     const { env, request } = context;
     const url = new URL(request.url);
 
+    // Ensure status column exists (Migration safety)
+    try {
+        await env.DB.prepare("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'").run();
+    } catch (e: any) {
+        // Column already exists - ignore
+    }
+
     // GET: List all users
     if (request.method === 'GET') {
         try {
-            // Try to get all columns including status
-            const query = `
-                SELECT id, email, nickname, real_name, level, total_xp, points, role, 
-                (CASE WHEN ROW_NUMBER() OVER (PARTITION BY id) > 0 THEN status ELSE 'active' END) as status, 
-                created_at 
-                FROM users 
-                ORDER BY created_at DESC
-            `;
-            // Simplified query first to ensure it matches common schema
-            const { results } = await env.DB.prepare("SELECT * FROM users ORDER BY created_at DESC").all();
+            const { results } = await env.DB.prepare(
+                "SELECT id, email, nickname, real_name, level, total_xp, points, role, COALESCE(status, 'active') as status, created_at FROM users ORDER BY created_at DESC"
+            ).all();
 
             return new Response(JSON.stringify(results || []), {
                 headers: { "Content-Type": "application/json" },
             });
         } catch (error: any) {
             console.error("Admin Users API Error:", error.message);
-            // Very basic fallback if something is seriously wrong with specific columns
             try {
                 const { results } = await env.DB.prepare("SELECT id, email, nickname, role FROM users").all();
                 return new Response(JSON.stringify(results || []), {

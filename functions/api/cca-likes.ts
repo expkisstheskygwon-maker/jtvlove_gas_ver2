@@ -67,6 +67,14 @@ export const onRequest: any = async (context: any) => {
                 });
             }
 
+            // Check if user is banned
+            const userCheck = await env.DB.prepare("SELECT COALESCE(status, 'active') as status FROM users WHERE id = ?").bind(user_id).first();
+            if (userCheck && userCheck.status === 'banned') {
+                return new Response(JSON.stringify({ error: "활동이 정지된 계정입니다." }), {
+                    status: 403, headers: { "Content-Type": "application/json" },
+                });
+            }
+
             // Check if already liked
             const existing = await env.DB.prepare(
                 "SELECT id FROM cca_likes WHERE cca_id = ? AND user_id = ?"
