@@ -22,10 +22,14 @@ const Footer: React.FC = () => {
                     <div className="md:col-span-1">
                         <div className="flex items-center gap-3 mb-4">
                             {settings?.logo_url ? (
-                                <img src={settings.logo_url} alt="Logo" className="w-10 h-10 object-contain rounded-xl" />
+                                <img 
+                                    src={settings.logo_url} 
+                                    alt="Logo" 
+                                    className={`${settings?.hide_site_name === 'true' ? 'h-8 md:h-10 w-auto' : 'w-10 h-10'} object-contain rounded-xl transition-all`} 
+                                />
                             ) : (
-                                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-[#1b180d]">
-                                    <span className="material-symbols-outlined fill-1">stars</span>
+                                <div className={`${settings?.hide_site_name === 'true' ? 'h-10 w-10 md:h-12 md:w-12' : 'w-10 h-10'} bg-primary rounded-xl flex items-center justify-center text-[#1b180d] transition-all`}>
+                                    <span className={`material-symbols-outlined fill-1 ${settings?.hide_site_name === 'true' ? 'text-2xl' : ''}`}>stars</span>
                                 </div>
                             )}
                             {!settings?.hide_site_name || settings.hide_site_name !== 'true' ? (
