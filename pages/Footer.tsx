@@ -28,15 +28,17 @@ const Footer: React.FC = () => {
                                     <span className="material-symbols-outlined fill-1">stars</span>
                                 </div>
                             )}
-                            <div>
-                                <h3 className="font-extrabold text-sm uppercase tracking-tight leading-none">
-                                    {settings?.site_name ? (
-                                        <span className="whitespace-pre-line">{settings.site_name}</span>
-                                    ) : (
-                                        <>필리핀<br /><span className="text-primary">JTV 협회</span></>
-                                    )}
-                                </h3>
-                            </div>
+                            {!settings?.hide_site_name || settings.hide_site_name !== 'true' ? (
+                                <div>
+                                    <h3 className="font-extrabold text-sm uppercase tracking-tight leading-none">
+                                        {settings?.site_name ? (
+                                            <span className="whitespace-pre-line">{settings.site_name}</span>
+                                        ) : (
+                                            <>필리핀<br /><span className="text-primary">JTV 협회</span></>
+                                        )}
+                                    </h3>
+                                </div>
+                            ) : null}
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed mt-4">
                             {settings?.site_name ? `${settings.site_name} ` : ''}{settings?.ui_texts?.footer_desc_1 || '공식 커뮤니티 플랫폼입니다.'}<br />

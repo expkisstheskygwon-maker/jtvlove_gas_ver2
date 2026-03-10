@@ -147,13 +147,15 @@ const Navigation = () => {
                 <span className="material-symbols-outlined text-xl fill-1">stars</span>
               </div>
             )}
-            <h1 className="font-extrabold text-sm tracking-tight leading-none uppercase">
-              {settings?.site_name ? (
-                <span className="whitespace-pre-line">{settings.site_name}</span>
-              ) : (
-                <>필리핀<br /><span className="text-primary">JTV 협회</span></>
-              )}
-            </h1>
+            {!settings?.hide_site_name || settings.hide_site_name !== 'true' ? (
+              <h1 className="font-extrabold text-sm tracking-tight leading-none uppercase">
+                {settings?.site_name ? (
+                  <span className="whitespace-pre-line">{settings.site_name}</span>
+                ) : (
+                  <>필리핀<br /><span className="text-primary">JTV 협회</span></>
+                )}
+              </h1>
+            ) : null}
           </Link>
           <nav className="flex items-center gap-8">
             <Link to="/" className={`text-sm font-bold transition-colors ${isActive('/') ? 'text-primary' : 'hover:text-primary'}`}>홈</Link>
@@ -242,9 +244,11 @@ const Navigation = () => {
               <span className="material-symbols-outlined text-sm">stars</span>
             </div>
           )}
-          <span className="font-black text-[10px] uppercase tracking-tighter">
-            {settings?.site_name || 'JTV LOVE'}
-          </span>
+          {!settings?.hide_site_name || settings.hide_site_name !== 'true' ? (
+            <span className="font-black text-[10px] uppercase tracking-tighter">
+              {settings?.site_name || 'JTV LOVE'}
+            </span>
+          ) : null}
         </Link>
         {user ? (
           <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 text-red-500 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">

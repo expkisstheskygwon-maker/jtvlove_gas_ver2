@@ -40,7 +40,8 @@ const SuperSiteSettings: React.FC = () => {
     notice_hero_image: '',
     notice_hero_title: '',
     notice_hero_subtitle: '',
-    ui_texts: {}
+    ui_texts: {},
+    hide_site_name: 'false'
   });
 
   // Tab 2: Hero
@@ -92,7 +93,8 @@ const SuperSiteSettings: React.FC = () => {
           notice_hero_image: siteData.notice_hero_image || '',
           notice_hero_title: siteData.notice_hero_title || '',
           notice_hero_subtitle: siteData.notice_hero_subtitle || '',
-          ui_texts: siteData.ui_texts || {}
+          ui_texts: siteData.ui_texts || {},
+          hide_site_name: siteData.hide_site_name || 'false'
         });
 
         if (siteData.ui_texts) {
@@ -259,7 +261,20 @@ const SuperSiteSettings: React.FC = () => {
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Association Name</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Association Name</label>
+                      <button 
+                        onClick={() => setSettings(prev => ({...prev, hide_site_name: prev.hide_site_name === 'true' ? 'false' : 'true'}))}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all ${settings.hide_site_name === 'true' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-zinc-800/50 border-white/5 text-gray-400'}`}
+                      >
+                        <span className={`material-symbols-outlined text-[14px] ${settings.hide_site_name === 'true' ? 'fill-1' : ''}`}>
+                          {settings.hide_site_name === 'true' ? 'visibility_off' : 'visibility'}
+                        </span>
+                        <span className="text-[8px] font-black uppercase tracking-tighter">
+                          {settings.hide_site_name === 'true' ? 'Logo Only' : 'Show Text'}
+                        </span>
+                      </button>
+                    </div>
                     <input type="text" value={settings.site_name} onChange={(e) => setSettings({...settings, site_name: e.target.value})} className="w-full bg-black border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:ring-1 focus:ring-red-500" />
                   </div>
                   <div className="space-y-4">
