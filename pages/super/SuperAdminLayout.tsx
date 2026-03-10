@@ -9,13 +9,11 @@ const SuperAdminLayout: React.FC<{ children: React.ReactNode }> = ({ children })
       { path: '/super-admin', icon: 'terminal', label: 'Main Command' },
       { path: '/super-admin/site-settings', icon: 'settings_input_component', label: 'Site Config' },
       { path: '/super-admin/partners', icon: 'partner_exchange', label: 'Partners & CCA' },
-      { path: '/super-admin/hero', icon: 'view_carousel', label: 'Hero Manager' },
       { path: '/super-admin/community', icon: 'forum', label: 'Board Center' },
       { path: '/super-admin/users', icon: 'manage_accounts', label: 'User Control' },
       { path: '/super-admin/messages', icon: 'forward_to_inbox', label: 'Messages' },
       { path: '/super-admin/inquiries', icon: 'contact_support', label: 'System Inquiry' },
-      { path: '/super-admin/notices', icon: 'campaign', label: '공지/이벤트' },
-      { path: '/super-admin/texts', icon: 'text_fields', label: 'Text Manager' }
+      { path: '/super-admin/notices', icon: 'campaign', label: '공지/이벤트' }
    ];
 
    return (
