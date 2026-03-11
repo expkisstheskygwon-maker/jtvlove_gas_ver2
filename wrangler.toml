@@ -4,4 +4,4 @@ pages_build_output_dir = "./dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "jtvlove_db"
-database_id = "61ccef4b-e983-444b-bc28-4b44c42717fd"
+database_id = "73639f8b-e7e0-4d31-a866-74041e5ff599"
