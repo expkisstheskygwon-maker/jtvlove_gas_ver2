@@ -1120,10 +1120,20 @@ const MyPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-16 px-4">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="size-8 bg-primary rounded-xl flex items-center justify-center text-[#1b180d]">
-                <span className="material-symbols-outlined text-sm font-black">stars</span>
-              </div>
-              <h4 className="font-black text-lg uppercase tracking-tighter">JTV STAR</h4>
+              {settings?.logo_url ? (
+                <img 
+                  src={settings.logo_url} 
+                  alt="Logo" 
+                  className={`${!settings?.site_name ? 'h-[28.8px]' : 'h-8'} w-auto object-contain rounded-xl transition-all`} 
+                />
+              ) : (
+                <div className={`${!settings?.site_name ? 'size-[28.8px]' : 'size-8'} bg-primary rounded-xl flex items-center justify-center text-[#1b180d] transition-all`}>
+                  <span className={`material-symbols-outlined font-black ${!settings?.site_name ? 'text-xs' : 'text-sm'}`}>stars</span>
+                </div>
+              )}
+              {settings?.site_name && (
+                <h4 className="font-black text-lg uppercase tracking-tighter">{settings.site_name}</h4>
+              )}
             </div>
             <p className="text-[10px] font-bold text-zinc-500 leading-loose uppercase tracking-wide">
               필리핀 최고의 엔터테인먼트 비즈니스 및<br />넘버원 커뮤니티 플랫폼입니다.

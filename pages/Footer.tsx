@@ -25,11 +25,11 @@ const Footer: React.FC = () => {
                                 <img 
                                     src={settings.logo_url} 
                                     alt="Logo" 
-                                    className={`${settings?.hide_site_name === 'true' ? 'h-8 md:h-10 w-auto' : 'w-10 h-10'} object-contain rounded-xl transition-all`} 
+                                    className={`${settings?.hide_site_name === 'true' || !settings?.site_name ? 'h-[28.8px]' : 'h-10'} w-auto object-contain rounded-xl transition-all`} 
                                 />
                             ) : (
-                                <div className={`${settings?.hide_site_name === 'true' ? 'h-10 w-10 md:h-12 md:w-12' : 'w-10 h-10'} bg-primary rounded-xl flex items-center justify-center text-[#1b180d] transition-all`}>
-                                    <span className={`material-symbols-outlined fill-1 ${settings?.hide_site_name === 'true' ? 'text-2xl' : ''}`}>stars</span>
+                                <div className={`${settings?.hide_site_name === 'true' || !settings?.site_name ? 'h-8 w-8' : 'w-10 h-10'} bg-primary rounded-xl flex items-center justify-center text-[#1b180d] transition-all`}>
+                                    <span className={`material-symbols-outlined fill-1 ${settings?.hide_site_name === 'true' || !settings?.site_name ? 'text-lg' : 'text-xl'}`}>stars</span>
                                 </div>
                             )}
                             {!settings?.hide_site_name || settings.hide_site_name !== 'true' ? (
