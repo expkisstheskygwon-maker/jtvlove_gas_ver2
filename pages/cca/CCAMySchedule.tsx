@@ -9,6 +9,7 @@ const CCAMySchedule: React.FC = () => {
   const navigate = useNavigate();
   const todayStr = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [currentMonth, setCurrentMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [appointments, setAppointments] = useState<Reservation[]>([]);
   const [dayOffDates, setDayOffDates] = useState<Set<string>>(new Set());
   const [soldOutDates, setSoldOutDates] = useState<Set<string>>(new Set());
@@ -32,6 +33,22 @@ const CCAMySchedule: React.FC = () => {
     loadHolidays();
     loadSoldOutDates();
     loadReservations();
+
+    // Add polling for real-time customer requests
+    const interval = setInterval(() => {
+      apiService.getCCAReservations(user.ccaId!).then((results) => {
+        const transformed = results.map((r: any) => ({
+          ...r,
+          date: r.reservation_date,
+          time: r.reservation_time,
+          customerName: r.customer_name,
+          shortMessage: r.customer_note || '',
+        }));
+        setAppointments(transformed);
+      });
+    }, 15000); // 15 seconds real-time update
+
+    return () => clearInterval(interval);
   }, [user, navigate]);
 
   const loadReservations = async () => {
@@ -203,25 +220,44 @@ const CCAMySchedule: React.FC = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-3xl font-black tracking-tight">My Schedule</h3>
           <div className="flex gap-2">
-            <button className="size-10 rounded-2xl border border-primary/10 flex items-center justify-center hover:bg-primary/10 transition-colors"><span className="material-symbols-outlined">chevron_left</span></button>
-            <button className="size-10 rounded-2xl border border-primary/10 flex items-center justify-center hover:bg-primary/10 transition-colors"><span className="material-symbols-outlined">chevron_right</span></button>
+            <button 
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
+              className="size-10 rounded-2xl border border-primary/10 flex items-center justify-center hover:bg-primary/10 transition-colors"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button 
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
+              className="size-10 rounded-2xl border border-primary/10 flex items-center justify-center hover:bg-primary/10 transition-colors"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
           </div>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-10 border border-primary/5 shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 right-0 size-48 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          
+          <h4 className="text-xl font-black uppercase tracking-widest mb-6 relative z-10 text-center">
+            {currentMonth.toLocaleString('default', { month: 'long' })} {currentMonth.getFullYear()}
+          </h4>
 
           <div className="grid grid-cols-7 gap-4 relative z-10">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-center text-[10px] font-black text-gray-300 py-4">{d}</div>)}
-            {Array.from({ length: 30 }).map((_, i) => {
-              const dateStr = `2023-11-${String(i + 1).padStart(2, '0')}`;
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-center text-[10px] font-black text-gray-400 py-2">{d}</div>)}
+            {Array.from({ length: getFirstDayOfMonth(currentMonth.getFullYear(), currentMonth.getMonth()) }).map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
+            {Array.from({ length: getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth()) }).map((_, i) => {
+              const day = i + 1;
+              const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const isSelected = selectedDate === dateStr;
               return (
                 <button
-                  key={i}
+                  key={day}
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${getDayStatus(dateStr)} ${selectedDate === dateStr ? 'ring-4 ring-primary !bg-primary !text-[#1b180d]' : ''}`}
+                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${getDayStatus(dateStr)} ${isSelected ? 'ring-4 ring-primary !bg-primary !text-[#1b180d]' : 'hover:scale-105'}`}
                 >
-                  <span className="text-sm font-black">{i + 1}</span>
+                  <span className="text-sm font-black">{day}</span>
                   {soldOutDates.has(dateStr) && <span className="text-[8px] font-black uppercase opacity-60">Full</span>}
                 </button>
               );
