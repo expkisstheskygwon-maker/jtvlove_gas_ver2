@@ -589,10 +589,10 @@ export const apiService = {
     } catch (error) {
       console.error("apiService.getSiteSettings Error:", error);
       return {
-        site_name: 'Philippine JTV Association',
+        site_name: 'JTV STAR',
         admin_phone: '0917-000-0000',
-        admin_email: 'admin@ph-jtv.org',
-        admin_sns: '@phjtv_official',
+        admin_email: 'admin@jtvstar.com',
+        admin_sns: '@jtvstar_official',
         hq_address: 'Metro Manila, Philippines',
         logo_url: '',
         favicon_url: '',

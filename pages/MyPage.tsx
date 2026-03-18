@@ -994,7 +994,7 @@ const MyPage: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xl font-black text-zinc-900 dark:text-white">우리은행 1002-XXX-XXXXXX</p>
-                  <p className="text-sm font-bold text-zinc-500">예금주: 홍길동 (PH-JTV 협회)</p>
+                  <p className="text-sm font-bold text-zinc-500">예금주: 홍길동</p>
                 </div>
               </div>
 
@@ -1123,10 +1123,10 @@ const MyPage: React.FC = () => {
               <div className="size-8 bg-primary rounded-xl flex items-center justify-center text-[#1b180d]">
                 <span className="material-symbols-outlined text-sm font-black">stars</span>
               </div>
-              <h4 className="font-black text-lg uppercase tracking-tighter">Philippines <span className="text-primary">JTV</span></h4>
+              <h4 className="font-black text-lg uppercase tracking-tighter">JTV STAR</h4>
             </div>
             <p className="text-[10px] font-bold text-zinc-500 leading-loose uppercase tracking-wide">
-              필리핀 최고의 엔터테인먼트 비즈니스 협회 및<br />넘버원 커뮤니티 플랫폼입니다.
+              필리핀 최고의 엔터테인먼트 비즈니스 및<br />넘버원 커뮤니티 플랫폼입니다.
             </p>
           </div>
 
@@ -1149,7 +1149,7 @@ const MyPage: React.FC = () => {
         </div>
         <div className="py-12 border-t border-zinc-100 dark:border-white/5 text-center px-4">
           <p className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.5em] opacity-50">
-            © 2026 Association PH-JTV. Crafting elite experiences in Asia.
+            © 2026 JTV STAR. Crafting elite experiences in Asia.
           </p>
         </div>
       </footer>

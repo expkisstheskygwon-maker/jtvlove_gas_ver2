@@ -109,9 +109,9 @@ const Home: React.FC = () => {
   return (
     <div className="animate-fade-in overflow-x-hidden">
       <Helmet>
-        <title>{settings?.site_name || 'Philippine JTV Association'}</title>
-        <meta name="description" content="필리핀 JTV 최신 정보, 업소 리뷰, CCA 평점 및 커뮤니티! 필리핀 여행의 밤을 책임지는 JTV LOVE에서 모든 것을 확인하세요." />
-        <meta property="og:title" content={settings?.site_name || 'Philippine JTV Association'} />
+        <title>{settings?.site_name || 'JTV STAR'}</title>
+        <meta name="description" content="필리핀 JTV 최신 정보, 업소 리뷰, CCA 평점 및 커뮤니티! 실시간으로 확인하고 소통하세요." />
+        <meta property="og:title" content={settings?.site_name || 'JTV STAR'} />
         <meta property="og:description" content="필리핀 JTV 최신 정보, 업소 리뷰, CCA 평점 및 커뮤니티! 필리핀 여행의 밤을 책임지는 JTV LOVE에서 모든 것을 확인하세요." />
       </Helmet>
       {/* ═══════════════════════════════════════════════ */}
@@ -156,7 +156,7 @@ const Home: React.FC = () => {
               ) : (
                 <>
                   <span className="inline-block px-4 py-1.5 bg-primary/20 text-primary text-[11px] font-black rounded-full uppercase tracking-widest border border-primary/30 backdrop-blur-sm">
-                    JTV 협회 인증 멤버
+                    인기 멤버
                   </span>
                   <span className="text-white/60 text-[11px] font-bold uppercase tracking-widest">{currentCca?.venueName}</span>
                 </>
@@ -480,7 +480,7 @@ const Home: React.FC = () => {
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
             {settings?.ui_texts?.home_premium_content || (
-              <>JTV 협회가 인증한 프리미엄 업소와 검증된 CCA를 만나보세요.<br className="hidden md:block" />안전하고 만족스러운 경험을 보장합니다.</>
+              <>엄선된 프리미엄 업소와 검증된 CCA를 만나보세요.<br className="hidden md:block" />안전하고 만족스러운 경험을 보장합니다.</>
             )}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

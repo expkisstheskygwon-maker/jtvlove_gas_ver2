@@ -62,7 +62,7 @@ const VenueAdminRegister: React.FC = () => {
                             <span className="material-symbols-outlined text-3xl font-black">storefront</span>
                         </div>
                         <h2 className="text-3xl font-black tracking-tighter mb-2">업소 관리자 파트너 등록</h2>
-                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">JTV LOVE 파트너십</p>
+                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">JTV STAR 파트너십</p>
                     </div>
 
                     {error && (

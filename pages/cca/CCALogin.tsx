@@ -256,7 +256,7 @@ const CCALogin: React.FC = () => {
                 </div>
 
                 <p className="mt-8 text-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest opacity-60">
-                    &copy; JTV LOVE Professional Staff Network
+                    &copy; JTV STAR Professional Staff Network
                 </p>
             </div>
         </div>

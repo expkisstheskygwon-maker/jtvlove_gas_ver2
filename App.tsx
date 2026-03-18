@@ -136,9 +136,7 @@ const Navigation = () => {
               <h1 className="font-extrabold text-sm tracking-tight leading-none uppercase">
                 {settings?.site_name ? (
                   <span className="whitespace-pre-line">{settings.site_name}</span>
-                ) : (
-                  <>필리핀<br /><span className="text-primary">JTV 협회</span></>
-                )}
+                ) : null}
               </h1>
             ) : null}
           </Link>
@@ -231,7 +229,7 @@ const Navigation = () => {
           )}
           {!settings?.hide_site_name || settings.hide_site_name !== 'true' ? (
             <span className="font-black text-[10px] uppercase tracking-tighter">
-              {settings?.site_name || 'JTV LOVE'}
+              {settings?.site_name || ''}
             </span>
           ) : null}
         </Link>

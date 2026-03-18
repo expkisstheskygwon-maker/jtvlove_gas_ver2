@@ -37,9 +37,7 @@ const Footer: React.FC = () => {
                                     <h3 className="font-extrabold text-sm uppercase tracking-tight leading-none">
                                         {settings?.site_name ? (
                                             <span className="whitespace-pre-line">{settings.site_name}</span>
-                                        ) : (
-                                            <>필리핀<br /><span className="text-primary">JTV 협회</span></>
-                                        )}
+                                        ) : null}
                                     </h3>
                                 </div>
                             ) : null}
