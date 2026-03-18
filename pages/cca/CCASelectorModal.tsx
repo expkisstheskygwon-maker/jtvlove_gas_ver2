@@ -34,10 +34,11 @@ const CCASelectorModal: React.FC<CCASelectorModalProps> = ({ isOpen, onClose, on
         }
     };
 
-    const filteredCCAs = ccas.filter(cca =>
-        cca.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cca.venueName && cca.venueName.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredCCAs = (ccas || []).filter(cca => {
+        const matchName = (cca?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchVenue = (cca?.venueName || '').toLowerCase().includes(searchTerm.toLowerCase());
+        return matchName || matchVenue;
+    });
 
     return (
         <AnimatePresence>
