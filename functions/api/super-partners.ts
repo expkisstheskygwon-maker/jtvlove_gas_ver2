@@ -128,14 +128,23 @@ export const onRequest: any = async (context: any) => {
         `;
                 const { results } = await env.DB.prepare(query).bind(today).all();
 
-                const formatted = results.map((c: any) => ({
-                    ...c,
-                    venueName: c.venueName || c.venue_name,
-                    isNew: c.is_new === 1,
-                    specialties: c.specialties ? JSON.parse(c.specialties) : [],
-                    languages: c.languages ? JSON.parse(c.languages) : [],
-                    experience_history: c.experience_history ? JSON.parse(c.experience_history) : []
-                }));
+                const formatted = results.map((c: any) => {
+                    let specialties = [];
+                    let languages = [];
+                    let experience_history = [];
+                    try { if (c.specialties) specialties = typeof c.specialties === 'string' ? JSON.parse(c.specialties) : c.specialties; } catch(e) {}
+                    try { if (c.languages) languages = typeof c.languages === 'string' ? JSON.parse(c.languages) : c.languages; } catch(e) {}
+                    try { if (c.experience_history) experience_history = typeof c.experience_history === 'string' ? JSON.parse(c.experience_history) : c.experience_history; } catch(e) {}
+                    
+                    return {
+                        ...c,
+                        venueName: c.venueName || c.venue_name,
+                        isNew: c.is_new === 1,
+                        specialties,
+                        languages,
+                        experience_history
+                    };
+                });
 
                 return new Response(JSON.stringify(formatted || []), {
                     headers: { "Content-Type": "application/json" },
