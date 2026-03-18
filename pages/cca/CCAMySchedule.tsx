@@ -36,16 +36,28 @@ const CCAMySchedule: React.FC = () => {
 
     // Add polling for real-time customer requests
     const interval = setInterval(() => {
-      apiService.getCCAReservations(user.ccaId!).then((results) => {
-        const transformed = results.map((r: any) => ({
+      Promise.all([
+        apiService.getCCAReservations(user.ccaId!),
+        apiService.getCCARequests({ ccaId: user.ccaId! })
+      ]).then(([resResults, reqResults]) => {
+        const transformedRes = resResults.map((r: any) => ({
           ...r,
           date: r.reservation_date,
           time: r.reservation_time,
           customerName: r.customer_name,
           shortMessage: r.customer_note || '',
         }));
-        setAppointments(transformed);
-      });
+        const transformedReq = reqResults.map((r: any) => ({
+          ...r,
+          id: r.id ? (r.id.toString().startsWith('req') ? r.id : `req_${r.id}`) : `req_${Math.random()}`,
+          status: r.status || 'pending',
+          date: r.preferred_date,
+          time: r.preferred_time,
+          customerName: r.customer_name,
+          shortMessage: r.customer_note || '',
+        }));
+        setAppointments([...transformedRes, ...transformedReq]);
+      }).catch(console.error);
     }, 15000); // 15 seconds real-time update
 
     return () => clearInterval(interval);
@@ -53,16 +65,31 @@ const CCAMySchedule: React.FC = () => {
 
   const loadReservations = async () => {
     if (!user?.ccaId) return;
-    const results = await apiService.getCCAReservations(user.ccaId);
-    // Transform API results to match Reservation type if needed
-    const transformed = results.map((r: any) => ({
-      ...r,
-      date: r.reservation_date,
-      time: r.reservation_time,
-      customerName: r.customer_name,
-      shortMessage: r.customer_note || '',
-    }));
-    setAppointments(transformed);
+    try {
+      const [resResults, reqResults] = await Promise.all([
+        apiService.getCCAReservations(user.ccaId),
+        apiService.getCCARequests({ ccaId: user.ccaId })
+      ]);
+      const transformedRes = resResults.map((r: any) => ({
+        ...r,
+        date: r.reservation_date,
+        time: r.reservation_time,
+        customerName: r.customer_name,
+        shortMessage: r.customer_note || '',
+      }));
+      const transformedReq = reqResults.map((r: any) => ({
+        ...r,
+        id: r.id ? (r.id.toString().startsWith('req') ? r.id : `req_${r.id}`) : `req_${Math.random()}`,
+        status: r.status || 'pending',
+        date: r.preferred_date,
+        time: r.preferred_time,
+        customerName: r.customer_name,
+        shortMessage: r.customer_note || '',
+      }));
+      setAppointments([...transformedRes, ...transformedReq]);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const loadHolidays = async () => {
