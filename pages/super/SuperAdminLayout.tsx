@@ -1,9 +1,16 @@
-
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SuperAdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
    const location = useLocation();
+   const navigate = useNavigate();
+   const { logout } = useAuth();
+
+   const handleLogout = () => {
+      logout();
+      navigate('/super-admin/login');
+   };
 
    const navItems = [
       { path: '/super-admin', icon: 'terminal', label: 'Main Command' },
@@ -38,7 +45,7 @@ const SuperAdminLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   SYSTEM ONLINE
                </div>
                <div className="h-6 w-px bg-zinc-800"></div>
-               <button className="text-xs font-black text-gray-400 hover:text-white transition-colors uppercase tracking-widest">Logout</button>
+               <button onClick={handleLogout} className="text-xs font-black text-gray-400 hover:text-white transition-colors uppercase tracking-widest">Logout</button>
             </div>
          </header>
 
