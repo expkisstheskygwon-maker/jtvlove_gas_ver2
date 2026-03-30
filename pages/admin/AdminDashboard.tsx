@@ -48,7 +48,6 @@ const AdminDashboard: React.FC = () => {
    };
 
    const stats = [
-      { name: "Today's Bookings", value: reservations.length, icon: "event_available", color: "text-blue-500", bg: "bg-blue-500/10" },
       { name: "Staff Count", value: ccas.length, icon: "how_to_reg", color: "text-green-500", bg: "bg-green-500/10" },
       { name: "Active Staff", value: ccas.filter(c => c.status === 'active').length, icon: "person_play", color: "text-orange-500", bg: "bg-orange-500/10" },
       { name: "Points Total", value: "₱" + (ccas.reduce((acc, curr) => acc + (curr.points || 0), 0) / 1000).toFixed(1) + "k", icon: "payments", color: "text-primary", bg: "bg-primary/10" }
@@ -65,7 +64,7 @@ const AdminDashboard: React.FC = () => {
    return (
       <div className="space-y-10 animate-fade-in">
          {/* Stat Cards */}
-         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map(stat => (
                <div key={stat.name} className="bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-sm border border-primary/5 flex items-center justify-between group hover:border-primary transition-all">
                   <div className="space-y-2">
@@ -79,39 +78,9 @@ const AdminDashboard: React.FC = () => {
             ))}
          </div>
 
-         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-            {/* Recent Reservations Table */}
-            <div className="xl:col-span-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-primary/10 shadow-sm">
-               <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xl font-black">Recent Activity</h3>
-                  <button className="text-primary font-bold text-xs uppercase tracking-widest hover:underline" onClick={() => navigate('/admin/reservations')}>View All</button>
-               </div>
-               <div className="space-y-4">
-                  {reservations.length > 0 ? (
-                     reservations.slice(0, 5).map(res => (
-                        <div key={res.id} onClick={() => navigate(`/admin/reservations?date=${res.date}`)} className="flex items-center justify-between p-6 bg-background-light dark:bg-white/5 rounded-2xl border border-primary/5 group hover:bg-white dark:hover:bg-zinc-800 transition-all cursor-pointer">
-                           <div className="flex items-center gap-4">
-                              <div className="size-10 bg-primary/20 text-primary rounded-full flex items-center justify-center">
-                                 <span className="material-symbols-outlined">schedule</span>
-                              </div>
-                              <div>
-                                 <p className="font-bold text-sm">{res.customerName} reservation</p>
-                                 <p className="text-[10px] text-gray-400 font-bold uppercase">{res.time} • {res.date}</p>
-                              </div>
-                           </div>
-                           <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${res.status === 'confirmed' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'}`}>
-                              {res.status}
-                           </span>
-                        </div>
-                     ))
-                  ) : (
-                     <p className="text-center text-gray-500 py-10">No recent reservations found.</p>
-                  )}
-               </div>
-            </div>
-
+         <div className="grid grid-cols-1 gap-8">
             {/* Quick Staff Status */}
-            <div className="xl:col-span-4 bg-background-dark text-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+            <div className="bg-background-dark text-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 right-0 size-48 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                <h3 className="text-xl font-black mb-8 relative z-10">Live Staff Status</h3>
                <div className="space-y-6 relative z-10">

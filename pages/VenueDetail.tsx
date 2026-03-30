@@ -13,20 +13,10 @@ const VenueDetail: React.FC = () => {
    const [venueCCAs, setVenueCCAs] = useState<CCA[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [activeTab, setActiveTab] = useState<'info' | 'menu' | 'tables' | 'staff'>('info');
-   const [showBookingModal, setShowBookingModal] = useState(false);
    const [venueNotices, setVenueNotices] = useState<any[]>([]);
    const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
    const [noticePage, setNoticePage] = useState(1);
    const NOTICES_PER_PAGE = 7;
-   const [bookingForm, setBookingForm] = useState({
-      date: new Date().toISOString().split('T')[0],
-      time: '19:00',
-      customerName: '',
-      customerContact: '',
-      customerNote: '',
-      groupSize: 1,
-      selectedCCAs: [] as string[]
-   });
 
    // Message state
    const { user } = useAuth();
@@ -93,56 +83,6 @@ const VenueDetail: React.FC = () => {
       };
       fetchData();
    }, [id]);
-
-   const handleBookingSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!bookingForm.customerName || !bookingForm.customerContact) {
-         alert("성함과 연락처를 입력해주세요.");
-         return;
-      }
-
-      try {
-         const success = await apiService.createReservation({
-            venueId: id,
-            customerName: bookingForm.customerName,
-            customerContact: bookingForm.customerContact,
-            customerNote: bookingForm.customerNote,
-            date: bookingForm.date,
-            time: bookingForm.time,
-            groupSize: bookingForm.groupSize,
-            ccaIds: bookingForm.selectedCCAs,
-            status: 'pending'
-         });
-
-         if (success) {
-            alert("예약 신청이 완료되었습니다. 관리자 확인 후 확정됩니다.");
-            setShowBookingModal(false);
-            setBookingForm({
-               date: new Date().toISOString().split('T')[0],
-               time: '19:00',
-               customerName: '',
-               customerContact: '',
-               customerNote: '',
-               groupSize: 1,
-               selectedCCAs: []
-            });
-         } else {
-            alert("예약에 실패했습니다. 다시 시도해주세요.");
-         }
-      } catch (err) {
-         console.error(err);
-         alert("오류가 발생했습니다.");
-      }
-   };
-
-   const toggleCCASelection = (ccaId: string) => {
-      setBookingForm(prev => ({
-         ...prev,
-         selectedCCAs: prev.selectedCCAs.includes(ccaId)
-            ? prev.selectedCCAs.filter(id => id !== ccaId)
-            : [...prev.selectedCCAs, ccaId]
-      }));
-   };
 
    if (isLoading) {
       return (
@@ -541,129 +481,6 @@ const VenueDetail: React.FC = () => {
                )}
             </div>
          </div>
-
-         {/* Sticky Bottom Actions */}
-         <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-primary/10 px-6 py-4 z-40">
-            <div className="max-w-4xl mx-auto flex gap-4">
-               <button
-                  onClick={() => setShowBookingModal(true)}
-                  className="w-full h-14 bg-primary text-[#1b180d] rounded-2xl font-black flex items-center justify-center gap-2 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all"
-               >
-                  <span className="material-symbols-outlined">calendar_month</span>
-                  실시간 예약하기
-               </button>
-            </div>
-         </div>
-
-         {/* Booking Modal */}
-         {showBookingModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-               <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setShowBookingModal(false)}></div>
-               <div className="relative w-full max-w-2xl bg-[#1b180d] rounded-[2.5rem] border border-primary/20 shadow-2xl overflow-hidden animate-slide-up">
-                  <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                     <div>
-                        <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Reservation</h2>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-1">{venue.name}</p>
-                     </div>
-                     <button onClick={() => setShowBookingModal(false)} className="size-12 rounded-2xl bg-white/5 text-white flex items-center justify-center hover:bg-primary hover:text-[#1b180d] transition-all">
-                        <span className="material-symbols-outlined">close</span>
-                     </button>
-                  </div>
-
-                  <form onSubmit={handleBookingSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">날짜 선택</label>
-                           <input
-                              type="date"
-                              value={bookingForm.date}
-                              onChange={e => setBookingForm({ ...bookingForm, date: e.target.value })}
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary transition-all"
-                           />
-                        </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">시간 선택</label>
-                           <select
-                              value={bookingForm.time}
-                              onChange={e => setBookingForm({ ...bookingForm, time: e.target.value })}
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary transition-all appearance-none"
-                           >
-                              {timeSlots.map(t => <option key={t} value={t} className="bg-[#1b180d]">{t}</option>)}
-                           </select>
-                        </div>
-                     </div>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">성함 (닉네임)</label>
-                           <input
-                              type="text"
-                              value={bookingForm.customerName}
-                              onChange={e => setBookingForm({ ...bookingForm, customerName: e.target.value })}
-                              placeholder="예: 홍길동"
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary transition-all"
-                           />
-                        </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">연락처 / SNS</label>
-                           <input
-                              type="text"
-                              value={bookingForm.customerContact}
-                              onChange={e => setBookingForm({ ...bookingForm, customerContact: e.target.value })}
-                              placeholder="예: 0917... 또는 카톡 ID"
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary transition-all"
-                           />
-                        </div>
-                     </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">인원 수</label>
-                        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-2">
-                           <button type="button" onClick={() => setBookingForm(prev => ({ ...prev, groupSize: Math.max(1, prev.groupSize - 1) }))} className="size-12 rounded-xl bg-white/5 text-white flex items-center justify-center hover:bg-primary/20 transition-all">-</button>
-                           <span className="flex-1 text-center text-white font-black">{bookingForm.groupSize} 명</span>
-                           <button type="button" onClick={() => setBookingForm(prev => ({ ...prev, groupSize: prev.groupSize + 1 }))} className="size-12 rounded-xl bg-white/5 text-white flex items-center justify-center hover:bg-primary/20 transition-all">+</button>
-                        </div>
-                     </div>
-
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">희망 스태프 선택 (중복 가능)</label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                           {venueCCAs.map(cca => {
-                              const isSelected = bookingForm.selectedCCAs.includes(cca.id);
-                              return (
-                                 <div
-                                    key={cca.id}
-                                    onClick={() => toggleCCASelection(cca.id)}
-                                    className={`relative aspect-[4/5] rounded-2xl overflow-hidden cursor-pointer border-2 transition-all ${isSelected ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                 >
-                                    <img src={cca.image} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                                    <div className="absolute bottom-2 left-2 right-2 text-center text-white text-[10px] font-black uppercase">{cca.nickname || cca.name}</div>
-                                    {isSelected && <div className="absolute top-2 right-2 size-6 bg-primary rounded-full flex items-center justify-center text-black shadow-lg"><span className="material-symbols-outlined text-sm">check</span></div>}
-                                 </div>
-                              );
-                           })}
-                        </div>
-                     </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">추가 요청사항</label>
-                        <textarea
-                           value={bookingForm.customerNote}
-                           onChange={e => setBookingForm({ ...bookingForm, customerNote: e.target.value })}
-                           placeholder="주류 주문, 룸 선호 등 추가 사항을 적어주세요."
-                           rows={3}
-                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-primary transition-all resize-none"
-                        />
-                     </div>
-
-                     <button type="submit" className="w-full py-6 bg-primary text-[#1b180d] rounded-2xl font-black uppercase tracking-[0.3em] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">
-                        예약 신청하기
-                     </button>
-                  </form>
-               </div>
-            </div>
-         )}
 
          {/* Message Modal */}
          {showMsgModal && (

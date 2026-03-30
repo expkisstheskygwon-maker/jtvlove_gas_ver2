@@ -37,7 +37,6 @@ const MyPage: React.FC = () => {
   const [showNotiPopup, setShowNotiPopup] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
   const [stats, setStats] = useState({
-    bookings: 0,
     posts: 0,
     notifications: 0
   });
@@ -75,14 +74,12 @@ const MyPage: React.FC = () => {
         const userStats = await apiService.getUserStats(authUser.id, authUser.nickname);
         if (userStats) {
           setStats({
-            bookings: userStats.bookings || 0,
             posts: userStats.posts || 0,
             notifications: userStats.unread_notifications || userStats.notifications?.length || 0
           });
           setNotificationsList(userStats.notifications || []);
         } else {
           setStats({
-            bookings: 0,
             posts: 0,
             notifications: 0
           });
@@ -351,12 +348,7 @@ const MyPage: React.FC = () => {
           </div>
 
           {/* Interactive Stat Cards */}
-          <div className="grid grid-cols-3 gap-4">
-            <button className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-zinc-200 dark:border-white/5 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-all group">
-              <span className="material-symbols-outlined text-primary mb-2 group-hover:scale-110 transition-transform">event_available</span>
-              <span className="text-[8px] text-zinc-400 font-black uppercase tracking-widest mb-1">Bookings</span>
-              <span className="text-xl font-black">{stats.bookings}</span>
-            </button>
+          <div className="grid grid-cols-2 gap-4">
             <button className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-zinc-200 dark:border-white/5 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-all group">
               <span className="material-symbols-outlined text-primary mb-2 group-hover:scale-110 transition-transform">edit_square</span>
               <span className="text-[8px] text-zinc-400 font-black uppercase tracking-widest mb-1">Posts</span>
@@ -1121,20 +1113,10 @@ const MyPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-16 px-4">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              {settings?.logo_url ? (
-                <img 
-                  src={settings.logo_url} 
-                  alt="Logo" 
-                  className={`${!settings?.site_name ? 'h-[28.8px]' : 'h-8'} w-auto object-contain rounded-xl transition-all`} 
-                />
-              ) : (
-                <div className={`${!settings?.site_name ? 'size-[28.8px]' : 'size-8'} bg-primary rounded-xl flex items-center justify-center text-[#1b180d] transition-all`}>
-                  <span className={`material-symbols-outlined font-black ${!settings?.site_name ? 'text-xs' : 'text-sm'}`}>stars</span>
+                <div className="size-8 bg-primary rounded-xl flex items-center justify-center text-[#1b180d] transition-all">
+                  <span className="material-symbols-outlined font-black text-sm">stars</span>
                 </div>
-              )}
-              {settings?.site_name && (
-                <h4 className="font-black text-lg uppercase tracking-tighter">{settings.site_name}</h4>
-              )}
+                <h4 className="font-black text-lg uppercase tracking-tighter">JTV LOVE</h4>
             </div>
             <p className="text-[10px] font-bold text-zinc-500 leading-loose uppercase tracking-wide">
               필리핀 최고의 엔터테인먼트 비즈니스 및<br />넘버원 커뮤니티 플랫폼입니다.

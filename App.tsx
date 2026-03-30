@@ -21,7 +21,6 @@ import Footer from './pages/Footer';
 // Admin & Portal
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProfile from './pages/admin/AdminProfile';
-import AdminReservations from './pages/admin/AdminReservations';
 import AdminCCAs from './pages/admin/AdminCCAs';
 import AdminNotices from './pages/admin/AdminNotices';
 
@@ -363,7 +362,6 @@ const AdminLayoutRoutes = () => (
     <Route path="/" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
     <Route path="/messages" element={<AdminLayout><AdminMessages /></AdminLayout>} />
     <Route path="/profile" element={<AdminLayout><AdminProfile /></AdminLayout>} />
-    <Route path="/reservations" element={<AdminLayout><AdminReservations /></AdminLayout>} />
     <Route path="/ccas" element={<AdminLayout><AdminCCAs /></AdminLayout>} />
     <Route path="/notices" element={<AdminLayout><AdminNotices /></AdminLayout>} />
     <Route path="/inquiry" element={<AdminLayout><AdminInquiry /></AdminLayout>} />
@@ -406,7 +404,6 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { path: '/admin', name: '대시보드', icon: 'dashboard' },
     { path: '/admin/messages', name: '메시지', icon: 'mail' },
     { path: '/admin/profile', name: '업소 설정', icon: 'storefront' },
-    { path: '/admin/reservations', name: '예약 관리', icon: 'calendar_month' },
     { path: '/admin/ccas', name: '스태프 관리', icon: 'groups' },
     { path: '/admin/notices', name: '공지사항', icon: 'campaign' },
     { path: '/admin/inquiry', name: '시스템 문의', icon: 'support_agent' },
