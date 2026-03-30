@@ -85,11 +85,51 @@ const CCAApply: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
         
-        // Mock API call to submit application
-        setTimeout(() => {
+        try {
+            let imageUrl = '';
+            if (formData.photo) {
+                const uploadedUrl = await apiService.uploadImage(formData.photo);
+                if (uploadedUrl) imageUrl = uploadedUrl;
+            }
+
+            let finalVenueId = 'pool';
+            let finalSpecialNotes = `[입사 지원서]\n신체사이즈/체형: ${formData.bodySize}\n자기소개: ${formData.introduction}`;
+
+            if (formData.venueOption === 'registered' && formData.registeredVenueId) {
+                finalVenueId = formData.registeredVenueId;
+            } else if (formData.venueOption === 'unregistered') {
+                finalSpecialNotes += `\n희망(근무 중인) 업소명(미등록): ${formData.unregisteredVenueName}`;
+            }
+
+            const ccaData = {
+                name: formData.realName,
+                nickname: formData.nickname || formData.realName,
+                realNameFirst: formData.realName,
+                phone: formData.phone,
+                birthday: formData.age ? `${new Date().getFullYear() - parseInt(formData.age) + 1}-01-01` : '', // rough estimate
+                languages: formData.languages,
+                experienceHistory: [formData.experience],
+                specialNotes: finalSpecialNotes,
+                image: imageUrl,
+                venueId: finalVenueId,
+                status: 'applicant',
+                grade: 'NEW',
+                isNew: true,
+                password: '1234' // default temporary password
+            };
+
+            const result = await apiService.createCCA(ccaData);
+            if (result.success) {
+                setIsSuccess(true);
+            } else {
+                alert(result.error || '지원서 접수에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            }
+        } catch (error) {
+            console.error('Submit error:', error);
+            alert('오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        } finally {
             setIsSubmitting(false);
-            setIsSuccess(true);
-        }, 1500);
+        }
     };
 
     if (isSuccess) {
