@@ -1,12 +1,26 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '../../services/apiService';
 
 const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
    const { user } = useAuth();
    const location = useLocation();
    const navigate = useNavigate();
+   const [ccaImage, setCcaImage] = useState<string>('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200/200');
+
+   useEffect(() => {
+      const fetchCcaImage = async () => {
+         if (user?.ccaId) {
+            const ccaInfo = await apiService.getCCAById(user.ccaId);
+            if (ccaInfo?.image) {
+               setCcaImage(ccaInfo.image);
+            }
+         }
+      };
+      fetchCcaImage();
+   }, [user?.ccaId]);
 
    const handleSignOut = () => {
       if (confirm("Sign out of CCA Portal?")) {
@@ -44,7 +58,7 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             <div className="flex items-center gap-3">
                <button className="material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors">notifications</button>
                <Link to="/cca-portal/settings">
-                  <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200/200" className="size-9 rounded-full border-2 border-primary/20 object-cover" />
+                  <img src={ccaImage} alt="Profile" className="size-9 rounded-full border-2 border-primary/20 object-cover" />
                </Link>
             </div>
          </header>
