@@ -9,6 +9,7 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
    const location = useLocation();
    const navigate = useNavigate();
    const [ccaImage, setCcaImage] = useState<string>('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200/200');
+   const [isClockedIn, setIsClockedIn] = useState<boolean>(false);
 
    useEffect(() => {
       const fetchCcaImage = async () => {
@@ -55,10 +56,25 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   )}
                </div>
             </div>
-            <div className="flex items-center gap-3">
-               <button className="material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors">notifications</button>
-               <Link to="/cca-portal/settings">
-                  <img src={ccaImage} alt="Profile" className="size-9 rounded-full border-2 border-primary/20 object-cover" />
+            <div className="flex items-center gap-2 sm:gap-3">
+               {/* Quick Commute Toggle */}
+               <button 
+                  onClick={() => setIsClockedIn(!isClockedIn)}
+                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border transition-all ${isClockedIn ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-100 dark:bg-zinc-800 border-transparent hover:bg-gray-200 dark:hover:bg-zinc-700'}`}
+               >
+                  <span className={`w-2 h-2 rounded-full ${isClockedIn ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                  <span className={`hidden sm:block text-[10px] font-black uppercase tracking-wider ${isClockedIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
+                     {isClockedIn ? '근무 중 (ON)' : '휴식 중 (OFF)'}
+                  </span>
+                  <span className={`sm:hidden text-[9px] font-black uppercase tracking-wider ${isClockedIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
+                     {isClockedIn ? 'ON' : 'OFF'}
+                  </span>
+               </button>
+
+               <button className="hidden sm:flex material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors">notifications</button>
+               <Link to="/cca-portal/settings" className="relative group">
+                  <img src={ccaImage} alt="Profile" className={`size-8 sm:size-9 rounded-full border-2 object-cover transition-colors ${isClockedIn ? 'border-emerald-500' : 'border-primary/20'}`} />
+                  {isClockedIn && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-zinc-950 rounded-full"></span>}
                </Link>
             </div>
          </header>

@@ -105,6 +105,7 @@ const Home: React.FC = () => {
   const totalSlides = isCustomHero ? heroSections.length : ccas.length;
   const activeIndex = isCustomHero ? currentHeroIndex : currentCcaIndex;
   const activeVenue = venues[hoveredVenueIndex] || venues[0];
+  const liveCCAs = ccas.filter(cca => cca.status === 'active').slice(0, 8); // Mock live CCAs
 
   return (
     <div className="animate-fade-in overflow-x-hidden">
@@ -251,6 +252,51 @@ const Home: React.FC = () => {
           </>
         )}
       </section>
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/* LIVE CCAs SECTION (CURRENTLY CLOCKED-IN)       */}
+      {/* ═══════════════════════════════════════════════ */}
+      {liveCCAs.length > 0 && (
+        <section className="py-10 bg-zinc-950 overflow-hidden relative border-y border-zinc-900 border-t-primary/20 shadow-[0_0_50px_rgba(255,215,0,0.05)]">
+           <div className="absolute top-0 right-1/4 w-[300px] h-[300px] bg-red-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+           <div className="max-w-7xl mx-auto px-4">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                   <div className="relative flex h-3.5 w-3.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
+                   </div>
+                   <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">NOW LIVE <span className="text-primary font-medium text-lg ml-2 opacity-80">현재 출근자</span></h2>
+                </div>
+                <Link to="/ccas" className="text-xs font-bold text-zinc-400 hover:text-white transition-colors">전체보기 &rarr;</Link>
+              </div>
+              <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2 snap-x pr-4">
+                 {liveCCAs.map(cca => (
+                   <Link to={`/ccas/${cca.id}`} key={`live-${cca.id}`} className="snap-start flex-shrink-0 w-36 md:w-44 group relative">
+                      <div className="aspect-[3/4] rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-primary/50 transition-colors shadow-2xl">
+                         <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                              onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop'; }}/>
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                         <div className="absolute top-2 left-2 bg-red-600/90 px-2.5 py-1 rounded text-[9px] font-black text-white uppercase tracking-wider backdrop-blur-md shadow-lg shadow-red-500/20 border border-white/10 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                            출근중
+                         </div>
+                         <div className="absolute bottom-3 left-3 right-3">
+                            <div className="flex justify-between items-end">
+                               <h4 className="font-extrabold text-sm text-white truncate drop-shadow-md">{cca.nickname || cca.name}</h4>
+                               {cca.grade && <span className="text-[8px] px-1.5 py-0.5 rounded uppercase font-black bg-primary text-[#1b180d]">{cca.grade}</span>}
+                            </div>
+                            <p className="text-[10px] text-zinc-300 truncate mt-1 opacity-80 font-medium flex items-center gap-1">
+                               <span className="material-symbols-outlined text-[10px]">location_on</span> {cca.venueName}
+                            </p>
+                         </div>
+                      </div>
+                   </Link>
+                 ))}
+              </div>
+           </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════ */}
       {/* FEATURED CCAs SECTION                          */}
