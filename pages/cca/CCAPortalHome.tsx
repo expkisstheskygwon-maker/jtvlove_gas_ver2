@@ -45,6 +45,7 @@ const CCAPortalHome: React.FC = () => {
       const result = await apiService.ccaCheckIn(user.ccaId, data.cca.venue_id || 'v1');
       if (result.success) {
          setAttendance({ status: 'checked_in', check_in_at: result.time || new Date().toISOString() });
+         window.dispatchEvent(new CustomEvent('ccaAttendanceUpdate', { detail: true }));
       }
       setCheckingIn(false);
    };
@@ -55,6 +56,7 @@ const CCAPortalHome: React.FC = () => {
       const result = await apiService.ccaCheckOut(user.ccaId, data.cca.venue_id || 'v1');
       if (result.success) {
          setAttendance({ ...attendance, status: 'checked_out', check_out_at: result.time || new Date().toISOString() });
+         window.dispatchEvent(new CustomEvent('ccaAttendanceUpdate', { detail: false }));
       }
       setCheckingOut(false);
    };

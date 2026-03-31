@@ -12,15 +12,22 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
    const [isClockedIn, setIsClockedIn] = useState<boolean>(false);
 
    useEffect(() => {
-      const fetchCcaImage = async () => {
+      const fetchCcaData = async () => {
          if (user?.ccaId) {
             const ccaInfo = await apiService.getCCAById(user.ccaId);
-            if (ccaInfo?.image) {
-               setCcaImage(ccaInfo.image);
+            if (ccaInfo) {
+               if (ccaInfo.image) setCcaImage(ccaInfo.image);
+               setIsClockedIn((ccaInfo as any).attendanceStatus === 'checked_in');
             }
          }
       };
-      fetchCcaImage();
+      
+      fetchCcaData();
+
+      // Listen for real-time dispatch events from CCAPortalHome when the CCA checks in or out
+      const handleStatusUpdate = (e: any) => setIsClockedIn(e.detail);
+      window.addEventListener('ccaAttendanceUpdate', handleStatusUpdate);
+      return () => window.removeEventListener('ccaAttendanceUpdate', handleStatusUpdate);
    }, [user?.ccaId]);
 
    const handleSignOut = () => {
@@ -57,10 +64,9 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-               {/* Quick Commute Toggle */}
-               <button 
-                  onClick={() => setIsClockedIn(!isClockedIn)}
-                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border transition-all ${isClockedIn ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-100 dark:bg-zinc-800 border-transparent hover:bg-gray-200 dark:hover:bg-zinc-700'}`}
+               {/* Check-in Indicator */}
+               <div 
+                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border transition-all ${isClockedIn ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-100 dark:bg-zinc-800 border-transparent'}`}
                >
                   <span className={`w-2 h-2 rounded-full ${isClockedIn ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
                   <span className={`hidden sm:block text-[10px] font-black uppercase tracking-wider ${isClockedIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
@@ -69,7 +75,7 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   <span className={`sm:hidden text-[9px] font-black uppercase tracking-wider ${isClockedIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
                      {isClockedIn ? 'ON' : 'OFF'}
                   </span>
-               </button>
+               </div>
 
                <button className="hidden sm:flex material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors">notifications</button>
                <Link to="/cca-portal/settings" className="relative group">
