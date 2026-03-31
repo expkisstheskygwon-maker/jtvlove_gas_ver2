@@ -41,7 +41,8 @@ const SuperSiteSettings: React.FC = () => {
     notice_hero_title: '',
     notice_hero_subtitle: '',
     ui_texts: {},
-    hide_site_name: 'false'
+    hide_site_name: 'false',
+    marketing_live_ccas: 'true'
   });
 
   // Tab 2: Hero
@@ -94,7 +95,8 @@ const SuperSiteSettings: React.FC = () => {
           notice_hero_title: siteData.notice_hero_title || '',
           notice_hero_subtitle: siteData.notice_hero_subtitle || '',
           ui_texts: siteData.ui_texts || {},
-          hide_site_name: siteData.hide_site_name || 'false'
+          hide_site_name: siteData.hide_site_name || 'false',
+          marketing_live_ccas: siteData.marketing_live_ccas || 'true'
         });
 
         if (siteData.ui_texts) {
@@ -360,6 +362,27 @@ const SuperSiteSettings: React.FC = () => {
                   <span className="text-[8px] font-black text-gray-500 uppercase">Notice Page</span>
                   <input type="file" onChange={(e) => e.target.files?.[0] && handleImageUpload('notice_hero_image', e.target.files[0])} className="w-full text-[9px] mb-2" />
                   <input type="text" placeholder="Title" value={settings.notice_hero_title} onChange={(e) => setSettings({...settings, notice_hero_title: e.target.value})} className="w-full bg-black text-[11px] font-bold p-2 rounded-lg border border-zinc-800" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+              <div className="flex items-center gap-4 mb-4 text-emerald-500">
+                <div className="size-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><span className="material-symbols-outlined">campaign</span></div>
+                <h3 className="text-lg font-black uppercase tracking-tight text-white">Marketing Display</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-black border border-white/10 rounded-2xl">
+                  <div>
+                    <h4 className="text-sm font-black text-white">Mock Live CCAs Display (현재 출근자 마케팅 표시)</h4>
+                    <p className="text-[10px] text-gray-500 mt-1">Show active CCAs as 'NOW LIVE' regardless of actual attendance. Randomly shuffles CCAs.<br/>If turned off, only CCAs actually clocked-in will be displayed.</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({...prev, marketing_live_ccas: prev.marketing_live_ccas === 'true' ? 'false' : 'true'}))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${settings.marketing_live_ccas === 'true' ? 'bg-emerald-500' : 'bg-zinc-700'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.marketing_live_ccas === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
                 </div>
               </div>
             </div>

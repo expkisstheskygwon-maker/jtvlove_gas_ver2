@@ -20,7 +20,9 @@ async function startServer() {
     admin_sns: '@phjtv_official',
     hq_address: 'Metro Manila, Philippines',
     logo_url: '',
-    favicon_url: ''
+    favicon_url: '',
+    hide_site_name: 'false',
+    marketing_live_ccas: 'true'
   };
 
   let heroSections: any[] = [];

@@ -78,6 +78,7 @@ export interface CCA {
   points?: number;
   themeColor?: string;
   // New Fields
+  isWorking?: boolean;
   mbti?: string;
   zodiac?: string;
   interests?: string[];
