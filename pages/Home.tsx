@@ -88,6 +88,19 @@ const Home: React.FC = () => {
     }
   };
 
+  const liveCCAs = React.useMemo(() => {
+    const isMock = !settings || settings.marketing_live_ccas !== 'false'; // Default to true
+    const activeCcas = ccas.filter(cca => cca.status === 'active');
+    
+    if (isMock) {
+      // Shuffle for random mock check-ins
+      return [...activeCcas].sort(() => 0.5 - Math.random()).slice(0, 8);
+    } else {
+      // Actual real check-ins
+      return activeCcas.filter(cca => (cca as any).isWorking || (cca as any).attendanceStatus === 'checked_in').slice(0, 8);
+    }
+  }, [ccas, settings]);
+
   if (isLoading || (ccas.length === 0 && heroSections.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-dark text-primary">
@@ -105,19 +118,6 @@ const Home: React.FC = () => {
   const totalSlides = isCustomHero ? heroSections.length : ccas.length;
   const activeIndex = isCustomHero ? currentHeroIndex : currentCcaIndex;
   const activeVenue = venues[hoveredVenueIndex] || venues[0];
-  
-  const liveCCAs = React.useMemo(() => {
-    const isMock = !settings || settings.marketing_live_ccas !== 'false'; // Default to true
-    const activeCcas = ccas.filter(cca => cca.status === 'active');
-    
-    if (isMock) {
-      // Shuffle for random mock check-ins
-      return [...activeCcas].sort(() => 0.5 - Math.random()).slice(0, 8);
-    } else {
-      // Actual real check-ins
-      return activeCcas.filter(cca => cca.isWorking || (cca as any).attendanceStatus === 'checked_in').slice(0, 8);
-    }
-  }, [ccas, settings]);
 
   return (
     <div className="animate-fade-in overflow-x-hidden">
