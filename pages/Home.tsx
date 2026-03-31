@@ -97,7 +97,14 @@ const Home: React.FC = () => {
       return [...activeCcas].sort(() => 0.5 - Math.random()).slice(0, 8);
     } else {
       // Actual real check-ins
-      return activeCcas.filter(cca => (cca as any).isWorking || (cca as any).attendanceStatus === 'checked_in').slice(0, 8);
+      return activeCcas
+        .filter(cca => (cca as any).attendanceStatus === 'checked_in' || (cca as any).isWorking)
+        .sort((a, b) => {
+          const timeA = new Date((a as any).checkInAt || 0).getTime();
+          const timeB = new Date((b as any).checkInAt || 0).getTime();
+          return timeA - timeB; // Earliest check-in first
+        })
+        .slice(0, 8);
     }
   }, [ccas, settings]);
 

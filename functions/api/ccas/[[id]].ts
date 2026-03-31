@@ -20,12 +20,15 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     try {
       const venueIdParam = url.searchParams.get('venueId');
 
+      const today = new Date().toISOString().split("T")[0];
       let query = `
-        SELECT c.*, v.name as venueName, v.name as venue_name, v.region as region
+        SELECT c.*, v.name as venueName, v.name as venue_name, v.region as region,
+               a.status as attendanceStatus, a.check_in_at as checkInAt
         FROM ccas c 
         LEFT JOIN venues v ON c.venue_id = v.id
+        LEFT JOIN cca_attendance a ON c.id = a.cca_id AND a.attendance_date = ?
       `;
-      let queryParams: any[] = [];
+      let queryParams: any[] = [today];
 
       if (id) {
         query += " WHERE c.id = ?";
@@ -36,6 +39,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
         return new Response(JSON.stringify({
           ...result,
+          attendanceStatus: result.attendanceStatus,
+          checkInAt: result.checkInAt,
           languages: result.languages ? JSON.parse(result.languages) : [],
           venueId: result.venue_id,
           sns: result.sns_links ? JSON.parse(result.sns_links) : {},
@@ -99,7 +104,9 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         // 현재 조회하는 venue가 이 CCA의 pending venue인 경우, 프론트에선 applicant로 처리되도록 강제 변경
         status: (venueIdParam && c.pending_venue_id === venueIdParam) ? 'applicant' : c.status,
         originalStatus: c.status,
-        isNew: c.is_new === 1
+        isNew: c.is_new === 1,
+        attendanceStatus: c.attendanceStatus,
+        checkInAt: c.checkInAt
       }));
 
       return new Response(JSON.stringify(formattedResults), {
