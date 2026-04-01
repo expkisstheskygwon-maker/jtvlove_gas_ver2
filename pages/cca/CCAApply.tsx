@@ -25,23 +25,23 @@ const CCAApply: React.FC = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        // 필수 및 기본 정보
+        // Required and Basic Info
         realName: '',
         nickname: '',
         age: '',
         phone: '',
-        bodySize: '', // 신체 사이즈
+        bodySize: '', // Body Size
         
-        // 상세 및 매력 포인트
+        // Details and Charming Points
         languages: [] as string[],
         experience: '',
         introduction: '',
         
-        // 사진
+        // Photo
         photo: null as File | null,
         photoPreview: '',
         
-        // 근무/취업 상태 옵션
+        // Employment Status Options
         venueOption: 'registered' as 'registered' | 'unregistered' | 'unemployed',
         registeredVenueId: '',
         unregisteredVenueName: ''
@@ -93,12 +93,12 @@ const CCAApply: React.FC = () => {
             }
 
             let finalVenueId = 'pool';
-            let finalSpecialNotes = `[입사 지원서]\n신체사이즈/체형: ${formData.bodySize}\n자기소개: ${formData.introduction}`;
+            let finalSpecialNotes = `[Job Application]\nBody Size/Type: ${formData.bodySize}\nIntroduction: ${formData.introduction}`;
 
             if (formData.venueOption === 'registered' && formData.registeredVenueId) {
                 finalVenueId = formData.registeredVenueId;
             } else if (formData.venueOption === 'unregistered') {
-                finalSpecialNotes += `\n희망(근무 중인) 업소명(미등록): ${formData.unregisteredVenueName}`;
+                finalSpecialNotes += `\nPreferred (Current) Venue (Unregistered): ${formData.unregisteredVenueName}`;
             }
 
             const ccaData = {
@@ -122,11 +122,11 @@ const CCAApply: React.FC = () => {
             if (result.success) {
                 setIsSuccess(true);
             } else {
-                alert(result.error || '지원서 접수에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                alert(result.error || 'Failed to submit application. Please try again later.');
             }
         } catch (error) {
             console.error('Submit error:', error);
-            alert('오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+            alert('An error occurred. Please try again later.');
         } finally {
             setIsSubmitting(false);
         }
@@ -139,13 +139,13 @@ const CCAApply: React.FC = () => {
                     <div className="size-24 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-8 animate-bounce">
                         <span className="material-symbols-outlined text-5xl text-emerald-500">check_circle</span>
                     </div>
-                    <h2 className="text-3xl font-extrabold mb-4">지원 완료!</h2>
+                    <h2 className="text-3xl font-extrabold mb-4">Application Submitted!</h2>
                     <p className="text-zinc-500 font-medium leading-relaxed mb-8">
-                        파트너 등록 신청이 성공적으로 접수되었습니다. <br />
-                        담당 업소(또는 본사)에서 24시간 내에 연락드릴 예정입니다.
+                        Your partner registration application has been successfully submitted. <br />
+                        Our affiliated venue (or headquarters) will contact you within 24 hours.
                     </p>
                     <Link to="/" className="block w-full py-4 bg-primary text-[#1b180d] rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl hover:scale-105 transition-transform">
-                        메인으로 돌아가기
+                        Back to Home
                     </Link>
                 </div>
             </div>
@@ -163,14 +163,14 @@ const CCAApply: React.FC = () => {
     return (
         <div className="min-h-screen bg-[#faf9f6] dark:bg-zinc-950 font-display flex flex-col items-center justify-center p-4 sm:p-8">
             <Helmet>
-                <title>CCA 파트너 지원 | JTV STAR</title>
+                <title>Apply as CCA Partner | JTV STAR</title>
             </Helmet>
 
             <div className="w-full max-w-2xl relative">
                 {/* Back button */}
                 <Link to="/cca-portal/welcome" className="absolute -top-16 left-0 flex items-center gap-2 text-zinc-500 hover:text-primary transition-colors font-bold text-sm">
                     <span className="material-symbols-outlined">arrow_back</span>
-                    소개 페이지로
+                    Back to Introduction
                 </Link>
 
                 <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl border border-primary/5 p-8 md:p-12 relative overflow-hidden">
@@ -181,7 +181,7 @@ const CCAApply: React.FC = () => {
                         <div className="flex justify-between mb-4">
                             <span className="text-[10px] font-black uppercase tracking-widest text-primary">Step {step} of 4</span>
                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                                {step === 1 ? '필수 기본 정보' : step === 2 ? '상세 이력' : step === 3 ? '프로필 사진' : '취업 및 소속 상태'}
+                                {step === 1 ? 'Basic Info' : step === 2 ? 'Detailed Profile' : step === 3 ? 'Profile Photo' : 'Employment Status'}
                             </span>
                         </div>
                         <div className="flex gap-2">
@@ -196,36 +196,36 @@ const CCAApply: React.FC = () => {
                         {/* STEP 1: Basic Info */}
                         {step === 1 && (
                             <div className="space-y-6 animate-fade-in flex-1">
-                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">기본 정보 입력 <span className="text-primary text-4xl leading-none">.</span></h2>
+                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">Enter Basic Info <span className="text-primary text-4xl leading-none">.</span></h2>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">본명 (실명) <span className="text-red-500">*</span></label>
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Real Name <span className="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
                                             name="realName" 
                                             required 
                                             value={formData.realName} 
                                             onChange={handleChange}
-                                            placeholder="홍길동" 
+                                            placeholder="Jane Doe" 
                                             className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-transparent rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">활동 닉네임</label>
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Working Nickname</label>
                                         <input 
                                             type="text" 
                                             name="nickname" 
                                             value={formData.nickname} 
                                             onChange={handleChange}
-                                            placeholder="사이트에 노출될 이름" 
+                                            placeholder="Name displayed on site" 
                                             className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-transparent rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">연락처 (핸드폰) <span className="text-red-500">*</span></label>
+                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Contact (Phone) <span className="text-red-500">*</span></label>
                                     <input 
                                         type="tel" 
                                         name="phone" 
@@ -239,7 +239,7 @@ const CCAApply: React.FC = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">나이 (Age) <span className="text-red-500">*</span></label>
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Age <span className="text-red-500">*</span></label>
                                         <input 
                                             type="number" 
                                             name="age" 
@@ -248,19 +248,19 @@ const CCAApply: React.FC = () => {
                                             required 
                                             value={formData.age} 
                                             onChange={handleChange}
-                                            placeholder="만 나이 입력" 
+                                            placeholder="Enter your age" 
                                             className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-transparent rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">신체 사이즈 <span className="text-red-500">*</span></label>
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Body Size <span className="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
                                             name="bodySize" 
                                             required 
                                             value={formData.bodySize} 
                                             onChange={handleChange}
-                                            placeholder="예: 165cm / 44사이즈" 
+                                            placeholder="e.g. 165cm / Size S" 
                                             className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-transparent rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                         />
                                     </div>
@@ -271,12 +271,12 @@ const CCAApply: React.FC = () => {
                         {/* STEP 2: Details */}
                         {step === 2 && (
                             <div className="space-y-6 animate-fade-in flex-1">
-                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">상세 프로필 <span className="text-primary text-4xl leading-none">.</span></h2>
+                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">Detailed Profile <span className="text-primary text-4xl leading-none">.</span></h2>
                                 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">구사 가능한 언어 (다중 선택)</label>
+                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Spoken Languages (Multiple Choice)</label>
                                     <div className="flex flex-wrap gap-3">
-                                        {['한국어', '영어', '일본어', '따갈로그'].map(lang => (
+                                        {['Korean', 'English', 'Japanese', 'Tagalog'].map(lang => (
                                             <button
                                                 type="button"
                                                 key={lang}
@@ -289,7 +289,7 @@ const CCAApply: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-2 mt-4">
-                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">근무 경력 확인</label>
+                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Work Experience</label>
                                     <select 
                                         name="experience"
                                         value={formData.experience}
@@ -297,21 +297,21 @@ const CCAApply: React.FC = () => {
                                         required
                                         className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-transparent rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                     >
-                                        <option value="">선택해주세요</option>
-                                        <option value="초보 (신입)">처음입니다 (신입)</option>
-                                        <option value="1년 미만">1년 미만</option>
-                                        <option value="1~3년">1~3년</option>
-                                        <option value="3년 이상 (에이스)">3년 이상 (경력직)</option>
+                                        <option value="">Please select</option>
+                                        <option value="Beginner (New)">Beginner (New)</option>
+                                        <option value="Less than 1 year">Less than 1 year</option>
+                                        <option value="1~3 years">1~3 years</option>
+                                        <option value="More than 3 years (Experienced)">More than 3 years (Experienced)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2 mt-4">
-                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">나의 매력 포인트 (자기소개)</label>
+                                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">My Charming Points (Introduction)</label>
                                     <textarea 
                                         name="introduction" 
                                         required 
                                         value={formData.introduction} 
                                         onChange={handleChange}
-                                        placeholder="고객들에게 어필할 나만의 매력과 장점을 적어주세요!" 
+                                        placeholder="Please write down your charms and strengths to appeal to clients!" 
                                         className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-transparent rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none h-24"
                                     ></textarea>
                                 </div>
@@ -321,7 +321,7 @@ const CCAApply: React.FC = () => {
                         {/* STEP 3: Photo Upload */}
                         {step === 3 && (
                             <div className="space-y-6 animate-fade-in flex-1">
-                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">얼굴 프로필 사진 <span className="text-red-500">*</span><span className="text-primary text-4xl leading-none">.</span></h2>
+                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">Profile Photo <span className="text-red-500">*</span><span className="text-primary text-4xl leading-none">.</span></h2>
                                 
                                 <label className="block border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-[2rem] p-1 overflow-hidden flex flex-col items-center justify-center text-center hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group h-64 relative">
                                     <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
@@ -333,24 +333,24 @@ const CCAApply: React.FC = () => {
                                             <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4 group-hover:scale-110 transition-transform">
                                                 <span className="material-symbols-outlined text-3xl">add_a_photo</span>
                                             </div>
-                                            <p className="font-bold text-lg mb-2">본인을 잘 나타내는 사진 선택</p>
-                                            <p className="text-xs text-zinc-400 font-medium">최대 5MB, JPG/PNG 지원</p>
+                                            <p className="font-bold text-lg mb-2">Select a photo that represents you well</p>
+                                            <p className="text-xs text-zinc-400 font-medium">Max 5MB, JPG/PNG supported</p>
                                         </div>
                                     )}
                                     {formData.photoPreview && (
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[1.8rem]">
-                                            <span className="text-white font-bold bg-black/40 px-4 py-2 rounded-xl backdrop-blur-sm">사진 변경하기</span>
+                                            <span className="text-white font-bold bg-black/40 px-4 py-2 rounded-xl backdrop-blur-sm">Change Photo</span>
                                         </div>
                                     )}
                                 </label>
-                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center mt-4">제출하신 사진은 사이트 내 본인 프로필의 메인 화면에 반영됩니다.</p>
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center mt-4">The photo you submit will be displayed on your main profile screen.</p>
                             </div>
                         )}
 
                         {/* STEP 4: Employment & Venue Status */}
                         {step === 4 && (
                             <div className="space-y-6 animate-fade-in flex-1">
-                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">취업 및 소속 상태 <span className="text-red-500">*</span><span className="text-primary text-4xl leading-none">.</span></h2>
+                                <h2 className="text-3xl font-extrabold mb-8 tracking-tight">Employment Status <span className="text-red-500">*</span><span className="text-primary text-4xl leading-none">.</span></h2>
                                 
                                 <div className="space-y-4">
                                     {/* Option 1: Registered Venue */}
@@ -365,8 +365,8 @@ const CCAApply: React.FC = () => {
                                                 className="w-5 h-5 accent-primary mt-1 flex-shrink-0" 
                                             />
                                             <div className="flex-1 w-full">
-                                                <p className="font-black text-lg text-zinc-900 dark:text-white">JTV STAR 등록 업체 근무 중</p>
-                                                <p className="text-xs text-zinc-500 font-medium mt-1 mb-3">현재 사이트에 등록되어 관리 중인 업소에서 일하고 있다면 선택해주세요.</p>
+                                                <p className="font-black text-lg text-zinc-900 dark:text-white">Working at JTV STAR registered venue</p>
+                                                <p className="text-xs text-zinc-500 font-medium mt-1 mb-3">Select this if you are currently working at a venue registered on the site.</p>
                                                 
                                                 {formData.venueOption === 'registered' && (
                                                     <select 
@@ -375,7 +375,7 @@ const CCAApply: React.FC = () => {
                                                         onChange={handleChange}
                                                         className="w-full bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl py-3 px-4 text-sm font-bold outline-none border focus:border-primary/50 transition-colors"
                                                     >
-                                                        <option value="">소속 업체를 선택하세요</option>
+                                                        <option value="">Select your affiliated venue</option>
                                                         {venues.map(v => (
                                                             <option key={v.id} value={v.id}>{v.name}</option>
                                                         ))}
@@ -397,8 +397,8 @@ const CCAApply: React.FC = () => {
                                                 className="w-5 h-5 accent-primary mt-1 flex-shrink-0" 
                                             />
                                             <div className="flex-1 w-full">
-                                                <p className="font-black text-lg text-zinc-900 dark:text-white">미등록 업체 근무 중</p>
-                                                <p className="text-xs text-zinc-500 font-medium mt-1 mb-3">근무 중인 업소가 목록에 없을 경우 직접 입력해 주시면 관리자가 확인 후 등록해 드립니다.</p>
+                                                <p className="font-black text-lg text-zinc-900 dark:text-white">Working at an unregistered venue</p>
+                                                <p className="text-xs text-zinc-500 font-medium mt-1 mb-3">If your current venue is not listed, enter it manually and an admin will register it after verification.</p>
                                                 
                                                 {formData.venueOption === 'unregistered' && (
                                                     <input 
@@ -406,7 +406,7 @@ const CCAApply: React.FC = () => {
                                                         name="unregisteredVenueName"
                                                         value={formData.unregisteredVenueName}
                                                         onChange={handleChange}
-                                                        placeholder="예: 클럽 시크릿 (마카티)"
+                                                        placeholder="e.g. Club Secret (Makati)"
                                                         className="w-full bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl py-3 px-4 text-sm font-bold outline-none border focus:border-primary/50 transition-colors"
                                                     />
                                                 )}
@@ -426,8 +426,8 @@ const CCAApply: React.FC = () => {
                                                 className="w-5 h-5 accent-primary mt-1 flex-shrink-0" 
                                             />
                                             <div className="flex-1 w-full">
-                                                <p className="font-black text-lg text-zinc-900 dark:text-white">미취업 (구직 중 / 인재풀 등록)</p>
-                                                <p className="text-xs text-zinc-500 font-medium mt-1">이력서를 공개하여 JTV STAR 제휴 업소 관리자들의 스카웃(면접 제안)을 기다립니다.</p>
+                                                <p className="font-black text-lg text-zinc-900 dark:text-white">Unemployed (Job Seeking / Talent Pool)</p>
+                                                <p className="text-xs text-zinc-500 font-medium mt-1">Publish your resume and wait for scouting (interview offers) from JTV STAR affiliated venue managers.</p>
                                             </div>
                                         </div>
                                     </label>
@@ -439,7 +439,7 @@ const CCAApply: React.FC = () => {
                         <div className="flex gap-4 mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800/50">
                             {step > 1 && (
                                 <button type="button" onClick={handlePrev} className="px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                                    이전으로
+                                    Previous
                                 </button>
                             )}
                             
@@ -456,9 +456,9 @@ const CCAApply: React.FC = () => {
                                 {isSubmitting ? (
                                     <span className="material-symbols-outlined animate-spin">cyclone</span>
                                 ) : step === 4 ? (
-                                    '지원서 제출하기'
+                                    'Submit Application'
                                 ) : (
-                                    <>다음 단계 <span className="material-symbols-outlined text-sm">arrow_forward</span></>
+                                    <>Next Step <span className="material-symbols-outlined text-sm">arrow_forward</span></>
                                 )}
                             </button>
                         </div>

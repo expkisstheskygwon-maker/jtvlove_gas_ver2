@@ -70,7 +70,7 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                >
                   <span className={`w-2 h-2 rounded-full ${isClockedIn ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
                   <span className={`hidden sm:block text-[10px] font-black uppercase tracking-wider ${isClockedIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
-                     {isClockedIn ? '근무 중 (ON)' : '휴식 중 (OFF)'}
+                     {isClockedIn ? 'Working (ON)' : 'Resting (OFF)'}
                   </span>
                   <span className={`sm:hidden text-[9px] font-black uppercase tracking-wider ${isClockedIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
                      {isClockedIn ? 'ON' : 'OFF'}

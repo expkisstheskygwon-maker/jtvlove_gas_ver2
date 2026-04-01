@@ -53,8 +53,8 @@ const CCASelectorModal: React.FC<CCASelectorModalProps> = ({ isOpen, onClose, on
                         <div className="p-8 pb-0">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 className="text-2xl font-black tracking-tighter">CCA 포털 모드 접속</h2>
-                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">대리 접속할 스태프를 선택해 주세요.</p>
+                                    <h2 className="text-2xl font-black tracking-tighter">CCA Portal Mode Login</h2>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Please select a staff member to login as.</p>
                                 </div>
                                 <button onClick={onClose} className="size-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-500 hover:bg-red-500 hover:text-white transition-all">
                                     <span className="material-symbols-outlined">close</span>
@@ -67,7 +67,7 @@ const CCASelectorModal: React.FC<CCASelectorModalProps> = ({ isOpen, onClose, on
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="이름 또는 업소명으로 검색..."
+                                    placeholder="Search by name or venue..."
                                     className="w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                 />
                             </div>
@@ -77,7 +77,7 @@ const CCASelectorModal: React.FC<CCASelectorModalProps> = ({ isOpen, onClose, on
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                                     <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    <p className="text-[10px] font-black text-gray-500 uppercase">스태프 목록 로드 중...</p>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase">Loading staff list...</p>
                                 </div>
                             ) : filteredCCAs.length > 0 ? (
                                 filteredCCAs.map(cca => (
@@ -97,7 +97,7 @@ const CCASelectorModal: React.FC<CCASelectorModalProps> = ({ isOpen, onClose, on
                                                 </div>
                                                 <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
                                                     <span className="material-symbols-outlined text-[10px]">apartment</span>
-                                                    {cca.venueName || '소속 없음'}
+                                                    {cca.venueName || 'No Affiliation'}
                                                 </p>
                                             </div>
                                         </div>
@@ -107,14 +107,14 @@ const CCASelectorModal: React.FC<CCASelectorModalProps> = ({ isOpen, onClose, on
                             ) : (
                                 <div className="text-center py-20">
                                     <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">search_off</span>
-                                    <p className="text-[10px] font-black text-gray-500 uppercase">검색 결과가 없습니다.</p>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase">No search results.</p>
                                 </div>
                             )}
                         </div>
 
                         <div className="p-8 bg-zinc-50 dark:bg-white/3 border-t border-white/5">
                             <p className="text-[9px] font-bold text-gray-400 leading-relaxed">
-                                <span className="text-red-500">* 주의:</span> 슈퍼관리자 권한으로 CCA 포털에 접속합니다. 스케줄 변경이나 갤러리 수정 등은 실시간으로 반영됩니다.
+                                <span className="text-red-500">* Note:</span> Logging into CCA Portal with Super Admin privileges. Schedule changes and gallery modifications are applied in real-time.
                             </p>
                         </div>
                     </motion.div>

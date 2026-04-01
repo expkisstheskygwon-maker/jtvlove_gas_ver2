@@ -59,19 +59,19 @@ const CCAMessages: React.FC = () => {
 
     const handleSearchUser = async () => {
         if (!composeSearchTerm.trim()) {
-            alert('검색어를 입력하세요.');
+            alert('Please enter a search term.');
             return;
         }
         const results = await apiService.searchMessageRecipients(composeSearchTerm, 'all');
         if (!results || results.length === 0) {
-            alert('검색 결과가 없습니다.');
+            alert('No search results.');
         }
         setComposeSearchResults(results || []);
     };
 
     const handleSendCompose = async () => {
         if (!composeSelectedUser || !composeContent.trim()) {
-            alert('수신자와 내용을 입력해주세요.');
+            alert('Please enter a recipient and content.');
             return;
         }
         setComposeSending(true);
@@ -87,7 +87,7 @@ const CCAMessages: React.FC = () => {
         });
         setComposeSending(false);
         if (result.success) {
-            alert('메시지가 전송되었습니다.');
+            alert('Message sent successfully.');
             setShowCompose(false);
             setComposeContent('');
             setComposeSubject('');
@@ -96,7 +96,7 @@ const CCAMessages: React.FC = () => {
             setComposeSelectedUser(null);
             fetchMessages();
         } else {
-            alert('전송 실패: ' + (result.error || ''));
+            alert('Failed to send: ' + (result.error || ''));
         }
     };
 
@@ -113,14 +113,14 @@ const CCAMessages: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-black tracking-tight">Messages</h2>
-                    <p className="text-sm text-gray-400 font-bold mt-1">쪽지함 관리</p>
+                    <p className="text-sm text-gray-400 font-bold mt-1">Message Management</p>
                 </div>
                 <button
                     onClick={() => setShowCompose(true)}
                     className="px-6 py-3 bg-primary text-[#1b180d] rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                 >
                     <span className="material-symbols-outlined text-lg">edit</span>
-                    새 메시지
+                    New Message
                 </button>
             </div>
 
@@ -132,7 +132,7 @@ const CCAMessages: React.FC = () => {
                         onClick={() => { setTab(t); setSelectedMsg(null); }}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                        {t === 'inbox' ? '📥 수신함' : '📤 발신함'}
+                        {t === 'inbox' ? '📥 Inbox' : '📤 Sent'}
                     </button>
                 ))}
             </div>
@@ -144,7 +144,7 @@ const CCAMessages: React.FC = () => {
             ) : messages.length === 0 ? (
                 <div className="py-20 text-center">
                     <span className="material-symbols-outlined text-5xl text-gray-300 mb-4 block">inbox</span>
-                    <p className="text-gray-400 font-bold">메시지가 없습니다</p>
+                    <p className="text-gray-400 font-bold">No messages.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -158,13 +158,13 @@ const CCAMessages: React.FC = () => {
                             >
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="font-black text-sm">{tab === 'inbox' ? msg.sender_name : msg.receiver_name}</p>
-                                    <p className="text-[10px] text-gray-400 font-bold">{new Date(msg.created_at).toLocaleDateString('ko-KR')}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold">{new Date(msg.created_at).toLocaleDateString('en-US')}</p>
                                 </div>
-                                <p className="text-xs font-bold text-primary mb-1">{msg.subject || '(제목 없음)'}</p>
+                                <p className="text-xs font-bold text-primary mb-1">{msg.subject || '(No Subject)'}</p>
                                 <p className="text-xs text-gray-500 line-clamp-2">{msg.content}</p>
                                 {msg.sender_type === 'system' ? (
                                     <div className="flex items-center gap-2 mt-2">
-                                        <span className="inline-block text-[9px] font-black bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full uppercase tracking-tighter">시스템 알림</span>
+                                        <span className="inline-block text-[9px] font-black bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full uppercase tracking-tighter">System Alert</span>
                                         <span className="material-symbols-outlined text-blue-500 text-sm">notifications_active</span>
                                     </div>
                                 ) : (
@@ -182,14 +182,14 @@ const CCAMessages: React.FC = () => {
                             <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-8 border border-primary/10 shadow-sm space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h3 className="text-lg font-black">{selectedMsg.subject || '(제목 없음)'}</h3>
+                                        <h3 className="text-lg font-black">{selectedMsg.subject || '(No Subject)'}</h3>
                                         <p className="text-xs text-gray-400 font-bold mt-1">
-                                            {tab === 'inbox' ? `보낸 사람: ${selectedMsg.sender_name}` : `받는 사람: ${selectedMsg.receiver_name}`}
-                                            &nbsp;·&nbsp;{new Date(selectedMsg.created_at).toLocaleString('ko-KR')}
+                                            {tab === 'inbox' ? `From: ${selectedMsg.sender_name}` : `To: ${selectedMsg.receiver_name}`}
+                                            &nbsp;·&nbsp;{new Date(selectedMsg.created_at).toLocaleString('en-US')}
                                         </p>
                                     </div>
                                     {selectedMsg.sender_type === 'system' && (
-                                        <span className="text-[9px] font-black bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full uppercase">시스템</span>
+                                        <span className="text-[9px] font-black bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full uppercase">System</span>
                                     )}
                                 </div>
 
@@ -203,7 +203,7 @@ const CCAMessages: React.FC = () => {
                                             <span className="material-symbols-outlined text-xl">support_agent</span>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-sm font-black text-gray-800 dark:text-gray-200">슈퍼관리자에게는 직접 답장할 수 없습니다</p>
+                                            <p className="text-sm font-black text-gray-800 dark:text-gray-200">You cannot reply directly to the Super Admin.</p>
                                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">
                                                 Please use the 1:1 System Inquiry for requests
                                             </p>
@@ -213,7 +213,7 @@ const CCAMessages: React.FC = () => {
                                             className="px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-2"
                                         >
                                             <span className="material-symbols-outlined text-lg">edit_note</span>
-                                            시스템 1:1 문의 접수하기
+                                            Submit 1:1 System Inquiry
                                         </Link>
                                     </div>
                                 )}
@@ -232,7 +232,7 @@ const CCAMessages: React.FC = () => {
                                             rows={3}
                                             value={replyText}
                                             onChange={(e) => setReplyText(e.target.value)}
-                                            placeholder="답장을 입력하세요..."
+                                            placeholder="Type your reply..."
                                             className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm focus:border-primary outline-none transition-all resize-none"
                                         />
                                         <button
@@ -240,7 +240,7 @@ const CCAMessages: React.FC = () => {
                                             disabled={replying || !replyText.trim()}
                                             className="px-8 py-3 bg-primary text-[#1b180d] rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 hover:scale-105 active:scale-95 transition-all"
                                         >
-                                            {replying ? '전송 중...' : '답장 보내기'}
+                                            {replying ? 'Sending...' : 'Send Reply'}
                                         </button>
                                     </div>
                                 )}
@@ -248,7 +248,7 @@ const CCAMessages: React.FC = () => {
                         ) : (
                             <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-16 border border-primary/10 shadow-sm flex flex-col items-center justify-center text-center">
                                 <span className="material-symbols-outlined text-5xl text-gray-200 mb-4">mark_email_read</span>
-                                <p className="text-gray-400 font-bold text-sm">메시지를 선택하세요</p>
+                                <p className="text-gray-400 font-bold text-sm">Please select a message.</p>
                             </div>
                         )}
                     </div>
@@ -260,7 +260,7 @@ const CCAMessages: React.FC = () => {
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-lg" onClick={() => setShowCompose(false)}>
                     <div className="bg-white dark:bg-zinc-900 rounded-[2rem] w-full max-w-lg shadow-2xl p-8 space-y-6" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-black">새 메시지 작성</h3>
+                            <h3 className="text-lg font-black">Compose New Message</h3>
                             <button onClick={() => setShowCompose(false)} className="size-10 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 flex items-center justify-center">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
@@ -269,13 +269,13 @@ const CCAMessages: React.FC = () => {
                         <div className="space-y-4">
                             {!composeSelectedUser ? (
                                 <div className="space-y-2 border border-gray-200 dark:border-white/5 rounded-2xl p-4 bg-gray-50 dark:bg-white/5">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">수신자 닉네임 검색</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Search recipient nickname</label>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
                                             value={composeSearchTerm}
                                             onChange={(e) => setComposeSearchTerm(e.target.value)}
-                                            placeholder="검색어를 입력하세요..."
+                                            placeholder="Enter search term..."
                                             onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
                                             className="flex-1 bg-white dark:bg-zinc-800 rounded-xl px-4 py-3 text-sm font-bold border border-gray-200 dark:border-white/10 outline-none focus:border-primary"
                                         />
@@ -283,7 +283,7 @@ const CCAMessages: React.FC = () => {
                                             onClick={handleSearchUser}
                                             className="px-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-colors"
                                         >
-                                            검색
+                                            Search
                                         </button>
                                     </div>
                                     {composeSearchResults.length > 0 && (
@@ -291,7 +291,7 @@ const CCAMessages: React.FC = () => {
                                             {composeSearchResults.map(user => (
                                                 <div key={user.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-white/10 rounded-xl hover:border-primary cursor-pointer transition-colors" onClick={() => setComposeSelectedUser(user)}>
                                                     <p className="font-bold text-sm tracking-tighter">{user.name}</p>
-                                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">선택</span>
+                                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">Select</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -300,33 +300,33 @@ const CCAMessages: React.FC = () => {
                             ) : (
                                 <div className="flex items-center justify-between bg-primary/10 border border-primary/20 p-4 rounded-2xl">
                                     <div>
-                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">선택된 수신자</p>
+                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">Selected Recipient</p>
                                         <p className="font-black tracking-tighter">{composeSelectedUser.name}</p>
                                     </div>
                                     <button onClick={() => setComposeSelectedUser(null)} className="text-[10px] font-black bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-primary/20 text-gray-500 hover:text-black dark:hover:text-white transition-colors">
-                                        다시 검색
+                                        Search Again
                                     </button>
                                 </div>
                             )}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">제목</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Subject</label>
                                 <input
                                     type="text"
                                     value={composeSubject}
                                     onChange={(e) => setComposeSubject(e.target.value)}
-                                    placeholder="제목 (선택사항)"
+                                    placeholder="Subject (Optional)"
                                     className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">내용 *</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Content *</label>
                                 <textarea
                                     rows={4}
                                     value={composeContent}
                                     onChange={(e) => setComposeContent(e.target.value)}
-                                    placeholder="메시지 내용을 입력하세요..."
+                                    placeholder="Enter your message content..."
                                     className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-4 font-bold text-sm border border-gray-200 dark:border-white/10 outline-none resize-none"
                                 />
                             </div>
@@ -337,7 +337,7 @@ const CCAMessages: React.FC = () => {
                             disabled={composeSending || !composeContent.trim() || !composeSelectedUser}
                             className="w-full py-4 bg-primary text-[#1b180d] rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg disabled:opacity-50 hover:scale-[1.02] active:scale-95 transition-all"
                         >
-                            {composeSending ? '전송 중...' : '메시지 보내기'}
+                            {composeSending ? 'Sending...' : 'Send Message'}
                         </button>
                     </div>
                 </div>

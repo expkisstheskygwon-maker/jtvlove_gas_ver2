@@ -95,7 +95,7 @@ const CCAPortalHome: React.FC = () => {
    const formatTime = (dateStr: string) => {
       if (!dateStr) return '';
       const d = new Date(dateStr);
-      return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
    };
 
    const formatRelativeTime = (dateStr: string) => {
@@ -103,16 +103,15 @@ const CCAPortalHome: React.FC = () => {
       const now = new Date();
       const d = new Date(dateStr);
       const diff = Math.floor((now.getTime() - d.getTime()) / 60000);
-      if (diff < 1) return '방금 전';
-      if (diff < 60) return `${diff}분 전`;
-      if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
-      return `${Math.floor(diff / 1440)}일 전`;
+      if (diff < 1) return 'Just now';
+      if (diff < 60) return `${diff} mins ago`;
+      if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+      return `${Math.floor(diff / 1440)} days ago`;
    };
 
    const todayFormatted = () => {
       const now = new Date();
-      const days = ['일', '월', '화', '수', '목', '금', '토'];
-      return `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+      return now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
    };
 
    if (loading) {
@@ -120,7 +119,7 @@ const CCAPortalHome: React.FC = () => {
          <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-4">
                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-               <p className="text-sm font-bold text-gray-400">로딩 중...</p>
+               <p className="text-sm font-bold text-gray-400">Loading...</p>
             </div>
          </div>
       );
@@ -138,9 +137,8 @@ const CCAPortalHome: React.FC = () => {
    return (
       <div className="space-y-6 animate-fade-in pb-8">
 
-         {/* ──── 1. 인사 & 출석 카드 ──── */}
+         {/* ──── 1. Greeting & Attendance Card ──── */}
          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a1612] via-[#2a2318] to-[#1a1612] p-6 md:p-8 text-white">
-            {/* 글로우 장식 */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-[60px] pointer-events-none"></div>
 
@@ -161,7 +159,7 @@ const CCAPortalHome: React.FC = () => {
                   <div>
                      <p className="text-xs font-bold text-primary/60 tracking-wider uppercase">{todayFormatted()}</p>
                      <h2 className="text-2xl md:text-3xl font-black tracking-tight mt-1">
-                        안녕하세요, <span className="text-primary">{cca?.name || 'CCA'}</span>님 👋
+                        Hello, <span className="text-primary">{cca?.name || 'CCA'}</span> 👋
                      </h2>
                      <div className="flex items-center gap-3 mt-2">
                         <span className="px-2.5 py-0.5 bg-primary/15 text-primary text-[10px] font-black rounded-full uppercase tracking-wider">{cca?.grade || 'PRO'}</span>
@@ -178,22 +176,22 @@ const CCAPortalHome: React.FC = () => {
                         className="flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-yellow-500 text-[#1b180d] rounded-2xl font-black text-sm uppercase tracking-wider shadow-xl shadow-primary/25 hover:shadow-primary/40 active:scale-[0.98] transition-all disabled:opacity-60"
                      >
                         <span className="material-symbols-outlined text-lg">login</span>
-                        {checkingIn ? '처리 중...' : '출근하기'}
+                        {checkingIn ? 'Processing...' : 'Clock-in'}
                      </button>
                   ) : isCheckedIn && !isCheckedOut ? (
                      <div className="text-right">
                         <div className="flex items-center gap-2 mb-2 justify-end">
                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                           <span className="text-xs font-bold text-emerald-400">근무 중</span>
-                           <span className="text-xs text-gray-500">{attendance.check_in_at ? formatTime(attendance.check_in_at) + ' 출근' : ''}</span>
+                           <span className="text-xs font-bold text-emerald-400">Clocked-in</span>
+                           <span className="text-xs text-gray-500">{attendance.check_in_at ? formatTime(attendance.check_in_at) + ' In' : ''}</span>
                         </div>
-                        <p className="text-[10px] text-gray-500 font-medium">하단의 퇴근하기 버튼을 눌러주세요</p>
+                        <p className="text-[10px] text-gray-500 font-medium">Please click the Clock-out button below.</p>
                      </div>
                   ) : (
                      <div className="flex items-center gap-2 justify-end">
                         <span className="material-symbols-outlined text-sm text-gray-500">check_circle</span>
                         <span className="text-xs font-bold text-gray-400">
-                           오늘 근무 완료 ({attendance.check_in_at ? formatTime(attendance.check_in_at) : ''} ~ {attendance.check_out_at ? formatTime(attendance.check_out_at) : ''})
+                           Today's work completed ({attendance.check_in_at ? formatTime(attendance.check_in_at) : ''} ~ {attendance.check_out_at ? formatTime(attendance.check_out_at) : ''})
                         </span>
                      </div>
                   )}
@@ -201,7 +199,7 @@ const CCAPortalHome: React.FC = () => {
             </div>
          </section>
 
-         {/* ──── 지명 요청 (Nomination Requests) ──── */}
+         {/* ──── Nomination Requests ──── */}
          {ccaRequests.length > 0 && (
             <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden">
                <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
@@ -215,8 +213,8 @@ const CCAPortalHome: React.FC = () => {
                         )}
                      </div>
                      <div>
-                        <h3 className="text-base font-black tracking-tight">지명 요청</h3>
-                        <p className="text-[11px] text-gray-400 font-medium">고객 지명 요청 {ccaRequests.filter((r: any) => r.status === 'pending').length}건 대기</p>
+                        <h3 className="text-base font-black tracking-tight">Nomination Requests</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">{ccaRequests.filter((r: any) => r.status === 'pending').length} customer requests pending</p>
                      </div>
                   </div>
                </div>
@@ -230,7 +228,7 @@ const CCAPortalHome: React.FC = () => {
                            <div className="flex-1 min-w-0">
                               <p className="text-sm font-bold">{req.customer_name}</p>
                                <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                                 {req.preferred_date} {req.preferred_time} · {req.group_size}명
+                                 {req.preferred_date} {req.preferred_time} · {req.group_size} pax
                               </p>
                               {req.customer_note && <p className="text-xs text-gray-500 mt-1 italic">'{req.customer_note}'</p>}
                            </div>
@@ -241,14 +239,14 @@ const CCAPortalHome: React.FC = () => {
                                     if (ok) setCcaRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'confirmed' } : r));
                                  }}
                                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-500/20 transition-colors"
-                              >수락</button>
+                              >Accept</button>
                               <button
                                  onClick={async () => {
                                     const ok = await apiService.updateCCARequestStatus(req.id, 'rejected');
                                     if (ok) setCcaRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: 'rejected' } : r));
                                  }}
                                  className="px-3 py-1.5 bg-red-500/10 text-red-500 rounded-xl text-[10px] font-black uppercase hover:bg-red-500/20 transition-colors"
-                              >거절</button>
+                              >Decline</button>
                            </div>
                         </div>
                      </div>
@@ -256,14 +254,14 @@ const CCAPortalHome: React.FC = () => {
                   {ccaRequests.filter((r: any) => r.status === 'pending').length === 0 && (
                      <div className="p-8 text-center">
                         <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-gray-600 mb-2">check_circle</span>
-                        <p className="text-sm text-gray-400 font-medium">대기 중인 지명 요청이 없습니다</p>
+                        <p className="text-sm text-gray-400 font-medium">No pending nomination requests.</p>
                      </div>
                   )}
                </div>
             </section>
          )}
 
-         {/* ──── 2+3. 오늘 예약 & 고객 메시지 (좌우 배치) ──── */}
+         {/* ──── 2+3. Today's Bookings & Customer Messages ──── */}
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
                <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
@@ -272,18 +270,18 @@ const CCAPortalHome: React.FC = () => {
                         <span className="material-symbols-outlined text-primary text-xl">calendar_today</span>
                      </div>
                      <div>
-                        <h3 className="text-base font-black tracking-tight">오늘 예약</h3>
-                        <p className="text-[11px] text-gray-400 font-medium">{reservations.length}건의 예약</p>
+                        <h3 className="text-base font-black tracking-tight">Today's Bookings</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">{reservations.length} bookings</p>
                      </div>
                   </div>
-                  <span className="text-[10px] font-black text-primary uppercase tracking-widest cursor-pointer hover:underline">전체보기 →</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest cursor-pointer hover:underline">See All →</span>
                </div>
 
                <div className="flex-1 overflow-auto">
                   {reservations.length === 0 ? (
                      <div className="p-8 text-center">
                         <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">event_busy</span>
-                        <p className="text-sm text-gray-400 font-medium">오늘 예정된 예약이 없습니다</p>
+                        <p className="text-sm text-gray-400 font-medium">No bookings scheduled for today.</p>
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
@@ -295,7 +293,7 @@ const CCAPortalHome: React.FC = () => {
                               <div className="flex-1 min-w-0">
                                  <p className="text-sm font-bold truncate">{r.customer_name}</p>
                                  <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                                    {r.reservation_time} 예약
+                                    {r.reservation_time} Booking
                                  </p>
                               </div>
                               <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide flex-shrink-0 ${r.status === 'confirmed'
@@ -304,7 +302,7 @@ const CCAPortalHome: React.FC = () => {
                                     ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                                     : 'bg-red-500/10 text-red-600 dark:text-red-400'
                                  }`}>
-                                 {r.status === 'confirmed' ? '확정' : r.status === 'pending' ? '대기' : '취소'}
+                                 {r.status === 'confirmed' ? 'Confirmed' : r.status === 'pending' ? 'Pending' : 'Cancelled'}
                               </span>
                            </div>
                         ))}
@@ -313,7 +311,7 @@ const CCAPortalHome: React.FC = () => {
                </div>
             </section>
 
-            {/* ──── 3. 고객 메시지 ──── */}
+            {/* ──── 3. Customer Messages ──── */}
             <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
                <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
                   <div className="flex items-center gap-3">
@@ -326,18 +324,18 @@ const CCAPortalHome: React.FC = () => {
                         )}
                      </div>
                      <div>
-                        <h3 className="text-base font-black tracking-tight">고객 메시지</h3>
-                        <p className="text-[11px] text-gray-400 font-medium">미답변 {unreadMsgCount}건</p>
+                        <h3 className="text-base font-black tracking-tight">Customer Messages</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">{unreadMsgCount} unreplied</p>
                      </div>
                   </div>
-                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest cursor-pointer hover:underline">전체보기 →</span>
+                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest cursor-pointer hover:underline">See All →</span>
                </div>
 
                <div className="flex-1 overflow-auto">
                   {customerMessages.length === 0 ? (
                      <div className="p-8 text-center">
                         <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">chat_bubble_outline</span>
-                        <p className="text-sm text-gray-400 font-medium">새로운 메시지가 없습니다</p>
+                        <p className="text-sm text-gray-400 font-medium">No new messages.</p>
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
@@ -369,10 +367,10 @@ const CCAPortalHome: React.FC = () => {
                                     }}
                                     className="flex-shrink-0 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors"
                                  >
-                                    답변
+                                    Reply
                                  </button>
                               ) : (
-                                 <span className="flex-shrink-0 text-[10px] font-bold text-emerald-500">답변완료</span>
+                                 <span className="flex-shrink-0 text-[10px] font-bold text-emerald-500">Replied</span>
                               )}
                            </div>
                         ))}
@@ -382,7 +380,7 @@ const CCAPortalHome: React.FC = () => {
             </section>
          </div>
 
-         {/* ──── 4+5. 관리자 메시지 & 공지사항 (좌우 배치) ──── */}
+         {/* ──── 4+5. Admin Messages & Notices ──── */}
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
                <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
@@ -391,8 +389,8 @@ const CCAPortalHome: React.FC = () => {
                         <span className="material-symbols-outlined text-purple-500 text-xl">shield_person</span>
                      </div>
                      <div>
-                        <h3 className="text-base font-black tracking-tight">관리자 메시지</h3>
-                        <p className="text-[11px] text-gray-400 font-medium">업체 관리자가 보낸 메시지</p>
+                        <h3 className="text-base font-black tracking-tight">Admin Messages</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">Messages from venue admin</p>
                      </div>
                   </div>
                </div>
@@ -401,7 +399,7 @@ const CCAPortalHome: React.FC = () => {
                   {adminMessages.length === 0 ? (
                      <div className="p-8 text-center">
                         <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">mark_email_read</span>
-                        <p className="text-sm text-gray-400 font-medium">새로운 관리자 메시지가 없습니다</p>
+                        <p className="text-sm text-gray-400 font-medium">No new admin messages.</p>
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
@@ -422,7 +420,7 @@ const CCAPortalHome: React.FC = () => {
                                        {m.priority !== 'normal' && (
                                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${m.priority === 'urgent' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-600'
                                              }`}>
-                                             {m.priority === 'urgent' ? '긴급' : '중요'}
+                                             {m.priority === 'urgent' ? 'URGENT' : 'IMPORTANT'}
                                           </span>
                                        )}
                                        <p className="text-sm font-bold">{m.title}</p>
@@ -443,7 +441,7 @@ const CCAPortalHome: React.FC = () => {
                </div>
             </section>
 
-            {/* ──── 5. 공지사항 ──── */}
+            {/* ──── 5. Notices ──── */}
             <section className="bg-white dark:bg-zinc-900/80 rounded-3xl border border-primary/5 overflow-hidden flex flex-col">
                <div className="flex items-center justify-between p-5 md:p-6 border-b border-primary/5">
                   <div className="flex items-center gap-3">
@@ -451,8 +449,8 @@ const CCAPortalHome: React.FC = () => {
                         <span className="material-symbols-outlined text-orange-500 text-xl">campaign</span>
                      </div>
                      <div>
-                        <h3 className="text-base font-black tracking-tight">공지사항</h3>
-                        <p className="text-[11px] text-gray-400 font-medium">{cca?.venue_name || 'Venue'} 공지</p>
+                        <h3 className="text-base font-black tracking-tight">Notices</h3>
+                        <p className="text-[11px] text-gray-400 font-medium">{cca?.venue_name || 'Venue'} Notices</p>
                      </div>
                   </div>
                </div>
@@ -461,7 +459,7 @@ const CCAPortalHome: React.FC = () => {
                   {notices.length === 0 ? (
                      <div className="p-8 text-center">
                         <span className="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">notifications_none</span>
-                        <p className="text-sm text-gray-400 font-medium">등록된 공지사항이 없습니다</p>
+                        <p className="text-sm text-gray-400 font-medium">No notices registered.</p>
                      </div>
                   ) : (
                      <div className="divide-y divide-primary/5">
@@ -490,7 +488,7 @@ const CCAPortalHome: React.FC = () => {
             </section>
          </div>
 
-         {/* ──── 6. 퇴근하기 버튼 ──── */}
+         {/* ──── 6. Clock Out Button ──── */}
          {isCheckedIn && !isCheckedOut && (
             <section className="sticky bottom-20 lg:bottom-4 z-40">
                <button
@@ -499,7 +497,7 @@ const CCAPortalHome: React.FC = () => {
                   className="w-full flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-rose-600 to-red-500 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-2xl shadow-red-500/30 hover:shadow-red-500/50 active:scale-[0.99] transition-all disabled:opacity-60"
                >
                   <span className="material-symbols-outlined text-lg">logout</span>
-                  {checkingOut ? '처리 중...' : '퇴근하기'}
+                  {checkingOut ? 'Processing...' : 'Clock-out'}
                </button>
             </section>
          )}
@@ -509,18 +507,18 @@ const CCAPortalHome: React.FC = () => {
                <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-white/5 rounded-2xl">
                   <span className="material-symbols-outlined text-emerald-500 text-lg">check_circle</span>
                   <span className="text-sm font-bold text-gray-500">
-                     오늘 근무가 완료되었습니다. 수고하셨습니다! 🎉
+                     Today's work is completed. Good job! 🎉
                   </span>
                </div>
             </section>
          )}
 
-         {/* ──── 7. 답변 모달 ──── */}
+         {/* ──── 7. Reply Modal ──── */}
          {selectedMessage && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
                <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-scale-in border border-primary/10">
                   <div className="flex items-center justify-between mb-6">
-                     <h3 className="text-xl font-black tracking-tight">{selectedMessage.customer_name} 메시지 답변</h3>
+                     <h3 className="text-xl font-black tracking-tight">{selectedMessage.customer_name} Message Reply</h3>
                      <button
                         onClick={() => setSelectedMessage(null)}
                         className="size-10 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center"
@@ -531,17 +529,17 @@ const CCAPortalHome: React.FC = () => {
 
                   <div className="space-y-6">
                      <div className="bg-gray-50 dark:bg-white/5 p-5 rounded-2xl border border-primary/5">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">원문 메시지</p>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Original Message</p>
                         <p className="text-sm font-medium leading-relaxed">{selectedMessage.message}</p>
                      </div>
 
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">답변 내용</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Reply Content</label>
                         <textarea
                            autoFocus
                            value={replyText}
                            onChange={(e) => setReplyText(e.target.value)}
-                           placeholder="고객님께 보낼 답변을 입력해주세요..."
+                           placeholder="Please enter your reply to the customer..."
                            className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-5 font-bold text-sm h-32 resize-none focus:ring-2 ring-primary/20"
                         />
                      </div>
@@ -557,7 +555,7 @@ const CCAPortalHome: React.FC = () => {
                            ) : (
                               <>
                                  <span className="material-symbols-outlined text-sm">send</span>
-                                 답변 보내기
+                                 Send Reply
                               </>
                            )}
                         </button>
@@ -565,7 +563,7 @@ const CCAPortalHome: React.FC = () => {
                            onClick={() => setSelectedMessage(null)}
                            className="flex-1 py-4 bg-gray-100 dark:bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest"
                         >
-                           취소
+                           Cancel
                         </button>
                      </div>
                   </div>

@@ -68,13 +68,13 @@ const CCAProfileSettings: React.FC = () => {
           setCca(ccaData);
           setFormData(ccaData);
         } else {
-          setError("CCA 정보를 불러올 수 없습니다. DB에 해당 ID의 데이터가 있는지 확인해주세요.");
+          setError("Cannot load CCA information. Please check if the data exists in the DB.");
         }
         setVenues(venuesData);
         setGalleryItems(galleryData);
       } catch (err) {
         console.error("Load failed", err);
-        setError("데이터 로딩 중 오류가 발생했습니다. DB 테이블이 생성되었는지 확인해주세요.");
+        setError("Error loading data. Please check if the DB table is created.");
       } finally {
         setIsLoading(false);
       }
@@ -369,7 +369,7 @@ const CCAProfileSettings: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">특징 / 특기 (Specialties)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Specialties</label>
                 <div className="flex flex-wrap gap-2">
                   {['Dance', 'Singing', 'Cooking', 'Gaming', 'Sports', 'Music', 'Art', 'Travel'].map(s => {
                     const isSelected = (formData.specialties || []).includes(s);
@@ -564,7 +564,7 @@ const CCAProfileSettings: React.FC = () => {
 
               {/* Venue Selection */}
               <div className="md:col-span-2 space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Venue Affiliation (소속 업체)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Venue Affiliation</label>
                 <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
                     <div className="size-14 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center shadow-sm">
@@ -589,7 +589,7 @@ const CCAProfileSettings: React.FC = () => {
                 </div>
                 {formData.venueId !== cca.venueId && (
                   <p className="text-[10px] text-red-500 font-black uppercase tracking-tighter pl-2 animate-pulse">
-                    * 업체 변경은 현재 소속 업체 관리자의 승인이 필요합니다.
+                    * Venue change requires admin approval.
                   </p>
                 )}
               </div>
@@ -628,7 +628,7 @@ const CCAProfileSettings: React.FC = () => {
 
               {/* Language Selection */}
               <div className="md:col-span-2 space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Language (가능 언어)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Language</label>
                 <div className="flex flex-wrap gap-3">
                   {['ENGLISH', 'KOREAN', 'JAPANESE', 'CHINESE', 'ETC'].map(lang => {
                     const isSelected = (formData.languages || []).includes(lang);
@@ -785,7 +785,7 @@ const CCAProfileSettings: React.FC = () => {
               <div className="size-12 bg-purple-500/10 text-purple-500 rounded-2xl flex items-center justify-center">
                 <span className="material-symbols-outlined">description</span>
               </div>
-              <h3 className="text-xl font-black tracking-tight">Special Notes (특이사항)</h3>
+              <h3 className="text-xl font-black tracking-tight">Special Notes</h3>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Confidential Notes for Admins</label>
