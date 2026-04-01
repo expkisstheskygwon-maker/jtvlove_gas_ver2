@@ -6,8 +6,8 @@ const CCALanding: React.FC = () => {
     return (
         <div className="min-h-screen bg-[#faf9f6] dark:bg-[#0f0e0b] font-display text-zinc-900 dark:text-white pb-20 overflow-x-hidden">
             <Helmet>
-                <title>CCA 파트너 안내 | JTV STAR</title>
-                <meta name="description" content="JTV STAR의 CCA로 합류하세요. 완벽한 프라이버시 보호, 똑똑한 스케줄 관리, 투명한 수익 정산을 경험하세요." />
+                <title>CCA Partner Guide | JTV STAR</title>
+                <meta name="description" content="Join JTV STAR as a CCA. Experience perfect privacy protection, smart schedule management, and transparent revenue settlement." />
             </Helmet>
 
             {/* Top Navigation for Landing */}
@@ -21,10 +21,10 @@ const CCALanding: React.FC = () => {
                     </Link>
                     <div className="flex gap-4">
                         <Link to="/cca-portal/login" className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors">
-                            로그인
+                            Login
                         </Link>
                         <Link to="/cca-portal/apply" className="px-6 py-2 bg-primary text-[#1b180d] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-                            지원하기
+                            Apply Now
                         </Link>
                     </div>
                 </div>
@@ -41,15 +41,15 @@ const CCALanding: React.FC = () => {
                             The Best Stage For You
                         </span>
                         <h2 className="text-4xl md:text-6xl font-extrabold leading-[1.1] tracking-tight">
-                            당신의 가치를 증명할<br />
-                            <span className="text-primary">최고의 무대,</span> JTV STAR
+                            The Best Stage to Prove<br />
+                            <span className="text-primary">Your Value,</span> JTV STAR
                         </h2>
                         <p className="text-lg text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed max-w-lg mx-auto lg:mx-0">
-                            능력에 맞는 합당한 대우를 받고 계신가요? 프라이버시 걱정 없는 똑똑한 스케줄 관리와, 상위 1% 예약 고객들을 지금 바로 만나보세요.
+                            Are you getting the highly-paid treatment you deserve? Experience smart scheduling without privacy concerns and meet the top 1% booking clients right now.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                             <Link to="/cca-portal/apply" className="px-10 py-5 bg-[#1b180d] dark:bg-primary text-white dark:text-[#1b180d] rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                                파트너 지원하기 <span className="material-symbols-outlined">arrow_forward</span>
+                                Apply as a Partner <span className="material-symbols-outlined">arrow_forward</span>
                             </Link>
                         </div>
                     </div>
@@ -63,13 +63,13 @@ const CCALanding: React.FC = () => {
                                         <div className="size-full bg-white dark:bg-zinc-900 rounded-full border-2 border-transparent"></div>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">환영합니다</p>
-                                        <p className="text-lg font-extrabold">에이스 <span className="text-primary">YUMI</span>님</p>
+                                        <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">Welcome</p>
+                                        <p className="text-lg font-extrabold">Ace <span className="text-primary">YUMI</span></p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">오늘의 지명</p>
-                                    <p className="text-xl font-black text-emerald-500">4팀</p>
+                                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Today's Requests</p>
+                                    <p className="text-xl font-black text-emerald-500">4 Groups</p>
                                 </div>
                             </div>
                             <div className="space-y-4">
@@ -77,8 +77,8 @@ const CCALanding: React.FC = () => {
                                     <div className="flex items-center gap-4">
                                         <span className="text-lg font-black text-zinc-400 w-12 text-center">20:00</span>
                                         <div>
-                                            <p className="font-bold text-sm">VIP 고객 예약 (지명)</p>
-                                            <p className="text-[10px] text-primary font-black uppercase">확정됨</p>
+                                            <p className="font-bold text-sm">VIP Client Booking (Request)</p>
+                                            <p className="text-[10px] text-primary font-black uppercase">Confirmed</p>
                                         </div>
                                     </div>
                                     <span className="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl">verified</span>
@@ -87,8 +87,8 @@ const CCALanding: React.FC = () => {
                                     <div className="flex items-center gap-4">
                                         <span className="text-lg font-black text-zinc-400 w-12 text-center">22:30</span>
                                         <div>
-                                            <p className="font-bold text-sm">일반 예약 대기</p>
-                                            <p className="text-[10px] text-zinc-500 font-black uppercase">대기중</p>
+                                            <p className="font-bold text-sm">General Booking Standby</p>
+                                            <p className="text-[10px] text-zinc-500 font-black uppercase">Waiting</p>
                                         </div>
                                     </div>
                                     <span className="material-symbols-outlined text-zinc-400 bg-zinc-200 dark:bg-zinc-700 p-2 rounded-xl">schedule</span>
@@ -102,7 +102,7 @@ const CCALanding: React.FC = () => {
                                 <span className="material-symbols-outlined">payments</span>
                             </div>
                             <div>
-                                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">이번 달 예상 수입금</p>
+                                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Estimated Income This Month</p>
                                 <p className="text-lg font-black tracking-tighter">₱ 200,000 <span className="text-primary text-xs">↑</span></p>
                             </div>
                         </div>
@@ -115,7 +115,7 @@ const CCALanding: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-widest mb-4">Why Join Us?</span>
-                        <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight">수백 명의 탑 CCA들이 <br className="md:hidden"/> <span className="text-primary">선택한 이유</span></h3>
+                        <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight">Why Hundreds of Top CCAs <br className="md:hidden"/> <span className="text-primary">Chose Us</span></h3>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
@@ -123,9 +123,9 @@ const CCALanding: React.FC = () => {
                             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-[#1b180d] transition-colors">
                                 <span className="material-symbols-outlined text-3xl">admin_panel_settings</span>
                             </div>
-                            <h4 className="text-xl font-bold mb-4">완벽한 프라이버시 보호</h4>
+                            <h4 className="text-xl font-bold mb-4">Perfect Privacy Protection</h4>
                             <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
-                                카카오톡, 라인 등 개인 메신저 연락처를 손님에게 알려줄 필요가 없습니다. 플랫폼 내장형 1:1 메시지를 통해 안전하게 예약과 지명을 관리하세요. 위험한 고객은 시스템 상에서 차단이 가능합니다.
+                                No need to share your personal messenger contacts like KakaoTalk or LINE with clients. Manage your bookings and requests safely through our built-in 1:1 messaging. Dangerous clients can be blocked directly within the system.
                             </p>
                         </div>
                         
@@ -133,9 +133,9 @@ const CCALanding: React.FC = () => {
                             <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                                 <span className="material-symbols-outlined text-3xl">event_available</span>
                             </div>
-                            <h4 className="text-xl font-bold mb-4">똑똑하고 쉬운 일정 관리</h4>
+                            <h4 className="text-xl font-bold mb-4">Smart & Easy Schedule Management</h4>
                             <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
-                                오늘 내게 배정된 예약 건수와 스케줄, 그리고 지명 고객들을 직관적인 캘린더 화면에서 한눈에 확인하세요. 스위치 하나로 출퇴근과 대기 상태를 손쉽게 전환할 수 있습니다.
+                                Check your assigned bookings, schedules, and requested clients at a glance on an intuitive calendar dashboard. Easily switch your status between Clock-in/Clock-out and Standby with a single toggle.
                             </p>
                         </div>
 
@@ -143,9 +143,9 @@ const CCALanding: React.FC = () => {
                             <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-6 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                                 <span className="material-symbols-outlined text-3xl">account_balance_wallet</span>
                             </div>
-                            <h4 className="text-xl font-bold mb-4">투명한 수익 시스템 & 인센티브</h4>
+                            <h4 className="text-xl font-bold mb-4">Transparent Earning System & Incentives</h4>
                             <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
-                                지명 수당, 팁, 예약 확정에 따른 인센티브/포인트가 실시간으로 집계되어 대시보드에 나타납니다. 자신이 얼마나 열심히 일하고 있는지 정확히 확인하고 능력만큼 보상받으세요.
+                                Request allowances, tips, and incentives/points from confirmed bookings are calculated in real-time and displayed on your dashboard. See exactly how hard you're working and get rewarded exclusively for your abilities.
                             </p>
                         </div>
                     </div>
@@ -159,21 +159,21 @@ const CCALanding: React.FC = () => {
                 <div className="flex flex-col lg:flex-row items-center gap-12 relative z-10 text-white">
                     <div className="lg:w-1/2 space-y-6">
                         <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Reward System</span>
-                        <h3 className="text-3xl md:text-5xl font-extrabold tracking-tight">당신의 땀방울, <br />그 이상의 <span className="text-primary">스마트한 가치</span></h3>
-                        <p className="text-zinc-400 leading-relaxed font-medium">단순 시급제에 얽매이지 마세요. 본인의 평점(Rating)이 높아지고 지명 손님(Request)이 늘어날수록, 시스템 알고리즘이 자동으로 추가 포인트/등급 배지 보상을 제공하여 더 많은 예약 기회를 창출해 드립니다.</p>
+                        <h3 className="text-3xl md:text-5xl font-extrabold tracking-tight">Your Effort, <br />Even Smarter <span className="text-primary">Value Creation</span></h3>
+                        <p className="text-zinc-400 leading-relaxed font-medium">Don't be tied to a simple hourly pay framework. As your Rating gets higher and your Request clients increase, our system algorithm automatically provides additional points/tier badge rewards to generate even more booking opportunities for you.</p>
                         
                         <ul className="space-y-4 pt-4">
                             <li className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg text-sm">verified</span>
-                                <span className="font-bold text-sm">에이스 전용 메인 화면 노출권 획득</span>
+                                <span className="font-bold text-sm">Exclusive exposure capability on the main screen for Aces</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-emerald-500 bg-emerald-500/10 p-1.5 rounded-lg text-sm">paid</span>
-                                <span className="font-bold text-sm">리뷰 1건당 환급 가능한 추가 마일리지</span>
+                                <span className="font-bold text-sm">Additional cash-convertible mileage points per each honest review</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-blue-500 bg-blue-500/10 p-1.5 rounded-lg text-sm">star_rate</span>
-                                <span className="font-bold text-sm">우수 리뷰 누적 시 프리미엄 업소로 이적 스카웃 무대</span>
+                                <span className="font-bold text-sm">Scouting opportunities to premium lounges when excellent reviews accumulate</span>
                             </li>
                         </ul>
                     </div>
@@ -183,8 +183,8 @@ const CCALanding: React.FC = () => {
                         <div className="bg-zinc-950 p-8 rounded-3xl border border-white/10 shadow-inner">
                             <div className="flex justify-between items-end mb-8">
                                 <div>
-                                    <p className="text-[10px] uppercase font-black text-zinc-500 tracking-widest mb-1">상위 5% 평균 합산 수입 비율</p>
-                                    <h4 className="text-3xl font-black text-white">압도적 성장 곡선</h4>
+                                    <p className="text-[10px] uppercase font-black text-zinc-500 tracking-widest mb-1">Top 5% Average Combined Income Ratio</p>
+                                    <h4 className="text-3xl font-black text-white">Overwhelming Growth Curve</h4>
                                 </div>
                                 <div className="text-right">
                                     <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/30">+32% / Mo</span>
@@ -194,7 +194,7 @@ const CCALanding: React.FC = () => {
                             <div className="space-y-6">
                                 <div>
                                     <div className="flex justify-between text-xs font-bold mb-2">
-                                        <span className="text-zinc-400">기본 출근 수당</span>
+                                        <span className="text-zinc-400">Basic Attendance Allowance</span>
                                         <span className="text-white">40%</span>
                                     </div>
                                     <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
@@ -203,7 +203,7 @@ const CCALanding: React.FC = () => {
                                 </div>
                                 <div>
                                     <div className="flex justify-between text-xs font-bold mb-2">
-                                        <span className="text-zinc-400">시스템 예약 / 지명 (Request) 보너스</span>
+                                        <span className="text-zinc-400">System Booking / Request Bonus</span>
                                         <span className="text-primary">45%</span>
                                     </div>
                                     <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
@@ -212,7 +212,7 @@ const CCALanding: React.FC = () => {
                                 </div>
                                 <div>
                                     <div className="flex justify-between text-xs font-bold mb-2">
-                                        <span className="text-zinc-400">고객 보너스 팁 및 리뷰 리워드</span>
+                                        <span className="text-zinc-400">Client Bonus Tips & Review Rewards</span>
                                         <span className="text-emerald-500">15%</span>
                                     </div>
                                     <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
@@ -227,12 +227,12 @@ const CCALanding: React.FC = () => {
 
             {/* Final CTA */}
             <section className="py-32 px-6 text-center">
-                <h3 className="text-3xl md:text-5xl font-extrabold mb-6">지금 바로 시작하세요</h3>
-                <p className="text-zinc-500 dark:text-zinc-400 max-w-lg mx-auto mb-10 font-medium">프로필 등록은 단 3분이면 충분합니다. 지금 무료로 가입하고 JTV 최고 라운지의 파트너가 되어보세요.</p>
+                <h3 className="text-3xl md:text-5xl font-extrabold mb-6">Start Right Now</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 max-w-lg mx-auto mb-10 font-medium">Registering your profile takes only 3 minutes. Join for free now and become a partner at the top JTV lounges.</p>
                 <Link to="/cca-portal/apply" className="inline-flex px-12 py-5 bg-primary text-[#1b180d] rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-110 active:scale-95 transition-all">
-                    프로필 등록 신청하기
+                    Apply to Register Profile
                 </Link>
-                <p className="mt-6 text-[10px] text-zinc-400 uppercase tracking-widest font-black">심사 후 24시간 내 결과를 통보해 드립니다</p>
+                <p className="mt-6 text-[10px] text-zinc-400 uppercase tracking-widest font-black">We will notify you of the results within 24 hours after review</p>
             </section>
         </div>
     );
