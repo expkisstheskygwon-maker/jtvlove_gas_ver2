@@ -274,7 +274,12 @@ const CCAPortalHome: React.FC = () => {
                         <p className="text-[11px] text-gray-400 font-medium">{reservations.length} bookings</p>
                      </div>
                   </div>
-                  <span className="text-[10px] font-black text-primary uppercase tracking-widest cursor-pointer hover:underline">See All →</span>
+                  <button 
+                     onClick={() => navigate('/cca-portal/schedule')}
+                     className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                   >
+                     See All →
+                   </button>
                </div>
 
                <div className="flex-1 overflow-auto">
@@ -328,7 +333,12 @@ const CCAPortalHome: React.FC = () => {
                         <p className="text-[11px] text-gray-400 font-medium">{unreadMsgCount} unreplied</p>
                      </div>
                   </div>
-                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest cursor-pointer hover:underline">See All →</span>
+                  <button 
+                     onClick={() => navigate('/cca-portal/messages')}
+                     className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline"
+                   >
+                     See All →
+                   </button>
                </div>
 
                <div className="flex-1 overflow-auto">
