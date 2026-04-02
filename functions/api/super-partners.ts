@@ -108,10 +108,11 @@ export const onRequest: any = async (context: any) => {
             if (action === "listVenues") {
                 const today = new Date().toISOString().split('T')[0];
                 const query = `
-          SELECT v.*, 
+          SELECT v.*, u.email as admin_email,
           (SELECT COUNT(*) FROM reservations r WHERE r.venue_id = v.id AND r.reservation_date = ?) as today_reservations,
           (SELECT COUNT(*) FROM ccas c WHERE c.venue_id = v.id AND c.status = 'active') as cca_count
           FROM venues v
+          LEFT JOIN users u ON v.owner_id = u.id
         `;
                 const { results } = await env.DB.prepare(query).bind(today).all();
                 return new Response(JSON.stringify(results || []), { headers: { "Content-Type": "application/json" } });
@@ -224,6 +225,32 @@ export const onRequest: any = async (context: any) => {
                 const pointStats = (await env.DB.prepare(pointsQuery).bind(id).all()).results || [];
 
                 return new Response(JSON.stringify({ venues, resStats, pointStats }), { headers: { "Content-Type": "application/json" } });
+            }
+        } catch (error: any) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    if (request.method === "POST") {
+        try {
+            const body = await request.json() as any;
+            const { action, venueId, newPassword } = body;
+
+            if (action === "resetVenueAdminPassword") {
+                if (!venueId || !newPassword) {
+                    return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+                }
+
+                // Find owner_id from venue
+                const venue = await env.DB.prepare("SELECT owner_id FROM venues WHERE id = ?").bind(venueId).first();
+                if (!venue || !venue.owner_id) {
+                    return new Response(JSON.stringify({ error: "Venue or owner not found" }), { status: 404 });
+                }
+
+                // Update users table for that owner
+                await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?").bind(newPassword, venue.owner_id).run();
+
+                return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
             }
         } catch (error: any) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });

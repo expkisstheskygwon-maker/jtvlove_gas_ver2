@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/apiService';
 import { Venue, CCA } from '../../types';
@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 
 const TIME_OPTIONS = Array.from({ length: 24 }).map((_, h) => {
-   const ampm = h < 12 ? '오전' : '오후';
+   const ampm = h < 12 ? '?ㅼ쟾' : '?ㅽ썑';
    let displayHour = h % 12;
    if (displayHour === 0) displayHour = 12;
    const value = `${h.toString().padStart(2, '0')}:00`;
@@ -53,6 +53,10 @@ const SuperPartners: React.FC = () => {
    const [unitType, setUnitType] = useState<'table' | 'room'>('table');
    const [unitEditForm, setUnitEditForm] = useState<{ id?: number, name: string, number: string, capacity: string, image: string }>({ name: '', number: '', capacity: '4', image: '' });
    const [selectedUnitIdx, setSelectedUnitIdx] = useState<number | null>(null);
+ 
+   // Password Reset State
+   const [newAdminPassword, setNewAdminPassword] = useState('');
+   const [isResetting, setIsResetting] = useState(false);
 
    useEffect(() => {
       loadData();
@@ -181,7 +185,31 @@ const SuperPartners: React.FC = () => {
 
       setEditForm(mappedItem);
       setVenueActiveTab('basic');
+      setNewAdminPassword('');
       setShowDetailModal(true);
+   };
+
+   const handleResetAdminPassword = async () => {
+      if (!newAdminPassword) {
+         alert('鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂.');
+         return;
+      }
+      if (!window.confirm(`?낆껜 愿由ъ옄??鍮꾨?踰덊샇瑜?"${newAdminPassword}"(??濡?媛뺤젣 蹂寃쏀븯?쒓쿋?듬땲源?`)) return;
+
+      setIsResetting(true);
+      try {
+         const result = await apiService.resetVenueAdminPassword(editForm.id, newAdminPassword);
+         if (result.success) {
+            alert('鍮꾨?踰덊샇媛 ?깃났?곸쑝濡?蹂寃쎈릺?덉뒿?덈떎.');
+            setNewAdminPassword('');
+         } else {
+            alert(`蹂寃??ㅽ뙣: ${result.error || '?????녿뒗 ?ㅻ쪟'}`);
+         }
+      } catch (err: any) {
+         alert(`?ㅻ쪟 諛쒖깮: ${err.message}`);
+      } finally {
+         setIsResetting(false);
+      }
    };
 
 
@@ -212,7 +240,7 @@ const SuperPartners: React.FC = () => {
 
             const venueId = isCreateMode ? undefined : (editForm.id || selectedItem?.id);
             if (!isCreateMode && !venueId) {
-               alert("수정 시 업소 ID가 누락되었습니다. 창을 닫고 다시 시도해 주세요.");
+               alert("?섏젙 ???낆냼 ID媛 ?꾨씫?섏뿀?듬땲?? 李쎌쓣 ?リ퀬 ?ㅼ떆 ?쒕룄??二쇱꽭??");
                setIsSaving(false);
                return;
             }
@@ -302,11 +330,11 @@ const SuperPartners: React.FC = () => {
             if (url) {
                setEditForm({ ...editForm, image: url });
             } else {
-               alert("이미지 압축 및 업로드에 실패했습니다.");
+               alert("?대?吏 ?뺤텞 諛??낅줈?쒖뿉 ?ㅽ뙣?덉뒿?덈떎.");
             }
          } catch (err) {
             console.error("Image upload error", err);
-            alert("이미지 처리 중 오류가 발생했습니다.");
+            alert("?대?吏 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.");
          }
       }
    };
@@ -387,10 +415,10 @@ const SuperPartners: React.FC = () => {
 
             data.forEach((row: any) => {
                // Assuming standard columns: Category, Name, Price, Promotion
-               const category = row['Category'] || row['카테고리'] || currentTags[0] || 'Uncategorized';
-               const name = row['Name'] || row['메뉴명'] || row['이름'];
-               const price = row['Price'] || row['가격'];
-               const promotion = row['Promotion'] || row['프로모션'] || '';
+               const category = row['Category'] || row['移댄뀒怨좊━'] || currentTags[0] || 'Uncategorized';
+               const name = row['Name'] || row['硫붾돱紐?] || row['?대쫫'];
+               const price = row['Price'] || row['媛寃?];
+               const promotion = row['Promotion'] || row['?꾨줈紐⑥뀡'] || '';
 
                if (!name || price === undefined) return; // Skip invalid rows
 
@@ -539,7 +567,7 @@ const SuperPartners: React.FC = () => {
                               {activeTab === 'ccas' && (
                                  <td className="px-8 py-6">
                                     <div className="flex flex-col gap-1">
-                                       <span className="text-[10px] font-bold text-gray-400">{item.age || '-'}세</span>
+                                       <span className="text-[10px] font-bold text-gray-400">{item.age || '-'}??/span>
                                        <span className="text-[10px] font-bold text-[#ffd700]">{formatBodySize(item.height)}</span>
                                     </div>
                                  </td>
@@ -657,12 +685,42 @@ const SuperPartners: React.FC = () => {
 
                               {/* Tab Content: BASIC */}
                               {venueActiveTab === 'basic' && (
-                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 animate-fade-in">
+                                 <div className="space-y-12 animate-fade-in">
+                                    {!isCreateMode && (
+                                       <div className="bg-black/30 rounded-[2.5rem] p-8 border border-white/5 space-y-6">
+                                          <div className="flex items-center justify-between">
+                                             <h6 className="text-[10px] font-black text-red-500 uppercase tracking-widest border-l-2 border-red-500 pl-4">Admin Security Portal</h6>
+                                             <div className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold text-gray-400">
+                                                <span className="material-symbols-outlined text-sm">alternate_email</span>
+                                                {editForm.admin_email || 'No admin connected'}
+                                             </div>
+                                          </div>
+                                          <div className="flex flex-col md:flex-row gap-4">
+                                             <div className="flex-1">
+                                                <input 
+                                                   type="text" 
+                                                   value={newAdminPassword} 
+                                                   onChange={e => setNewAdminPassword(e.target.value)} 
+                                                   placeholder="Set New Emergency Password..." 
+                                                   className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-white font-black text-sm" 
+                                                />
+                                             </div>
+                                             <button 
+                                                onClick={handleResetAdminPassword}
+                                                disabled={isResetting}
+                                                className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-red-600/20 disabled:opacity-50"
+                                             >
+                                                {isResetting ? 'Verifying...' : 'Force Reset Account'}
+                                             </button>
+                                          </div>
+                                       </div>
+                                    )}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                                     <div className="lg:col-span-2 space-y-10">
                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                           <div className="space-y-4">
                                              <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Venue Name</label>
-                                             <input type="text" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" placeholder="업체명을 입력하세요..." />
+                                             <input type="text" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white font-black" placeholder="?낆껜紐낆쓣 ?낅젰?섏꽭??.." />
                                           </div>
                                           <div className="space-y-4">
                                              <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Region</label>
@@ -756,6 +814,7 @@ const SuperPartners: React.FC = () => {
                                              </label>
                                           </div>
                                        </div>
+                                       </div>
                                     </div>
                                  </div>
                               )}
@@ -790,6 +849,7 @@ const SuperPartners: React.FC = () => {
                                              </div>
                                           </div>
                                        ))}
+                                       </div>
                                     </div>
                                  </div>
                               )}
@@ -857,6 +917,7 @@ const SuperPartners: React.FC = () => {
                                           </div>
                                           <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-white">Append New Neural Delicacy</span>
                                        </button>
+                                       </div>
                                     </div>
                                  </div>
                               )}
@@ -923,6 +984,7 @@ const SuperPartners: React.FC = () => {
                                              </div>
                                           )}
                                        </div>
+                                       </div>
                                     </div>
                                  </div>
                               )}
@@ -954,12 +1016,12 @@ const SuperPartners: React.FC = () => {
 
                                  <div className="space-y-3">
                                     <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">MBTI Profile</label>
-                                    <input type="text" placeholder="예: ENFP" value={editForm.mbti || ''} onChange={e => setEditForm({ ...editForm, mbti: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600" />
+                                    <input type="text" placeholder="?? ENFP" value={editForm.mbti || ''} onChange={e => setEditForm({ ...editForm, mbti: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600" />
                                  </div>
 
                                  <div className="space-y-3">
                                     <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Quick Bio</label>
-                                    <textarea value={editForm.oneLineStory || ''} onChange={e => setEditForm({ ...editForm, oneLineStory: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600 h-32 resize-none" placeholder="자기소개를 입력해 주세요..." />
+                                    <textarea value={editForm.oneLineStory || ''} onChange={e => setEditForm({ ...editForm, oneLineStory: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600 h-32 resize-none" placeholder="?먭린?뚭컻瑜??낅젰??二쇱꽭??.." />
                                  </div>
 
                                  <div className="space-y-4">
@@ -1019,7 +1081,7 @@ const SuperPartners: React.FC = () => {
                                     </div>
                                     <div className="space-y-3">
                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Birthday (DD. MMM. YYYY.)</label>
-                                       <input type="text" value={editForm.birthday || ''} onChange={e => setEditForm({ ...editForm, birthday: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold" placeholder="예: 23. Jan. 2000." />
+                                       <input type="text" value={editForm.birthday || ''} onChange={e => setEditForm({ ...editForm, birthday: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold" placeholder="?? 23. Jan. 2000." />
                                     </div>
                                     <div className="space-y-3 md:col-span-2">
                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Residential Address</label>
@@ -1050,7 +1112,7 @@ const SuperPartners: React.FC = () => {
                                  {/* Section: Specialties & Languages */}
                                  <section className="space-y-8">
                                     <div>
-                                       <label className="text-[10px] font-black text-gray-500 uppercase ml-2 mb-4 block">Specialties (특징/특기)</label>
+                                       <label className="text-[10px] font-black text-gray-500 uppercase ml-2 mb-4 block">Specialties (?뱀쭠/?밴린)</label>
                                        <div className="flex flex-wrap gap-2">
                                           {['DANCE', 'SINGING', 'COOKING', 'GAMING', 'SPORTS', 'MUSIC', 'ART', 'TRAVEL'].map(s => (
                                              <button key={s} onClick={() => toggleSpec(s)} className={`px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest transition-all ${editForm.specialties?.includes(s) ? 'bg-red-600 text-white shadow-lg' : 'bg-white/5 text-gray-500 border border-white/5'}`}>{s}</button>
@@ -1058,7 +1120,7 @@ const SuperPartners: React.FC = () => {
                                        </div>
                                     </div>
                                     <div>
-                                       <label className="text-[10px] font-black text-gray-500 uppercase ml-2 mb-4 block">Available Languages (가능 언어)</label>
+                                       <label className="text-[10px] font-black text-gray-500 uppercase ml-2 mb-4 block">Available Languages (媛???몄뼱)</label>
                                        <div className="flex flex-wrap gap-2">
                                           {['ENGLISH', 'KOREAN', 'JAPANESE', 'CHINESE', 'TAGALOG'].map(l => (
                                              <button key={l} onClick={() => toggleLang(l)} className={`px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest transition-all ${editForm.languages?.includes(l) ? 'bg-zinc-100 text-black shadow-lg' : 'bg-white/5 text-gray-500 border border-white/5'}`}>{l}</button>
@@ -1192,3 +1254,4 @@ const SuperPartners: React.FC = () => {
 };
 
 export default SuperPartners;
+

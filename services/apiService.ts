@@ -877,6 +877,20 @@ export const apiService = {
     }
   },
 
+  async resetVenueAdminPassword(venueId: string, newPassword: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/super-partners`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resetVenueAdminPassword', venueId, newPassword })
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('resetVenueAdminPassword error:', error);
+      return { error: error.message };
+    }
+  },
+
   async getVenueHistory(id: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/super-partners?action=venueHistory&id=${id}`);
