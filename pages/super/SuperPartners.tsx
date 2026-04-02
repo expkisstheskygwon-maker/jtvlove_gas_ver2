@@ -56,6 +56,7 @@ const SuperPartners: React.FC = () => {
  
    // Password Reset State
    const [newAdminPassword, setNewAdminPassword] = useState('');
+   const [newAdminEmail, setNewAdminEmail] = useState('');
    const [isResetting, setIsResetting] = useState(false);
 
    useEffect(() => {
@@ -186,24 +187,27 @@ const SuperPartners: React.FC = () => {
       setEditForm(mappedItem);
       setVenueActiveTab('basic');
       setNewAdminPassword('');
+      setNewAdminEmail(item.admin_email || '');
       setShowDetailModal(true);
    };
 
-   const handleResetAdminPassword = async () => {
-      if (!newAdminPassword) {
-         alert('Please enter a password.');
+   const handleUpdateAdminAccount = async () => {
+      if (!newAdminEmail) {
+         alert('Please enter an email address.');
          return;
       }
-      if (!window.confirm(`Are you sure you want to change the admin password to "${newAdminPassword}"?`)) return;
+      if (!window.confirm(`Are you sure you want to update the admin account to ID: "${newAdminEmail}"?`)) return;
 
       setIsResetting(true);
       try {
-         const result = await apiService.resetVenueAdminPassword(editForm.id, newAdminPassword);
+         const result = await apiService.updateVenueAdminAccount(editForm.id, newAdminEmail, newAdminPassword);
          if (result.success) {
-            alert('Password changed successfully.');
+            alert('Account updated successfully.');
             setNewAdminPassword('');
+            // Refresh local state to reflect new email
+            setEditForm({ ...editForm, admin_email: newAdminEmail });
          } else {
-            alert(`Change failed: ${result.error || 'Unknown error'}`);
+            alert(`Update failed: ${result.error || 'Unknown error'}`);
          }
       } catch (err: any) {
          alert(`Error occurred: ${err.message}`);
@@ -695,23 +699,38 @@ const SuperPartners: React.FC = () => {
                                                 {editForm.admin_email || 'No admin connected'}
                                              </div>
                                           </div>
-                                          <div className="flex flex-col md:flex-row gap-4">
-                                             <div className="flex-1">
-                                                <input 
-                                                   type="text" 
-                                                   value={newAdminPassword} 
-                                                   onChange={e => setNewAdminPassword(e.target.value)} 
-                                                   placeholder="Set New Emergency Password..." 
-                                                   className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-white font-black text-sm" 
-                                                />
+                                          <div className="flex flex-col md:flex-row gap-6">
+                                             <div className="flex-1 space-y-4">
+                                                <div className="space-y-2">
+                                                   <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-2">Admin Email (ID)</label>
+                                                   <input 
+                                                      type="text" 
+                                                      value={newAdminEmail} 
+                                                      onChange={e => setNewAdminEmail(e.target.value)} 
+                                                      placeholder="Admin Email (ID)..." 
+                                                      className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-white font-black text-sm" 
+                                                   />
+                                                </div>
+                                                <div className="space-y-2">
+                                                   <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-2">Reset Password (Optional)</label>
+                                                   <input 
+                                                      type="text" 
+                                                      value={newAdminPassword} 
+                                                      onChange={e => setNewAdminPassword(e.target.value)} 
+                                                      placeholder="Set New Password..." 
+                                                      className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-white font-black text-sm" 
+                                                   />
+                                                </div>
                                              </div>
-                                             <button 
-                                                onClick={handleResetAdminPassword}
-                                                disabled={isResetting}
-                                                className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-red-600/20 disabled:opacity-50"
-                                             >
-                                                {isResetting ? 'Verifying...' : 'Force Reset Account'}
-                                             </button>
+                                             <div className="flex flex-col justify-end">
+                                                <button 
+                                                   onClick={handleUpdateAdminAccount}
+                                                   disabled={isResetting}
+                                                   className="bg-red-600 text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-red-600/20 disabled:opacity-50 h-fit"
+                                                >
+                                                   {isResetting ? 'Verifying...' : 'Force Sync Account'}
+                                                </button>
+                                             </div>
                                           </div>
                                        </div>
                                     )}

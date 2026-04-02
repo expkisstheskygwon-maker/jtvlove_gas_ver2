@@ -877,16 +877,16 @@ export const apiService = {
     }
   },
 
-  async resetVenueAdminPassword(venueId: string, newPassword: string): Promise<any> {
+  async updateVenueAdminAccount(venueId: string, newEmail: string, newPassword?: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/super-partners`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resetVenueAdminPassword', venueId, newPassword })
+        body: JSON.stringify({ action: 'updateVenueAdminAccount', venueId, newEmail, newPassword })
       });
       return await response.json();
     } catch (error: any) {
-      console.error('resetVenueAdminPassword error:', error);
+      console.error('updateVenueAdminAccount error:', error);
       return { error: error.message };
     }
   },

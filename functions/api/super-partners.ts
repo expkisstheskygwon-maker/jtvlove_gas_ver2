@@ -236,6 +236,48 @@ export const onRequest: any = async (context: any) => {
             const body = await request.json() as any;
             const { action, venueId, newPassword } = body;
 
+            if (action === "updateVenueAdminAccount") {
+                const { venueId, newEmail, newPassword } = body;
+                if (!venueId || !newEmail) {
+                    return new Response(JSON.stringify({ error: "Venue ID and Email are required" }), { status: 400 });
+                }
+
+                // 1. Find if venue has an owner
+                const venue = await env.DB.prepare("SELECT name, owner_id FROM venues WHERE id = ?").bind(venueId).first();
+                if (!venue) {
+                    return new Response(JSON.stringify({ error: "Venue not found" }), { status: 404 });
+                }
+
+                if (venue.owner_id) {
+                    // 2. Update existing owner
+                    const updates = ["email = ?"];
+                    const params = [newEmail];
+                    if (newPassword) {
+                        updates.push("password = ?");
+                        params.push(newPassword);
+                    }
+                    params.push(venue.owner_id);
+
+                    await env.DB.prepare(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`)
+                        .bind(...params).run();
+                } else {
+                    // 3. Create new owner if none exists
+                    const newUserId = `u_admin_${Date.now()}`;
+                    const password = newPassword || "123456"; // Default password if not provided
+                    
+                    await env.DB.prepare(`
+                        INSERT INTO users (id, email, password, nickname, real_name, role)
+                        VALUES (?, ?, ?, ?, ?, 'venue_admin')
+                    `).bind(newUserId, newEmail, password, `${venue.name} Admin`, venue.name).run();
+
+                    // 4. Link venue to this new owner
+                    await env.DB.prepare("UPDATE venues SET owner_id = ? WHERE id = ?")
+                        .bind(newUserId, venueId).run();
+                }
+
+                return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
+            }
+
             if (action === "resetVenueAdminPassword") {
                 if (!venueId || !newPassword) {
                     return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
