@@ -36,9 +36,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
             }
 
             if (action === "check_out") {
-                await env.DB.prepare(
-                    "UPDATE cca_attendance SET check_out_at = ?, status = 'checked_out' WHERE cca_id = ? AND attendance_date = ?"
-                ).bind(now, ccaId, today).run();
+                // Find latest checked_in record for this CCA
+                const lastCheckIn = await env.DB.prepare(
+                    "SELECT id FROM cca_attendance WHERE cca_id = ? AND status = 'checked_in' ORDER BY check_in_at DESC LIMIT 1"
+                ).bind(ccaId).first();
+
+                if (lastCheckIn) {
+                    await env.DB.prepare(
+                        "UPDATE cca_attendance SET check_out_at = ?, status = 'checked_out' WHERE id = ?"
+                    ).bind(now, lastCheckIn.id).run();
+                } else {
+                    // Fallback to legacy date-based update if no specific record found
+                    await env.DB.prepare(
+                        "UPDATE cca_attendance SET check_out_at = ?, status = 'checked_out' WHERE cca_id = ? AND attendance_date = ?"
+                    ).bind(now, ccaId, today).run();
+                }
 
                 return new Response(JSON.stringify({ success: true, action: "check_out", time: now }), {
                     headers: { "Content-Type": "application/json" },
