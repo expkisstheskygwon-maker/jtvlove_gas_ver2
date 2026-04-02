@@ -19,7 +19,11 @@ const CCALanding: React.FC = () => {
                         </div>
                         <h1 className="text-sm font-black tracking-tighter uppercase">JTV STAR <span className="text-primary">PARTNERS</span></h1>
                     </Link>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 items-center">
+                        <Link to="/applicant/status" className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-emerald-500 transition-colors flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">badge</span>
+                            My Status
+                        </Link>
                         <Link to="/cca-portal/login" className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors">
                             Login
                         </Link>
@@ -221,6 +225,30 @@ const CCALanding: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Already Applied? Check Status */}
+            <section className="py-16 px-6 max-w-4xl mx-auto">
+                <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 md:p-12 border border-emerald-500/10 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                        <div className="size-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-4xl text-emerald-500">fact_check</span>
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                            <h3 className="text-xl md:text-2xl font-extrabold mb-2">Already Applied?</h3>
+                            <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1">Check your application status and respond to job offers from venues.</p>
+                            <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-black">Use the Name + 4-digit PIN you entered during application</p>
+                        </div>
+                        <Link 
+                            to="/applicant/status" 
+                            className="px-10 py-4 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.15em] shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 flex-shrink-0"
+                        >
+                            <span className="material-symbols-outlined text-lg">badge</span>
+                            Check My Status
+                        </Link>
                     </div>
                 </div>
             </section>

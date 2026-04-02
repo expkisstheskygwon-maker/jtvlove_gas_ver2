@@ -3,6 +3,20 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 
+const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
+    pending: { label: 'Pending Review', color: 'text-amber-500 bg-amber-500/10', icon: 'hourglass_top' },
+    reviewing: { label: 'Offers Received', color: 'text-blue-500 bg-blue-500/10', icon: 'mark_email_unread' },
+    hired: { label: 'Hired!', color: 'text-emerald-500 bg-emerald-500/10', icon: 'check_circle' },
+    rejected: { label: 'Not Selected', color: 'text-red-500 bg-red-500/10', icon: 'cancel' },
+};
+
+const offerStatusConfig: Record<string, { label: string; color: string }> = {
+    pending: { label: 'Awaiting Your Response', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
+    accepted: { label: 'Accepted', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
+    rejected: { label: 'Declined', color: 'text-red-500 bg-red-500/10 border-red-500/20' },
+    expired: { label: 'Expired', color: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20' },
+};
+
 const ApplicantStatus: React.FC = () => {
     const [name, setName] = useState('');
     const [pin, setPin] = useState('');
@@ -36,8 +50,7 @@ const ApplicantStatus: React.FC = () => {
         try {
             const result = await apiService.acceptJobOffer(offerId, name, pin);
             if (result.success) {
-                alert('Congratulations! You have been hired. You can now log in to the CCA Portal.');
-                // Refresh data
+                alert('🎉 Congratulations! You have been hired. You can now log in to the CCA Portal.');
                 const refreshed = await apiService.checkApplicantStatus(name, pin);
                 if (!refreshed.error) setData(refreshed);
             } else {
@@ -68,21 +81,9 @@ const ApplicantStatus: React.FC = () => {
         }
     };
 
-    const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
-        pending: { label: 'Pending Review', color: 'text-amber-500 bg-amber-500/10', icon: 'hourglass_top' },
-        reviewing: { label: 'Offers Received', color: 'text-blue-500 bg-blue-500/10', icon: 'mark_email_unread' },
-        hired: { label: 'Hired!', color: 'text-emerald-500 bg-emerald-500/10', icon: 'check_circle' },
-        rejected: { label: 'Not Selected', color: 'text-red-500 bg-red-500/10', icon: 'cancel' },
-    };
-
-    const offerStatusConfig: Record<string, { label: string; color: string }> = {
-        pending: { label: 'Awaiting Your Response', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
-        accepted: { label: 'Accepted', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
-        rejected: { label: 'Declined', color: 'text-red-500 bg-red-500/10 border-red-500/20' },
-        expired: { label: 'Expired', color: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20' },
-    };
-
-    // If not logged in, show login form
+    // ═══════════════════════════════════════
+    // LOGIN FORM (not authenticated)
+    // ═══════════════════════════════════════
     if (!data) {
         return (
             <div className="min-h-screen bg-[#faf9f6] dark:bg-zinc-950 font-display flex flex-col items-center justify-center p-4">
@@ -91,9 +92,9 @@ const ApplicantStatus: React.FC = () => {
                 </Helmet>
 
                 <div className="w-full max-w-md">
-                    <Link to="/" className="flex items-center gap-2 text-zinc-500 hover:text-primary transition-colors font-bold text-sm mb-8">
+                    <Link to="/cca-portal/welcome" className="flex items-center gap-2 text-zinc-500 hover:text-primary transition-colors font-bold text-sm mb-8">
                         <span className="material-symbols-outlined">arrow_back</span>
-                        Back to Home
+                        Back to CCA Portal
                     </Link>
 
                     <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl border border-primary/5 p-8 md:p-10 relative overflow-hidden">
@@ -159,9 +160,28 @@ const ApplicantStatus: React.FC = () => {
         );
     }
 
-    // Show status dashboard
-    const app = data.application;
-    const offers = data.offers || [];
+    // ═══════════════════════════════════════
+    // STATUS DASHBOARD (authenticated)
+    // ═══════════════════════════════════════
+    const app = data?.application;
+    const offers: any[] = data?.offers || [];
+
+    // Guard: if data was set but application is missing
+    if (!app) {
+        return (
+            <div className="min-h-screen bg-[#faf9f6] dark:bg-zinc-950 font-display flex flex-col items-center justify-center p-4">
+                <Helmet><title>Error | JTV STAR</title></Helmet>
+                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-xl border border-red-500/10 p-10 text-center max-w-md">
+                    <span className="material-symbols-outlined text-5xl text-red-400 mb-4 block">error</span>
+                    <p className="font-bold text-zinc-600 dark:text-zinc-400 mb-4">Unable to load application data.<br/>Please try logging in again.</p>
+                    <button onClick={() => setData(null)} className="px-8 py-3 bg-primary text-[#1b180d] rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const sc = statusConfig[app.status] || statusConfig.pending;
 
     return (
@@ -171,12 +191,14 @@ const ApplicantStatus: React.FC = () => {
             </Helmet>
 
             <div className="max-w-3xl mx-auto">
+                {/* Top Bar */}
                 <div className="flex items-center justify-between mb-8">
-                    <Link to="/" className="flex items-center gap-2 text-zinc-500 hover:text-primary transition-colors font-bold text-sm">
+                    <Link to="/cca-portal/welcome" className="flex items-center gap-2 text-zinc-500 hover:text-primary transition-colors font-bold text-sm">
                         <span className="material-symbols-outlined">arrow_back</span>
-                        Home
+                        CCA Portal
                     </Link>
-                    <button onClick={() => setData(null)} className="text-xs font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 transition-colors">
+                    <button onClick={() => setData(null)} className="text-xs font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 transition-colors flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">logout</span>
                         Logout
                     </button>
                 </div>
@@ -222,6 +244,32 @@ const ApplicantStatus: React.FC = () => {
                             <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Applied</p>
                             <p className="font-extrabold mt-1">{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}</p>
                         </div>
+                    </div>
+                </div>
+
+                {/* Status Progress */}
+                <div className="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-xl border border-primary/5 p-6 md:p-8 mb-6">
+                    <h3 className="text-sm font-extrabold uppercase tracking-widest text-zinc-400 mb-4">Application Progress</h3>
+                    <div className="flex items-center gap-2">
+                        {['pending', 'reviewing', 'hired'].map((step, i) => {
+                            const isActive = step === app.status;
+                            const isPast = ['pending', 'reviewing', 'hired'].indexOf(app.status) >= i;
+                            return (
+                                <React.Fragment key={step}>
+                                    {i > 0 && (
+                                        <div className={`flex-1 h-1 rounded-full transition-all ${isPast ? 'bg-primary shadow-[0_0_8px_rgba(255,215,0,0.4)]' : 'bg-zinc-200 dark:bg-zinc-800'}`}></div>
+                                    )}
+                                    <div className={`size-10 rounded-full flex items-center justify-center text-xs font-black transition-all ${isActive ? 'bg-primary text-[#1b180d] scale-110 shadow-lg shadow-primary/30' : isPast ? 'bg-primary/20 text-primary' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'}`}>
+                                        <span className="material-symbols-outlined text-lg">{statusConfig[step]?.icon || 'circle'}</span>
+                                    </div>
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                    <div className="flex justify-between mt-3 text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                        <span>Submitted</span>
+                        <span>Under Review</span>
+                        <span>Hired</span>
                     </div>
                 </div>
 
@@ -287,6 +335,19 @@ const ApplicantStatus: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Hired? CCA Portal Link */}
+                {app.status === 'hired' && (
+                    <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 text-center">
+                        <span className="material-symbols-outlined text-4xl text-emerald-500 mb-3 block">celebration</span>
+                        <p className="font-extrabold text-lg mb-2">Congratulations! You're now a CCA Partner.</p>
+                        <p className="text-sm text-zinc-500 mb-4">You can now access the CCA Portal with your assigned credentials.</p>
+                        <Link to="/cca-portal/login" className="inline-flex px-8 py-3 bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all items-center gap-2">
+                            <span className="material-symbols-outlined text-sm">login</span>
+                            Go to CCA Portal
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );

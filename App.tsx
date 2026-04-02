@@ -119,7 +119,8 @@ const Navigation = () => {
 
   const isSpecial = location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/cca-portal') ||
-    location.pathname.startsWith('/super-admin');
+    location.pathname.startsWith('/super-admin') ||
+    location.pathname.startsWith('/applicant');
   const isActive = (path: string) => location.pathname === path;
 
   if (isSpecial) return null;
@@ -286,6 +287,7 @@ const FooterWrapper = () => {
   const isSpecial = location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/cca-portal') ||
     location.pathname.startsWith('/super-admin') ||
+    location.pathname.startsWith('/applicant') ||
     location.pathname === '/login' ||
     location.pathname === '/register';
   if (isSpecial) return null;
