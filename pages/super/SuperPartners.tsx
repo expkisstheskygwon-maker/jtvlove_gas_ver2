@@ -149,39 +149,51 @@ const SuperPartners: React.FC = () => {
       }
    };
 
-   const handleOpenDetail = (item: any) => {
+   const handleOpenDetail = async (item: any) => {
       setIsCreateMode(false);
+      
+      // Fetch full details including current attendance status for CCAs
+      let fullItem = item;
+      if (activeTab === 'ccas') {
+         try {
+            const data = await apiService.getCCAById(item.id);
+            if (data) fullItem = data;
+         } catch (err) {
+            console.warn("Failed to fetch real-time attendance", err);
+         }
+      }
+
       // Region normalization for legacy data
-      let normalizedRegion = item.region;
-      if (item.region === 'MANILA') normalizedRegion = 'Manila';
-      else if (item.region === 'CLARK' || item.region === 'CLARK/ANGELES') normalizedRegion = 'Clark/Angeles';
-      else if (item.region === 'CEBU') normalizedRegion = 'Cebu';
-      else if (item.region === 'ETC' || item.region === 'OTHERS') normalizedRegion = 'Others';
+      let normalizedRegion = fullItem.region;
+      if (fullItem.region === 'MANILA') normalizedRegion = 'Manila';
+      else if (fullItem.region === 'CLARK' || fullItem.region === 'CLARK/ANGELES') normalizedRegion = 'Clark/Angeles';
+      else if (fullItem.region === 'CEBU') normalizedRegion = 'Cebu';
+      else if (fullItem.region === 'ETC' || fullItem.region === 'OTHERS') normalizedRegion = 'Others';
 
       const mappedItem = {
-         ...item,
+         ...fullItem,
          region: normalizedRegion,
-         venueId: item.venue_id,
-         realNameFirst: item.real_name_first,
-         realNameMiddle: item.real_name_middle,
-         realNameLast: item.real_name_last,
-         oneLineStory: item.one_line_story,
-         maritalStatus: item.marital_status,
-         childrenStatus: item.children_status,
-         specialties: typeof item.specialties === 'string' ? JSON.parse(item.specialties) : (item.specialties || []),
-         languages: typeof item.languages === 'string' ? JSON.parse(item.languages) : (item.languages || []),
+         venueId: fullItem.venue_id,
+         realNameFirst: fullItem.real_name_first,
+         realNameMiddle: fullItem.real_name_middle,
+         realNameLast: fullItem.real_name_last,
+         oneLineStory: fullItem.one_line_story,
+         maritalStatus: fullItem.marital_status,
+         childrenStatus: fullItem.children_status,
+         specialties: typeof fullItem.specialties === 'string' ? JSON.parse(fullItem.specialties) : (fullItem.specialties || []),
+         languages: typeof fullItem.languages === 'string' ? JSON.parse(fullItem.languages) : (fullItem.languages || []),
 
          // Venue fields
-         sns: typeof item.sns === 'string' ? JSON.parse(item.sns) : (item.sns || { telegram: '', facebook: '', kakao: '', band: '', instagram: '', discord: '' }),
-         operating_hours: typeof item.operating_hours === 'string' ? JSON.parse(item.operating_hours) : (item.operating_hours || { open: '19:00', close: '02:00' }),
-         showUpTime: typeof item.showUpTime === 'string' ? JSON.parse(item.showUpTime) : (item.showUpTime || { first: '19:30', last: '21:00' }),
-         media: typeof item.media === 'string' ? JSON.parse(item.media) : (item.media || []),
-         tags: typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || ['Main Dishes', 'Set Menu', 'Premium Drinks', 'Side Dishes']),
-         menu: typeof item.menu === 'string' ? JSON.parse(item.menu) : (item.menu || []),
-         tables: typeof item.tables === 'string' ? JSON.parse(item.tables) : (item.tables || []),
-         rooms: typeof item.rooms === 'string' ? JSON.parse(item.rooms) : (item.rooms || []),
-         banner_image: item.banner_image || '',
-         introduction: item.introduction || item.description || ''
+         sns: typeof fullItem.sns === 'string' ? JSON.parse(fullItem.sns) : (fullItem.sns || { telegram: '', facebook: '', kakao: '', band: '', instagram: '', discord: '' }),
+         operating_hours: typeof fullItem.operating_hours === 'string' ? JSON.parse(fullItem.operating_hours) : (fullItem.operating_hours || { open: '19:00', close: '02:00' }),
+         showUpTime: typeof fullItem.showUpTime === 'string' ? JSON.parse(fullItem.showUpTime) : (fullItem.showUpTime || { first: '19:30', last: '21:00' }),
+         media: typeof fullItem.media === 'string' ? JSON.parse(fullItem.media) : (fullItem.media || []),
+         tags: typeof fullItem.tags === 'string' ? JSON.parse(fullItem.tags) : (fullItem.tags || ['Main Dishes', 'Set Menu', 'Premium Drinks', 'Side Dishes']),
+         menu: typeof fullItem.menu === 'string' ? JSON.parse(fullItem.menu) : (fullItem.menu || []),
+         tables: typeof fullItem.tables === 'string' ? JSON.parse(fullItem.tables) : (fullItem.tables || []),
+         rooms: typeof fullItem.rooms === 'string' ? JSON.parse(fullItem.rooms) : (fullItem.rooms || []),
+         banner_image: fullItem.banner_image || '',
+         introduction: fullItem.introduction || fullItem.description || ''
       };
 
       setEditForm(mappedItem);
@@ -1034,6 +1046,49 @@ const SuperPartners: React.FC = () => {
                                     <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">MBTI Profile</label>
                                     <input type="text" placeholder="?? ENFP" value={editForm.mbti || ''} onChange={e => setEditForm({ ...editForm, mbti: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600" />
                                  </div>
+
+                                 {!isCreateMode && (
+                                    <div className="bg-black/40 rounded-3xl p-6 border border-white/10 space-y-4">
+                                       <div className="flex items-center justify-between">
+                                          <h6 className="text-[10px] font-black text-red-500 uppercase tracking-widest border-l-2 border-red-500 pl-3">Attendance Control</h6>
+                                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${editForm.isWorking ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-gray-500 border border-white/10'}`}>
+                                             {editForm.isWorking ? 'ACTIVE' : 'OFFLINE'}
+                                          </span>
+                                       </div>
+                                       <div className="grid grid-cols-2 gap-3">
+                                          <button 
+                                             onClick={async () => {
+                                                if (!window.confirm("Force Clock-In this CCA?")) return;
+                                                const res = await apiService.ccaCheckIn(editForm.id, editForm.venue_id || 'v1');
+                                                if (res.success) {
+                                                   alert("Clocked-in successfully");
+                                                   setEditForm({ ...editForm, isWorking: true });
+                                                   loadData();
+                                                }
+                                             }}
+                                             disabled={editForm.isWorking}
+                                             className="bg-emerald-600/10 text-emerald-500 border border-emerald-500/20 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-30"
+                                          >
+                                             Force IN
+                                          </button>
+                                          <button 
+                                             onClick={async () => {
+                                                if (!window.confirm("Force Clock-Out this CCA?")) return;
+                                                const res = await apiService.ccaCheckOut(editForm.id, editForm.venue_id || 'v1');
+                                                if (res.success) {
+                                                   alert("Clocked-out successfully");
+                                                   setEditForm({ ...editForm, isWorking: false });
+                                                   loadData();
+                                                }
+                                             }}
+                                             disabled={!editForm.isWorking}
+                                             className="bg-red-600/10 text-red-500 border border-red-500/20 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all disabled:opacity-30"
+                                          >
+                                             Force OUT
+                                          </button>
+                                       </div>
+                                    </div>
+                                 )}
 
                                  <div className="space-y-3">
                                     <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Quick Bio</label>
