@@ -83,10 +83,23 @@ export const onRequest: PagesFunction<Env> = async (context: { env: Env; request
         notices = result.results || [];
       }
 
-      // 6. 오늘 출퇴근 상태
+      const getBusinessDate = () => {
+        const now = new Date();
+        const utcHours = now.getUTCHours();
+        const utcMinutes = now.getUTCMinutes();
+        if (utcHours === 0 && utcMinutes < 30) {
+          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          return yesterday.toISOString().split('T')[0];
+        }
+        return now.toISOString().split('T')[0];
+      };
+
+      const businessDate = getBusinessDate();
+
+      // 6. 오늘 출퇴근 상태 (현재 영업일 기준 최근 기록)
       const attendance = await env.DB.prepare(
-        "SELECT * FROM cca_attendance WHERE cca_id = ? ORDER BY check_in_at DESC LIMIT 1"
-      ).bind(ccaId).first();
+        "SELECT * FROM cca_attendance WHERE cca_id = ? AND attendance_date = ? ORDER BY check_in_at DESC LIMIT 1"
+      ).bind(ccaId, businessDate).first();
 
       return new Response(JSON.stringify({
         cca,
@@ -95,7 +108,7 @@ export const onRequest: PagesFunction<Env> = async (context: { env: Env; request
         adminMessages,
         notices,
         attendance,
-        today,
+        today: businessDate,
       }), {
         headers: { "Content-Type": "application/json" },
       });

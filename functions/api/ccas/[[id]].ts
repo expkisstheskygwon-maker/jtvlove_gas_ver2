@@ -20,11 +20,22 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     try {
       const venueIdParam = url.searchParams.get('venueId');
 
-      // More robust attendance check: anyone currently 'checked_in' 
-      // or who checked in within the last 24 hours and hasn't checked out.
+      const getBusinessDate = () => {
+        const now = new Date();
+        const utcHours = now.getUTCHours();
+        const utcMinutes = now.getUTCMinutes();
+        if (utcHours === 0 && utcMinutes < 30) {
+          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          return yesterday.toISOString().split('T')[0];
+        }
+        return now.toISOString().split('T')[0];
+      };
+
+      const currentBusinessDate = getBusinessDate();
+
       let query = `
         SELECT c.*, v.name as venueName, v.name as venue_name, v.region as region,
-               a.status as attendanceStatus, a.check_in_at as checkInAt
+               a.status as attendanceStatus, a.check_in_at as checkInAt, a.attendance_date
         FROM ccas c 
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN (
@@ -45,7 +56,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
         if (!result) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
 
-        const isWorking = result.attendanceStatus === 'checked_in';
+        const isWorking = result.attendanceStatus === 'checked_in' && result.attendance_date === currentBusinessDate;
 
         return new Response(JSON.stringify({
           ...result,
@@ -90,7 +101,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       const { results } = await env.DB.prepare(query).bind(...queryParams).all();
 
       const formattedResults = results.map((c: any) => {
-        const isWorking = c.attendanceStatus === 'checked_in';
+        const isWorking = c.attendanceStatus === 'checked_in' && c.attendance_date === currentBusinessDate;
         return {
           ...c,
           isWorking,
