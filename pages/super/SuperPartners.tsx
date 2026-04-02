@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/apiService';
 import { Venue, CCA } from '../../types';
@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 
 const TIME_OPTIONS = Array.from({ length: 24 }).map((_, h) => {
-   const ampm = h < 12 ? '?ㅼ쟾' : '?ㅽ썑';
+   const ampm = h < 12 ? '오전' : '오후';
    let displayHour = h % 12;
    if (displayHour === 0) displayHour = 12;
    const value = `${h.toString().padStart(2, '0')}:00`;
@@ -567,7 +567,7 @@ const SuperPartners: React.FC = () => {
                               {activeTab === 'ccas' && (
                                  <td className="px-8 py-6">
                                     <div className="flex flex-col gap-1">
-                                       <span className="text-[10px] font-bold text-gray-400">{item.age || '-'}??/span>
+                                       <span className="text-[10px] font-bold text-gray-400">{item.age || '-'}세</span>
                                        <span className="text-[10px] font-bold text-[#ffd700]">{formatBodySize(item.height)}</span>
                                     </div>
                                  </td>
@@ -849,12 +849,11 @@ const SuperPartners: React.FC = () => {
                                              </div>
                                           </div>
                                        ))}
-                                       </div>
-                                    </div>
-                                 </div>
-                              )}
+                                   </div>
+                                </div>
+                             )}
 
-                              {/* Tab Content: MENU */}
+                             {/* Tab Content: MENU */}
                               {venueActiveTab === 'menu' && (
                                  <div className="space-y-12 animate-fade-in">
                                     <div className="bg-black/40 rounded-[2.5rem] p-10 border border-white/10 space-y-8">
@@ -1021,7 +1020,7 @@ const SuperPartners: React.FC = () => {
 
                                  <div className="space-y-3">
                                     <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Quick Bio</label>
-                                    <textarea value={editForm.oneLineStory || ''} onChange={e => setEditForm({ ...editForm, oneLineStory: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600 h-32 resize-none" placeholder="?먭린?뚭컻瑜??낅젰??二쇱꽭??.." />
+                                    <textarea value={editForm.oneLineStory || ''} onChange={e => setEditForm({ ...editForm, oneLineStory: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-red-600 h-32 resize-none" placeholder="자기소개를 입력해 주세요..." />
                                  </div>
 
                                  <div className="space-y-4">
