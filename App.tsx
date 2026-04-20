@@ -20,6 +20,7 @@ import Policy from './pages/Policy';
 import Footer from './pages/Footer';
 import Guidebook from './pages/Guidebook';
 import ApplicantStatus from './pages/ApplicantStatus';
+import Ranking from './pages/Ranking';
 
 
 // Admin & Portal
@@ -370,6 +371,7 @@ const App: React.FC = () => {
           <Route path="/notice" element={<NoticeCenter />} />
           <Route path="/policy" element={<Policy />} />
           <Route path="/guide" element={<Guidebook />} />
+          <Route path="/ranking" element={<Ranking />} />
           <Route path="/applicant/status" element={<ApplicantStatus />} />
 
           {/* Venue Admin Auth */}

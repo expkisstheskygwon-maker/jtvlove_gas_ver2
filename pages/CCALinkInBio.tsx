@@ -260,7 +260,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   }
 
   return (
-    <div className="lib-wrapper">
+    <div className="lib-wrapper luminary-theme">
       {/* Header */}
       <header className="lib-header">
         <span className="lib-header-username">
