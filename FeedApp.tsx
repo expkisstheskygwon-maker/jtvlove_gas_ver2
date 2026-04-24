@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import CCAFeed from './pages/CCAFeed';
 import CCALinkInBio from './pages/CCALinkInBio';
 import Ranking from './pages/Ranking';
@@ -8,20 +8,19 @@ import Ranking from './pages/Ranking';
 // 피드 도메인 (예: ccafeed.com 또는 feed.jtvstar.com) 접속 시 이 라우터가 활성화됩니다.
 const FeedApp: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        {/* 메인 피드 */}
-        <Route path="/" element={<CCAFeed />} />
-        
-        {/* 기존 @username 라우팅 뿐만 아니라 더 명시적인 프로필 라우트 지원 */}
-        <Route path="/@:username" element={<CCALinkInBio />} />
-        <Route path="/p/:username" element={<CCALinkInBio />} />
-        <Route path="/ranking" element={<Ranking />} />
-        
-        {/* 기존에 /#/@username 과 같이 넘어오는 경우 처리 */}
-        <Route path="*" element={<HashRedirector />} />
-      </Routes>
-    </Router>
+    <Routes>
+      {/* 메인 피드 */}
+      <Route path="/" element={<CCAFeed />} />
+      
+      {/* 기존 @username 라우팅 뿐만 아니라 더 명시적인 프로필 라우트 지원 */}
+      {/* RRv6에서는 /@:username 패턴이 제대로 동작하지 않아 /:username으로 수정합니다. */}
+      <Route path="/:username" element={<CCALinkInBio />} />
+      <Route path="/p/:username" element={<CCALinkInBio />} />
+      <Route path="/ranking" element={<Ranking />} />
+      
+      {/* 기존에 /#/@username 과 같이 넘어오는 경우 처리 */}
+      <Route path="*" element={<HashRedirector />} />
+    </Routes>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { apiService } from './services/apiService';
 import Home from './pages/Home';
@@ -354,59 +354,57 @@ const App: React.FC = () => {
   }
 
   return (
-    <Router>
-      <div className="min-h-screen">
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/venues" element={<VenueList />} />
-          <Route path="/venues/:id" element={<VenueDetail />} />
-          <Route path="/ccas" element={<CCAList />} />
-          <Route path="/ccas/:id" element={<CCAProfile />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/community/post/:id" element={<PostDetail />} />
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/notice" element={<NoticeCenter />} />
-          <Route path="/policy" element={<Policy />} />
-          <Route path="/guide" element={<Guidebook />} />
-          <Route path="/ranking" element={<Ranking />} />
-          <Route path="/applicant/status" element={<ApplicantStatus />} />
+    <div className="min-h-screen">
+      <Navigation />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/venues" element={<VenueList />} />
+        <Route path="/venues/:id" element={<VenueDetail />} />
+        <Route path="/ccas" element={<CCAList />} />
+        <Route path="/ccas/:id" element={<CCAProfile />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/community/post/:id" element={<PostDetail />} />
+        <Route path="/mypage" element={<MyPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/notice" element={<NoticeCenter />} />
+        <Route path="/policy" element={<Policy />} />
+        <Route path="/guide" element={<Guidebook />} />
+        <Route path="/ranking" element={<Ranking />} />
+        <Route path="/applicant/status" element={<ApplicantStatus />} />
 
-          {/* Venue Admin Auth */}
-          <Route path="/admin/login" element={<VenueAdminLogin />} />
-          <Route path="/admin/register" element={<VenueAdminRegister />} />
+        {/* Venue Admin Auth */}
+        <Route path="/admin/login" element={<VenueAdminLogin />} />
+        <Route path="/admin/register" element={<VenueAdminRegister />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/*" element={<AdminLayoutRoutes />} />
+        {/* Admin Routes */}
+        <Route path="/admin/*" element={<AdminLayoutRoutes />} />
 
-          {/* CCA Portal Auth & Onboarding */}
-          <Route path="/cca-portal/login" element={<CCALogin />} />
-          <Route path="/cca-portal/welcome" element={<CCALanding />} />
-          <Route path="/cca-portal/apply" element={<CCAApply />} />
+        {/* CCA Portal Auth & Onboarding */}
+        <Route path="/cca-portal/login" element={<CCALogin />} />
+        <Route path="/cca-portal/welcome" element={<CCALanding />} />
+        <Route path="/cca-portal/apply" element={<CCAApply />} />
 
-          {/* CCA Portal Routes */}
-          <Route path="/cca-portal/*" element={<CCAPortalLayout><CCAPortalRoutes /></CCAPortalLayout>} />
+        {/* CCA Portal Routes */}
+        <Route path="/cca-portal/*" element={<CCAPortalLayout><CCAPortalRoutes /></CCAPortalLayout>} />
 
-          {/* Super Admin Auth */}
-          <Route path="/super-admin/login" element={<SuperLogin />} />
+        {/* Super Admin Auth */}
+        <Route path="/super-admin/login" element={<SuperLogin />} />
 
-          {/* Super Admin Routes */}
-          <Route path="/super-admin/*" element={
-            <SuperAdminProtectedRoute>
-              <SuperAdminLayout>
-                <SuperAdminRoutes />
-              </SuperAdminLayout>
-            </SuperAdminProtectedRoute>
-          } />
-          
-          {/* Catch-all to Home */}
-          <Route path="*" element={<Home />} />
-        </Routes>
-        <FooterWrapper />
-      </div>
-    </Router>
+        {/* Super Admin Routes */}
+        <Route path="/super-admin/*" element={
+          <SuperAdminProtectedRoute>
+            <SuperAdminLayout>
+              <SuperAdminRoutes />
+            </SuperAdminLayout>
+          </SuperAdminProtectedRoute>
+        } />
+        
+        {/* Catch-all to Home */}
+        <Route path="*" element={<Home />} />
+      </Routes>
+      <FooterWrapper />
+    </div>
   );
 };
 

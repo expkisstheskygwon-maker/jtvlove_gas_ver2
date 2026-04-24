@@ -7,6 +7,8 @@ import { HelmetProvider } from 'react-helmet-async';
 
 import FeedApp from './FeedApp';
 
+import { HashRouter as Router } from 'react-router-dom';
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
@@ -20,7 +22,9 @@ root.render(
   <React.StrictMode>
     <HelmetProvider>
       <AuthProvider>
-        {isFeedDomain ? <FeedApp /> : <App />}
+        <Router>
+          {isFeedDomain ? <FeedApp /> : <App />}
+        </Router>
       </AuthProvider>
     </HelmetProvider>
   </React.StrictMode>
