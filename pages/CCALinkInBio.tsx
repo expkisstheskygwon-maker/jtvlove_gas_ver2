@@ -61,6 +61,19 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   // Views
   const [todayViews, setTodayViews] = useState(0);
 
+  // Request Modal State
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    customerName: '',
+    customerContact: '',
+    customerNote: '',
+    preferredDate: new Date().toISOString().split('T')[0],
+    preferredTime: '20:00',
+    groupSize: 1
+  });
+
   // Lightbox
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [touchStartX, setTouchStartX] = useState(0);
@@ -157,9 +170,77 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
     }
   };
 
-  const handleBooking = () => {
-    if (cca) {
-      window.location.href = `https://jtvstar.com/#/ccas/${cca.id}`;
+  const handleOpenRequestModal = () => {
+    const storedUser = localStorage.getItem('user');
+    let initialName = '';
+    let initialContact = '';
+    
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        initialName = parsed.nickname || parsed.realName || '';
+        initialContact = parsed.phone || '';
+      } catch (e) {}
+    }
+
+    setRequestForm(prev => ({
+      ...prev,
+      customerName: initialName,
+      customerContact: initialContact
+    }));
+    setShowRequestModal(true);
+  };
+
+  const handleSubmitRequest = async () => {
+    if (!cca || !requestForm.customerName) {
+      showToastMsg('이름을 입력해주세요.');
+      return;
+    }
+    
+    setRequestSubmitting(true);
+    try {
+      const storedUser = localStorage.getItem('user');
+      let userId = '';
+      if (storedUser) {
+        try { userId = JSON.parse(storedUser).id; } catch(e) {}
+      }
+
+      const result = await apiService.createCCARequest({
+        cca_id: cca.id,
+        venue_id: (cca as any).venueId || '',
+        cca_name: cca.nickname || cca.name,
+        venue_name: (cca as any).venueName || '',
+        customer_name: requestForm.customerName,
+        customer_contact: requestForm.customerContact,
+        customer_note: requestForm.customerNote,
+        preferred_date: requestForm.preferredDate,
+        preferred_time: requestForm.preferredTime,
+        group_size: requestForm.groupSize,
+        user_id: userId
+      });
+
+      if (result.success) {
+        setRequestSuccess(true);
+        setTimeout(() => {
+          setShowRequestModal(false);
+          setRequestSuccess(false);
+          setRequestForm({
+            customerName: '',
+            customerContact: '',
+            customerNote: '',
+            preferredDate: new Date().toISOString().split('T')[0],
+            preferredTime: '20:00',
+            groupSize: 1
+          });
+        }, 2500);
+      } else {
+        showToastMsg('요청 실패: ' + (result.error || '알 수 없는 오류'));
+      }
+    } catch (err) {
+      console.error(err);
+      showToastMsg('요청 중 오류가 발생했습니다.');
+    } finally {
+      setRequestSubmitting(false);
     }
   };
 
@@ -370,7 +451,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                 <span className="material-symbols-outlined">{isFollowing ? 'person_remove' : 'person_add'}</span>
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
-              <button className="lib-profile-action-btn secondary" onClick={handleBooking}>
+              <button className="lib-profile-action-btn secondary" onClick={handleOpenRequestModal}>
                 <span className="material-symbols-outlined">calendar_month</span>
                 Request
               </button>
@@ -549,6 +630,101 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                 </button>
               </>
             )}
+          </div>
+        )}
+
+        {/* Nomination Request Modal */}
+        {showRequestModal && (
+          <div className="lib-modal-overlay" onClick={() => !requestSubmitting && setShowRequestModal(false)}>
+            <div className="lib-modal-content" onClick={e => e.stopPropagation()}>
+              {requestSuccess ? (
+                <div className="lib-modal-success">
+                  <div className="lib-modal-success-icon">
+                    <span className="material-symbols-outlined">check_circle</span>
+                  </div>
+                  <h3>요청 완료!</h3>
+                  <p>{cca.nickname || cca.name}님에게 지명 요청이 전달되었습니다.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="lib-modal-header">
+                    <div className="lib-modal-title">
+                      <h3>지명 요청</h3>
+                      <p>{cca.nickname || cca.name} · {(cca as any).venueName}</p>
+                    </div>
+                    <button className="lib-modal-close" onClick={() => setShowRequestModal(false)}>
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+
+                  <div className="lib-modal-body">
+                    <div className="lib-form-group">
+                      <label>예약자 이름 *</label>
+                      <input
+                        type="text"
+                        value={requestForm.customerName}
+                        onChange={e => setRequestForm({ ...requestForm, customerName: e.target.value })}
+                        placeholder="성함을 입력해주세요"
+                      />
+                    </div>
+
+                    <div className="lib-form-row">
+                      <div className="lib-form-group">
+                        <label>날짜</label>
+                        <input
+                          type="date"
+                          value={requestForm.preferredDate}
+                          onChange={e => setRequestForm({ ...requestForm, preferredDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="lib-form-group">
+                        <label>시간</label>
+                        <select
+                          value={requestForm.preferredTime}
+                          onChange={e => setRequestForm({ ...requestForm, preferredTime: e.target.value })}
+                        >
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const h = (18 + i) % 24;
+                            const time = `${h.toString().padStart(2, '0')}:00`;
+                            return <option key={time} value={time}>{time}</option>;
+                          })}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="lib-form-group">
+                      <label>인원</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={requestForm.groupSize}
+                        onChange={e => setRequestForm({ ...requestForm, groupSize: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+
+                    <div className="lib-form-group">
+                      <label>메모 (선택사항)</label>
+                      <textarea
+                        rows={3}
+                        value={requestForm.customerNote}
+                        onChange={e => setRequestForm({ ...requestForm, customerNote: e.target.value })}
+                        placeholder="추가 요청사항을 적어주세요..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="lib-modal-footer">
+                    <button
+                      className="lib-modal-submit-btn"
+                      onClick={handleSubmitRequest}
+                      disabled={requestSubmitting || !requestForm.customerName}
+                    >
+                      {requestSubmitting ? '전송 중...' : '지명 요청 보내기'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -344,6 +344,189 @@
   flex-direction: column;
 }
 
+/* ─── Modal (Request) ─── */
+.lib-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: flex-end; /* Mobile: slide up from bottom */
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .lib-modal-overlay {
+    align-items: center; /* Desktop: center */
+  }
+}
+
+.lib-modal-content {
+  width: 100%;
+  max-width: 600px;
+  background: #121214;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px 24px 0 0;
+  padding: 24px;
+  animation: modalSlideUp 0.3s ease-out;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .lib-modal-content {
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.lib-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.lib-modal-title h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--luminary-gold);
+}
+
+.lib-modal-title p {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 4px 0 0 0;
+}
+
+.lib-modal-close {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.lib-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lib-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lib-form-group label {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-left: 4px;
+}
+
+.lib-form-group input,
+.lib-form-group select,
+.lib-form-group textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.lib-form-group input:focus,
+.lib-form-group select:focus,
+.lib-form-group textarea:focus {
+  outline: none;
+  border-color: var(--luminary-gold);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lib-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.lib-modal-footer {
+  margin-top: 32px;
+}
+
+.lib-modal-submit-btn {
+  width: 100%;
+  height: 52px;
+  background: var(--luminary-gold);
+  color: #000;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lib-modal-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lib-modal-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.lib-modal-success {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.lib-modal-success-icon {
+  width: 64px;
+  height: 64px;
+  background: rgba(232, 184, 75, 0.1);
+  color: var(--luminary-gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+}
+
+.lib-modal-success-icon span {
+  font-size: 40px;
+}
+
+.lib-modal-success h3 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.lib-modal-success p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+}
+
 .lib-lightbox-close {
   position: absolute;
   top: 16px;
