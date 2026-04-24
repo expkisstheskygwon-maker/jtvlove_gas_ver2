@@ -501,7 +501,10 @@ export const apiService = {
   async getGallery(ccaId?: string): Promise<MediaItem[]> {
     try {
       let url = `${API_BASE}/gallery`;
-      if (ccaId) url += `?ccaId=${encodeURIComponent(ccaId)}`;
+      if (ccaId) {
+        const cleanId = ccaId.startsWith('@') ? ccaId.substring(1) : ccaId;
+        url += `?ccaId=${encodeURIComponent(cleanId)}`;
+      }
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch gallery');
       return await response.json();

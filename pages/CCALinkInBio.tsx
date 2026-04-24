@@ -261,293 +261,297 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
 
   return (
     <div className="lib-wrapper luminary-theme">
-      {/* Header */}
-      <header className="lib-header">
-        <span className="lib-header-username">
-          {cca.nickname || cca.name}
-          <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#eebd2b' }}>verified</span>
-        </span>
-        <div className="lib-header-actions">
-          <button className="lib-header-btn" onClick={handleCopyLink} aria-label="Copy Link">
-            <span className="material-symbols-outlined" style={{ fontSize: 22 }}>share</span>
-          </button>
-          <button className="lib-header-btn" onClick={goToFeed} aria-label="Feed">
-            <span className="material-symbols-outlined" style={{ fontSize: 22 }}>grid_view</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Profile Section */}
-      <section className="lib-profile">
-        <div className="lib-profile-row">
-          {/* Avatar */}
-          <div className="lib-profile-avatar-container">
-            <div className="lib-profile-avatar-ring">
-              <img
-                src={cca.image || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200'}
-                alt={cca.name}
-                className="lib-profile-avatar"
-              />
-            </div>
-            <span className={`lib-profile-avatar-badge ${cca.grade || 'NEW'}`}>
-              {gradeConfig.label}
-            </span>
-          </div>
-
-          {/* Stats */}
-          <div className="lib-profile-stats">
-            <div className="lib-profile-stat">
-              <span className="lib-profile-stat-value">{gallery.length}</span>
-              <span className="lib-profile-stat-label">Posts</span>
-            </div>
-            <button className="lib-profile-stat" onClick={handleToggleHeart} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}>
-              <span className="lib-profile-stat-value" style={isHearted ? { color: '#ef4444' } : {}}>
-                {heartCount.toLocaleString()}
-              </span>
-              <span className="lib-profile-stat-label">{isHearted ? '❤️ Hearts' : 'Hearts'}</span>
+      <div className="lib-container">
+        {/* Header */}
+        <header className="lib-header">
+          <span className="lib-header-username">
+            {cca.nickname || cca.name}
+            <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#eebd2b' }}>verified</span>
+          </span>
+          <div className="lib-header-actions">
+            <button className="lib-header-btn" onClick={handleCopyLink} aria-label="Copy Link">
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>share</span>
             </button>
-            <div className="lib-profile-stat">
-              <span className="lib-profile-stat-value">{todayViews.toLocaleString()}</span>
-              <span className="lib-profile-stat-label">Views</span>
+            <button className="lib-header-btn" onClick={goToFeed} aria-label="Feed">
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>grid_view</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Profile Section */}
+        <section className="lib-profile">
+          <div className="lib-profile-row">
+            {/* Avatar */}
+            <div className="lib-profile-avatar-container">
+              <div className="lib-profile-avatar-ring">
+                <img
+                  src={cca.image || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200'}
+                  alt={cca.name}
+                  className="lib-profile-avatar"
+                />
+              </div>
+              <span className={`lib-profile-avatar-badge ${cca.grade || 'NEW'}`}>
+                {gradeConfig.label}
+              </span>
+            </div>
+
+            {/* Stats */}
+            <div className="lib-profile-stats">
+              <div className="lib-profile-stat">
+                <span className="lib-profile-stat-value">{gallery.length}</span>
+                <span className="lib-profile-stat-label">Posts</span>
+              </div>
+              <button className="lib-profile-stat" onClick={handleToggleHeart} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}>
+                <span className="lib-profile-stat-value" style={isHearted ? { color: '#ef4444' } : {}}>
+                  {heartCount.toLocaleString()}
+                </span>
+                <span className="lib-profile-stat-label">{isHearted ? '❤️ Hearts' : 'Hearts'}</span>
+              </button>
+              <div className="lib-profile-stat">
+                <span className="lib-profile-stat-value">{todayViews.toLocaleString()}</span>
+                <span className="lib-profile-stat-label">Views</span>
+              </div>
             </div>
           </div>
+
+          <div className="lib-profile-info">
+            <div className="lib-profile-name">{cca.nickname || cca.name}</div>
+            <div className="lib-profile-venue">
+              <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#eebd2b' }}>location_on</span>
+              {(cca as any).venueName || 'Venue'}
+              {cca.score !== undefined && (
+                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 900, color: '#eebd2b' }}>
+                  Score: {cca.score}
+                </span>
+              )}
+            </div>
+
+            {(cca.description || cca.oneLineStory) && (
+              <div className="lib-profile-bio">
+                {cca.description || cca.oneLineStory}
+              </div>
+            )}
+
+            {/* Info Chips */}
+            <div className="lib-profile-info-chips">
+              {cca.mbti && (
+                <span className="lib-profile-chip">
+                  <span className="material-symbols-outlined">psychology</span>
+                  {cca.mbti}
+                </span>
+              )}
+              {cca.zodiac && (
+                <span className="lib-profile-chip">
+                  <span className="material-symbols-outlined">auto_awesome</span>
+                  {cca.zodiac}
+                </span>
+              )}
+              {cca.height && (
+                <span className="lib-profile-chip">
+                  <span className="material-symbols-outlined">height</span>
+                  {cca.height}
+                </span>
+              )}
+              {cca.languages && cca.languages.length > 0 && (
+                <span className="lib-profile-chip">
+                  <span className="material-symbols-outlined">translate</span>
+                  {cca.languages.join(', ')}
+                </span>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="lib-profile-actions">
+              <button 
+                className={`lib-profile-action-btn ${isFollowing ? 'secondary' : 'primary'}`} 
+                onClick={handleFollowToggle}
+                style={!isFollowing ? { background: '#eebd2b', color: '#1b180d' } : {}}
+              >
+                <span className="material-symbols-outlined">{isFollowing ? 'person_remove' : 'person_add'}</span>
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+              <button className="lib-profile-action-btn secondary" onClick={handleBooking}>
+                <span className="material-symbols-outlined">calendar_month</span>
+                Request
+              </button>
+              <button className="lib-profile-action-btn secondary" onClick={() => {
+                if (cca) window.location.href = `https://jtvstar.com/#/ccas/${cca.id}`;
+              }}>
+                <span className="material-symbols-outlined">badge</span>
+                Full Profile
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Gallery Tabs */}
+        <div className="lib-gallery-tabs">
+          <button
+            className={`lib-gallery-tab ${galleryTab === 'grid' ? 'active' : ''}`}
+            onClick={() => setGalleryTab('grid')}
+          >
+            <span className="material-symbols-outlined">grid_on</span>
+          </button>
+          <button
+            className={`lib-gallery-tab ${galleryTab === 'info' ? 'active' : ''}`}
+            onClick={() => setGalleryTab('info')}
+          >
+            <span className="material-symbols-outlined">person</span>
+          </button>
         </div>
 
-        {/* Name & Bio */}
-        <div className="lib-profile-name">{cca.nickname || cca.name}</div>
-        <div className="lib-profile-venue">
-          <span className="material-symbols-outlined" style={{ fontSize: 13, color: '#eebd2b' }}>location_on</span>
-          {(cca as any).venueName || 'Venue'}
-          {cca.score !== undefined && (
-            <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 900, color: '#eebd2b' }}>
-              Score: {cca.score}
-            </span>
-          )}
-        </div>
-        {(cca.description || cca.oneLineStory) && (
-          <div className="lib-profile-bio">
-            {cca.description || cca.oneLineStory}
+        {/* Gallery Grid or Info */}
+        {galleryTab === 'grid' ? (
+          gallery.length > 0 ? (
+            <div className="lib-gallery-grid">
+              {gallery.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="lib-gallery-item"
+                  onClick={() => openLightbox(idx)}
+                >
+                  <img src={item.url} alt={item.caption || ''} loading="lazy" />
+                  {item.type === 'video' && (
+                    <div className="lib-gallery-video-badge">
+                      <span className="material-symbols-outlined">play_circle</span>
+                    </div>
+                  )}
+                  <div className="lib-gallery-item-overlay">
+                    <span>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                      {item.likes || 0}
+                    </span>
+                    <span>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>chat_bubble</span>
+                      {item.commentsCount || 0}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="lib-gallery-empty">
+              <span className="material-symbols-outlined">add_photo_alternate</span>
+              <p>No posts yet</p>
+            </div>
+          )
+        ) : (
+          /* Info Tab */
+          <div style={{ padding: '24px 20px 100px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {cca.mbti && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>MBTI</div>
+                  <div style={{ fontSize: 18, fontWeight: 900 }}>{cca.mbti}</div>
+                </div>
+              )}
+              {cca.zodiac && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Zodiac</div>
+                  <div style={{ fontSize: 18, fontWeight: 900 }}>{cca.zodiac}</div>
+                </div>
+              )}
+              {cca.height && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Height</div>
+                  <div style={{ fontSize: 18, fontWeight: 900 }}>{cca.height}</div>
+                </div>
+              )}
+              {cca.languages && cca.languages.length > 0 && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Languages</div>
+                  <div style={{ fontSize: 14, fontWeight: 900 }}>{cca.languages.join(', ')}</div>
+                </div>
+              )}
+              {cca.drinking && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Drinking</div>
+                  <div style={{ fontSize: 14, fontWeight: 900 }}>{cca.drinking}</div>
+                </div>
+              )}
+              {cca.smoking && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Smoking</div>
+                  <div style={{ fontSize: 14, fontWeight: 900 }}>{cca.smoking}</div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Info Chips */}
-        <div className="lib-profile-info-chips">
-          {cca.mbti && (
-            <span className="lib-profile-chip">
-              <span className="material-symbols-outlined">psychology</span>
-              {cca.mbti}
-            </span>
-          )}
-          {cca.zodiac && (
-            <span className="lib-profile-chip">
-              <span className="material-symbols-outlined">auto_awesome</span>
-              {cca.zodiac}
-            </span>
-          )}
-          {cca.height && (
-            <span className="lib-profile-chip">
-              <span className="material-symbols-outlined">height</span>
-              {cca.height}
-            </span>
-          )}
-          {cca.languages && cca.languages.length > 0 && (
-            <span className="lib-profile-chip">
-              <span className="material-symbols-outlined">translate</span>
-              {cca.languages.join(', ')}
-            </span>
-          )}
-        </div>
+        {/* Bottom padding for fixed footer */}
+        <div style={{ paddingBottom: 70 }}></div>
 
-        {/* Action Buttons */}
-        <div className="lib-profile-actions">
-          <button 
-            className={`lib-profile-action-btn ${isFollowing ? 'secondary' : 'primary'}`} 
-            onClick={handleFollowToggle}
-            style={!isFollowing ? { background: '#eebd2b', color: '#1b180d' } : {}}
+        {/* Bottom Navigation */}
+        <nav className="lib-feed-link">
+          <button className="lib-feed-tab" onClick={goToFeed}>
+            <span className="material-symbols-outlined">home</span>
+            <span className="lib-feed-tab-label">Feed</span>
+          </button>
+          <button className="lib-feed-tab active">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+            <span className="lib-feed-tab-label">Profile</span>
+          </button>
+          <button className="lib-feed-tab" onClick={() => { window.location.hash = '/'; }}>
+            <span className="material-symbols-outlined">language</span>
+            <span className="lib-feed-tab-label">Main Site</span>
+          </button>
+        </nav>
+
+        {/* Toast */}
+        {showToast && (
+          <div className="lib-toast">{toastMessage}</div>
+        )}
+
+        {/* Lightbox */}
+        {lightboxIndex !== null && gallery[lightboxIndex] && (
+          <div
+            className="lib-lightbox"
+            onClick={closeLightbox}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
-            <span className="material-symbols-outlined">{isFollowing ? 'person_remove' : 'person_add'}</span>
-            {isFollowing ? 'Following' : 'Follow'}
-          </button>
-          <button className="lib-profile-action-btn secondary" onClick={handleBooking}>
-            <span className="material-symbols-outlined">calendar_month</span>
-            Request
-          </button>
-          <button className="lib-profile-action-btn secondary" onClick={() => {
-            if (cca) window.location.href = `https://jtvstar.com/#/ccas/${cca.id}`;
-          }}>
-            <span className="material-symbols-outlined">badge</span>
-            Full Profile
-          </button>
-        </div>
-      </section>
+            <button className="lib-lightbox-close" onClick={closeLightbox}>
+              <span className="material-symbols-outlined">close</span>
+            </button>
 
-      {/* Gallery Tabs */}
-      <div className="lib-gallery-tabs">
-        <button
-          className={`lib-gallery-tab ${galleryTab === 'grid' ? 'active' : ''}`}
-          onClick={() => setGalleryTab('grid')}
-        >
-          <span className="material-symbols-outlined">grid_on</span>
-        </button>
-        <button
-          className={`lib-gallery-tab ${galleryTab === 'info' ? 'active' : ''}`}
-          onClick={() => setGalleryTab('info')}
-        >
-          <span className="material-symbols-outlined">person</span>
-        </button>
-      </div>
-
-      {/* Gallery Grid or Info */}
-      {galleryTab === 'grid' ? (
-        gallery.length > 0 ? (
-          <div className="lib-gallery-grid">
-            {gallery.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="lib-gallery-item"
-                onClick={() => openLightbox(idx)}
-              >
-                <img src={item.url} alt={item.caption || ''} loading="lazy" />
-                {item.type === 'video' && (
-                  <div className="lib-gallery-video-badge">
-                    <span className="material-symbols-outlined">play_circle</span>
-                  </div>
-                )}
-                <div className="lib-gallery-item-overlay">
-                  <span>
-                    <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>favorite</span>
-                    {item.likes || 0}
-                  </span>
-                  <span>
-                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>chat_bubble</span>
-                    {item.commentsCount || 0}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="lib-gallery-empty">
-            <span className="material-symbols-outlined">add_photo_alternate</span>
-            <p>No posts yet</p>
-          </div>
-        )
-      ) : (
-        /* Info Tab */
-        <div style={{ padding: '24px 20px 100px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {cca.mbti && (
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>MBTI</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{cca.mbti}</div>
-              </div>
-            )}
-            {cca.zodiac && (
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Zodiac</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{cca.zodiac}</div>
-              </div>
-            )}
-            {cca.height && (
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Height</div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{cca.height}</div>
-              </div>
-            )}
-            {cca.languages && cca.languages.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Languages</div>
-                <div style={{ fontSize: 14, fontWeight: 900 }}>{cca.languages.join(', ')}</div>
-              </div>
-            )}
-            {cca.drinking && (
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Drinking</div>
-                <div style={{ fontSize: 14, fontWeight: 900 }}>{cca.drinking}</div>
-              </div>
-            )}
-            {cca.smoking && (
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Smoking</div>
-                <div style={{ fontSize: 14, fontWeight: 900 }}>{cca.smoking}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Bottom padding for fixed footer */}
-      <div style={{ paddingBottom: 70 }}></div>
-
-      {/* Bottom Navigation */}
-      <nav className="lib-feed-link">
-        <button className="lib-feed-tab" onClick={goToFeed}>
-          <span className="material-symbols-outlined">home</span>
-          <span className="lib-feed-tab-label">Feed</span>
-        </button>
-        <button className="lib-feed-tab active">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-          <span className="lib-feed-tab-label">Profile</span>
-        </button>
-        <button className="lib-feed-tab" onClick={() => { window.location.hash = '/'; }}>
-          <span className="material-symbols-outlined">language</span>
-          <span className="lib-feed-tab-label">Main Site</span>
-        </button>
-      </nav>
-
-      {/* Toast */}
-      {showToast && (
-        <div className="lib-toast">{toastMessage}</div>
-      )}
-
-      {/* Lightbox */}
-      {lightboxIndex !== null && gallery[lightboxIndex] && (
-        <div
-          className="lib-lightbox"
-          onClick={closeLightbox}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          <button className="lib-lightbox-close" onClick={closeLightbox}>
-            <span className="material-symbols-outlined">close</span>
-          </button>
-
-          <div className="lib-lightbox-counter">
-            {lightboxIndex + 1} / {gallery.length}
-          </div>
-
-          <div className="lib-lightbox-header" onClick={e => e.stopPropagation()}>
-            <img src={cca.image} alt="" className="lib-lightbox-avatar" />
-            <span className="lib-lightbox-author">{cca.nickname || cca.name}</span>
-          </div>
-
-          <div className="lib-lightbox-media" onClick={e => e.stopPropagation()}>
-            {gallery[lightboxIndex].type === 'video' ? (
-              <video src={gallery[lightboxIndex].url} controls autoPlay />
-            ) : (
-              <img src={gallery[lightboxIndex].url} alt={gallery[lightboxIndex].caption || ''} />
-            )}
-          </div>
-
-          {gallery[lightboxIndex].caption && (
-            <div className="lib-lightbox-footer" onClick={e => e.stopPropagation()}>
-              <span style={{ fontSize: 13, fontWeight: 800, marginRight: 6 }}>{cca.nickname || cca.name}</span>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{gallery[lightboxIndex].caption}</span>
+            <div className="lib-lightbox-counter">
+              {lightboxIndex + 1} / {gallery.length}
             </div>
-          )}
 
-          {gallery.length > 1 && (
-            <>
-              <button className="lib-lightbox-nav lib-lightbox-prev" onClick={e => { e.stopPropagation(); goToPrev(); }}>
-                <span className="material-symbols-outlined">chevron_left</span>
-              </button>
-              <button className="lib-lightbox-nav lib-lightbox-next" onClick={e => { e.stopPropagation(); goToNext(); }}>
-                <span className="material-symbols-outlined">chevron_right</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
+            <div className="lib-lightbox-header" onClick={e => e.stopPropagation()}>
+              <img src={cca.image} alt="" className="lib-lightbox-avatar" />
+              <span className="lib-lightbox-author">{cca.nickname || cca.name}</span>
+            </div>
+
+            <div className="lib-lightbox-media" onClick={e => e.stopPropagation()}>
+              {gallery[lightboxIndex].type === 'video' ? (
+                <video src={gallery[lightboxIndex].url} controls autoPlay />
+              ) : (
+                <img src={gallery[lightboxIndex].url} alt={gallery[lightboxIndex].caption || ''} />
+              )}
+            </div>
+
+            {gallery[lightboxIndex].caption && (
+              <div className="lib-lightbox-footer" onClick={e => e.stopPropagation()}>
+                <span style={{ fontSize: 13, fontWeight: 800, marginRight: 6 }}>{cca.nickname || cca.name}</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{gallery[lightboxIndex].caption}</span>
+              </div>
+            )}
+
+            {gallery.length > 1 && (
+              <>
+                <button className="lib-lightbox-nav lib-lightbox-prev" onClick={e => { e.stopPropagation(); goToPrev(); }}>
+                  <span className="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button className="lib-lightbox-nav lib-lightbox-next" onClick={e => { e.stopPropagation(); goToNext(); }}>
+                  <span className="material-symbols-outlined">chevron_right</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
