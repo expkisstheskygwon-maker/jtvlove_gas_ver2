@@ -2,153 +2,136 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/apiService';
 import { CCA } from '../../types';
 
+const CATEGORIES = [
+  { id: 'all', label: '전체' },
+  { id: 'trending', label: '인기' },
+  { id: 'new', label: '신규' },
+  { id: 'free', label: '무료구독' },
+  { id: 'secret', label: '시크릿' },
+];
+
 const FeedExplore: React.FC = () => {
-  const [ccas, setCCAs] = useState<CCA[]>([]);
+  const [activeCat, setActiveCat] = useState('all');
+  const [creators, setCreators] = useState<CCA[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
         const data = await apiService.getCCAs();
-        setCCAs(data.filter((c: any) => c.status === 'active').sort((a, b) => (b.score || 0) - (a.score || 0)));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+        setCreators(data);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
-    fetch();
+    loadData();
   }, []);
 
   const goToProfile = (nickname: string) => {
     window.location.hash = `/@${nickname}`;
   };
 
-  const top20 = ccas.slice(0, 20);
-  const trending = ccas.slice(0, 8);
-
   return (
-    <>
-      <div className="ft-page-header">
-        <div className="ft-page-title">
-          <span>탐색</span>
-          <div className="ft-page-title-icon">
-            <span className="material-symbols-outlined">notifications</span>
-          </div>
-        </div>
-        <div className="ft-tabs">
-          <button className="ft-tab active">홈</button>
-          <button className="ft-tab">
-            <span style={{ color: 'var(--ft-danger)', marginRight: 4, fontSize: 8 }}>●</span>
-            Comp
+    <div className="ft-ex-container">
+      {/* ═══ 입체적인 탭 네비게이션 ═══ */}
+      <div className="ft-tabs" style={{ marginBottom: 32 }}>
+        {CATEGORIES.map(cat => (
+          <button 
+            key={cat.id} 
+            className={`ft-tab ${activeCat === cat.id ? 'active' : ''}`}
+            onClick={() => setActiveCat(cat.id)}
+          >
+            {cat.label}
           </button>
+        ))}
+      </div>
+
+      {/* ═══ Spotlight Hero Banner ═══ */}
+      <div className="ft-ex-banner-hero">
+        <div className="ft-ex-banner-bg"></div>
+        <div className="ft-ex-banner-content">
+          <div className="ft-ex-banner-tag">HOT EVENT</div>
+          <h1 className="ft-ex-banner-title">
+            신규 구독 시 <br />
+            보너스 캐시 100% 증정
+          </h1>
+          <p style={{ fontSize: 14, opacity: 0.8 }}>지금 바로 최애 크리에이터를 구독하세요.</p>
         </div>
       </div>
 
-      {loading ? (
+      {/* ═══ 실시간 랭킹 (Mini List) ═══ */}
+      <section className="ft-ex-section">
+        <div className="ft-ex-head">
+          <h2 className="ft-ex-title">실시간 랭킹 Top 5</h2>
+          <span className="ft-ex-subtitle">팬들이 가장 많이 찾은 크리에이터</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
+          {creators.slice(0, 5).map((cca, i) => (
+            <div key={cca.id} className="ft-ex-rank-item" onClick={() => goToProfile(cca.nickname || cca.name)}>
+              <span className="ft-ex-rank-num">{i + 1}</span>
+              <img src={cca.image} className="ft-ex-rank-av" alt="" />
+              <div className="ft-ex-rank-info">
+                <div className="ft-ex-rank-name">{cca.nickname || cca.name}</div>
+                <div className="ft-ex-rank-sub">오늘 {Math.floor(Math.random() * 1000)}명 방문</div>
+              </div>
+              <span className="material-symbols-outlined" style={{ color: 'var(--ft-primary)', fontSize: 18 }}>trending_up</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ New Rising Stars (Magazine Grid) ═══ */}
+      <section className="ft-ex-section">
+        <div className="ft-ex-head">
+          <h2 className="ft-ex-title">새로운 원석의 발견</h2>
+          <span className="ft-ex-subtitle">신규 크리에이터를 만나보세요</span>
+        </div>
+        <div className="ft-ex-grid">
+          {creators.slice(5, 15).map(cca => (
+            <div key={cca.id} className="ft-ex-card" onClick={() => goToProfile(cca.nickname || cca.name)}>
+              <img src={cca.image} className="ft-ex-card-img" alt="" />
+              <div className="ft-ex-card-overlay">
+                <div className="ft-ex-card-info">
+                  <div className="ft-ex-card-name">
+                    {cca.nickname || cca.name}
+                    <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#facc15' }}>verified</span>
+                  </div>
+                  <div className="ft-ex-card-stats">
+                    <span className="ft-ex-glass-tag">NEW</span>
+                    <span className="ft-ex-glass-tag">POST {Math.floor(Math.random() * 50)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ Exclusive Secret Rooms ═══ */}
+      <section className="ft-ex-section" style={{ background: 'var(--ft-gradient-soft)', padding: 30, borderRadius: 24 }}>
+        <div className="ft-ex-head">
+          <h2 className="ft-ex-title">🔒 비밀스러운 대화</h2>
+          <span className="ft-ex-subtitle">오직 당신만을 위한 프라이빗 룸</span>
+        </div>
+        <div className="ft-ex-grid">
+          {creators.slice(2, 6).map(cca => (
+            <div key={cca.id} className="ft-ex-card" style={{ height: 200, aspect-ratio: 'auto' }}>
+              <img src={cca.image} className="ft-ex-card-img" alt="" />
+              <div className="ft-ex-card-overlay" style={{ background: 'linear-gradient(to top, rgba(232,82,122,0.8), transparent)' }}>
+                <div className="ft-ex-card-info">
+                  <div className="ft-ex-card-name">{cca.nickname || cca.name}</div>
+                  <div className="ft-ex-glass-tag">입장하기</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {loading && (
         <div className="ft-loading"><div className="ft-spinner"></div></div>
-      ) : (
-        <>
-          {/* Banner area */}
-          <div className="ft-banner-wrap">
-            <div className="ft-banner">
-              {top20[0] && (
-                <img src={top20[0].image} alt="" style={{ opacity: 0.4 }} />
-              )}
-              <div className="ft-banner-overlay">
-                <div className="ft-banner-badge">🏆 이번 주 1위</div>
-                <div className="ft-banner-title">
-                  {top20[0]?.nickname || top20[0]?.name || 'Top Creator'}
-                </div>
-                <div style={{ fontSize: 13, opacity: 0.8 }}>
-                  최고 후원자 · {top20[0]?.venueName}
-                </div>
-              </div>
-            </div>
-            <div className="ft-banner-dots">
-              <button className="ft-banner-dot active" />
-              <button className="ft-banner-dot" />
-              <button className="ft-banner-dot" />
-            </div>
-          </div>
-
-          {/* Top 20 Section */}
-          <div className="ft-explore-section">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="ft-explore-emoji">👀</span>
-              <div>
-                <div className="ft-explore-section-title" style={{ color: 'var(--ft-primary)' }}>
-                  실시간 검색 Top 20
-                </div>
-                <div className="ft-explore-section-subtitle">
-                  팬들이 가장 많이 찾은 크리에이터 🔥
-                </div>
-              </div>
-            </div>
-
-            <div className="ft-creator-scroll">
-              {trending.map(cca => (
-                <div
-                  key={cca.id}
-                  className="ft-creator-card"
-                  onClick={() => goToProfile(cca.nickname || cca.name)}
-                >
-                  <img
-                    src={cca.image || 'https://ui-avatars.com/api/?name=' + cca.name}
-                    alt=""
-                    className="ft-creator-card-img"
-                  />
-                  <div className="ft-creator-card-info">
-                    <div className="ft-creator-card-name">{cca.nickname || cca.name}</div>
-                    <div className="ft-creator-card-desc">
-                      {cca.description || cca.oneLineStory || `${cca.venueName}`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Popular picks section */}
-          <div className="ft-explore-section" style={{ borderTop: '8px solid var(--ft-bg-tertiary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="ft-explore-emoji">💸</span>
-              <div>
-                <div className="ft-explore-section-title" style={{ color: 'var(--ft-success)' }}>
-                  지갑 조심하세요
-                </div>
-                <div className="ft-explore-section-subtitle">
-                  팬들이 가장 많이 팔로우한 크리에이터 ⚠️
-                </div>
-              </div>
-            </div>
-
-            <div className="ft-creator-scroll">
-              {ccas.slice(3, 11).map(cca => (
-                <div
-                  key={cca.id}
-                  className="ft-creator-card"
-                  onClick={() => goToProfile(cca.nickname || cca.name)}
-                >
-                  <img
-                    src={cca.image || 'https://ui-avatars.com/api/?name=' + cca.name}
-                    alt=""
-                    className="ft-creator-card-img"
-                  />
-                  <div className="ft-creator-card-info">
-                    <div className="ft-creator-card-name">{cca.nickname || cca.name}</div>
-                    <div className="ft-creator-card-desc">
-                      {cca.description || cca.oneLineStory || `Score: ${cca.score || 0}`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
       )}
-    </>
+    </div>
   );
 };
 
