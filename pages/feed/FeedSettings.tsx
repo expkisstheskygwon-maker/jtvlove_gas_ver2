@@ -2,9 +2,15 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const FeedSettings: React.FC = () => {
+interface FeedSettingsProps {
+  theme?: 'dark' | 'light';
+  toggleTheme?: () => void;
+}
+
+const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isDark = theme === 'dark';
 
   const handleLogout = () => {
     logout();
@@ -15,7 +21,6 @@ const FeedSettings: React.FC = () => {
     { icon: 'person', label: '프로필 수정', desc: '닉네임, 프로필 이미지 변경' },
     { icon: 'notifications', label: '알림 설정', desc: '푸시 알림 및 이메일 설정' },
     { icon: 'lock', label: '비밀번호 변경', desc: '계정 보안 설정' },
-    { icon: 'palette', label: '테마 설정', desc: '라이트 / 다크 모드' },
     { icon: 'translate', label: '언어 설정', desc: '한국어 / English' },
     { icon: 'help', label: '도움말', desc: 'FAQ 및 고객지원' },
   ];
@@ -56,6 +61,47 @@ const FeedSettings: React.FC = () => {
                 </button>
               </>
             )}
+          </div>
+        </div>
+
+        {/* Theme Toggle Card */}
+        <div className="ft-membership-card">
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>테마 설정</div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {/* Dark */}
+            <button
+              onClick={() => isDark ? null : toggleTheme?.()}
+              style={{
+                flex: 1, padding: '16px 12px',
+                background: isDark ? 'var(--ft-primary)' : 'var(--ft-bg-tertiary)',
+                border: isDark ? '2px solid var(--ft-primary)' : '2px solid var(--ft-border)',
+                borderRadius: 'var(--ft-radius-md)',
+                color: isDark ? '#fff' : 'var(--ft-text-secondary)',
+                fontWeight: 700, fontSize: 13,
+                display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 8,
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 28 }}>dark_mode</span>
+              다크 모드
+            </button>
+            {/* Light */}
+            <button
+              onClick={() => !isDark ? null : toggleTheme?.()}
+              style={{
+                flex: 1, padding: '16px 12px',
+                background: !isDark ? 'var(--ft-primary)' : 'var(--ft-bg-tertiary)',
+                border: !isDark ? '2px solid var(--ft-primary)' : '2px solid var(--ft-border)',
+                borderRadius: 'var(--ft-radius-md)',
+                color: !isDark ? '#fff' : 'var(--ft-text-secondary)',
+                fontWeight: 700, fontSize: 13,
+                display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 8,
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 28 }}>light_mode</span>
+              라이트 모드
+            </button>
           </div>
         </div>
 
