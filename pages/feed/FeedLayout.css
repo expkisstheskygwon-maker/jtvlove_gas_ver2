@@ -276,3 +276,40 @@
     display: flex; justify-content: space-around; align-items: center; z-index: 100;
   }
 }
+
+/* ─── Tabs (Segmented Button Style) ─── */
+.ft-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ft-tabs::-webkit-scrollbar { display: none; }
+
+.ft-tab {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ft-text-secondary);
+  background: var(--ft-bg-tertiary);
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-full);
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ft-tab:hover {
+  background: var(--ft-border-light);
+  border-color: var(--ft-text-muted);
+}
+
+.ft-tab.active {
+  color: #FFFFFF;
+  background: var(--ft-gradient);
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(232, 82, 122, 0.25);
+}
