@@ -21,6 +21,7 @@ const FeedHome: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'following'>('all');
   const [feedItems, setFeedItems] = useState<any[]>([]);
+  const [onDutyCCAs, setOnDutyCCAs] = useState<CCA[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadFeed = useCallback(async () => {
@@ -28,6 +29,10 @@ const FeedHome: React.FC = () => {
     try {
       const data = await apiService.getFeed(1, 30, user?.id);
       setFeedItems(data.items || []);
+      
+      // 출근 중인 CCA 데이터 (여기서는 상위 점수 순으로 임시 로드)
+      const ccas = await apiService.getCCAs();
+      setOnDutyCCAs(ccas.slice(0, 10));
     } catch (err) {
       console.error('Feed load error:', err);
     } finally {
@@ -43,19 +48,23 @@ const FeedHome: React.FC = () => {
 
   return (
     <>
-      {/* Header */}
-      <div className="ft-page-header">
-        <div className="ft-page-title">
-          <span>피드</span>
-          <div className="ft-page-title-icon">
-            <span className="material-symbols-outlined">notifications</span>
+      {/* ═══ On-Duty Stories ═══ */}
+      <div className="ft-stories">
+        {onDutyCCAs.map(cca => (
+          <div key={cca.id} className="ft-story" onClick={() => goToProfile(cca.nickname || cca.name)}>
+            <div className="ft-story-ring">
+              <img src={cca.image} className="ft-story-img" alt="" />
+            </div>
+            <div className="ft-story-name">{cca.nickname || cca.name}</div>
           </div>
-        </div>
-        <div className="ft-tabs">
-          <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>전체</button>
-          <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => setActiveTab('subscribed')}>구독</button>
-          <button className={`ft-tab ${activeTab === 'following' ? 'active' : ''}`} onClick={() => setActiveTab('following')}>팔로우</button>
-        </div>
+        ))}
+      </div>
+
+      {/* Tabs (Feed filter) */}
+      <div className="ft-tabs" style={{ marginBottom: 12 }}>
+        <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>전체</button>
+        <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => setActiveTab('subscribed')}>구독</button>
+        <button className={`ft-tab ${activeTab === 'following' ? 'active' : ''}`} onClick={() => setActiveTab('following')}>팔로우</button>
       </div>
 
       {/* Feed Posts */}
@@ -89,20 +98,10 @@ const FeedHome: React.FC = () => {
                 </button>
               </div>
 
-              {/* Body text */}
               {item.caption && (
                 <div className="ft-post-body">{item.caption}</div>
               )}
 
-              {/* Tags */}
-              {item.venueName && (
-                <div className="ft-post-tags">
-                  <span className="ft-post-tag">#{item.venueName}</span>
-                  <span className="ft-post-tag">#일상</span>
-                </div>
-              )}
-
-              {/* Media */}
               {item.url && (
                 <div className="ft-post-media">
                   {item.type === 'video' ? (
@@ -111,12 +110,11 @@ const FeedHome: React.FC = () => {
                     <img src={item.url} alt="" loading="lazy" />
                   )}
                   {item.isSubscriberOnly && (
-                    <div className="ft-post-media-badge">구독자 무료</div>
+                    <div className="ft-post-media-badge">구독자 전용</div>
                   )}
                 </div>
               )}
 
-              {/* Actions */}
               <div className="ft-post-actions">
                 <button className="ft-post-action">
                   <span className="material-symbols-outlined">favorite</span>
@@ -125,8 +123,7 @@ const FeedHome: React.FC = () => {
                   <span className="material-symbols-outlined">chat_bubble_outline</span>
                 </button>
                 <button className="ft-post-action">
-                  <span className="material-symbols-outlined">redeem</span>
-                  <span>{item.likes || 0}</span>
+                  <span className="material-symbols-outlined">send</span>
                 </button>
                 <div className="ft-post-action-spacer" />
                 <button className="ft-post-action">
@@ -135,7 +132,7 @@ const FeedHome: React.FC = () => {
               </div>
 
               {item.likes > 0 && (
-                <div className="ft-post-likes">좋아요 {item.likes}</div>
+                <div className="ft-post-likes">좋아요 {item.likes}개</div>
               )}
             </article>
           ))}
