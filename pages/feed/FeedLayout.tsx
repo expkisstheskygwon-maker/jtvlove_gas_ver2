@@ -56,7 +56,6 @@ const FeedLayout: React.FC = () => {
   }, [theme]);
 
   useEffect(() => {
-    // 추천 리스트 데이터 로드
     const loadReco = async () => {
       try {
         const data = await apiService.getCCAs();
@@ -80,7 +79,7 @@ const FeedLayout: React.FC = () => {
   return (
     <div className={`ft-app ${isDark ? 'ft-dark' : ''}`}>
       
-      {/* ═══ PC Sidebar (Expandable) ═══ */}
+      {/* ═══ PC Sidebar ═══ */}
       <aside className="ft-sidebar-pc">
         <div className="ft-side-logo" onClick={() => navigate('/feed')}>
           <div className="ft-side-logo-icon">L</div>
@@ -98,7 +97,7 @@ const FeedLayout: React.FC = () => {
               <span>{item.label}</span>
             </button>
           ))}
-          <button className="ft-side-item" onClick={() => navigate('/settings')}>
+          <button className={`ft-side-item ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => navigate('/settings')}>
             <span className="material-symbols-outlined">person</span>
             <span>프로필</span>
           </button>
@@ -109,34 +108,34 @@ const FeedLayout: React.FC = () => {
             <span className="material-symbols-outlined">
               {isDark ? 'light_mode' : 'dark_mode'}
             </span>
-            <span>{isDark ? '라이트 모드' : '다크 모드'}</span>
+            <span>테마 변경</span>
           </button>
         </div>
       </aside>
 
-      {/* ═══ Main Content Container ═══ */}
+      {/* ═══ Main Body ═══ */}
       <div className="ft-main-container">
         
-        {/* Center Column: Feed/Pages */}
+        {/* Center: Content */}
         <div className="ft-center-col">
           {getPageComponent(location.pathname, theme, toggleTheme)}
         </div>
 
-        {/* Right Column: Recommendations */}
+        {/* Right: Recommendations */}
         <aside className="ft-right-col">
           <div className="ft-right-profile">
             <div className="ft-right-avatar">
-              <img src={user?.profileImage || "https://ui-avatars.com/api/?name=" + (user?.nickname || "U")} alt="" />
+              <img src={user?.profileImage || "https://ui-avatars.com/api/?name=" + (user?.nickname || "U")} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div className="ft-right-user-info">
               <div className="ft-right-username">{user?.nickname || "Guest"}</div>
-              <div className="ft-right-name">{user?.realName || "Premium Member"}</div>
+              <div className="ft-right-name">{user?.realName || "Luminary Member"}</div>
             </div>
-            <button className="ft-switch-btn" onClick={() => navigate('/login')}>전환</button>
+            <button className="ft-switch-btn" onClick={() => navigate('/settings')}>전환</button>
           </div>
 
           <div className="ft-right-section-head">
-            <div className="ft-right-section-title">회원님을 위한 추천</div>
+            <div className="ft-right-section-title">추천 크리에이터</div>
             <div className="ft-view-all">모두 보기</div>
           </div>
 
@@ -147,33 +146,32 @@ const FeedLayout: React.FC = () => {
               </div>
               <div className="ft-reco-info">
                 <div className="ft-reco-name">{cca.nickname || cca.name}</div>
-                <div className="ft-reco-sub">회원님을 위한 추천</div>
+                <div className="ft-reco-sub">최근 활동 중</div>
               </div>
               <button className="ft-follow-btn" onClick={() => navigate(`/@${cca.nickname || cca.name}`)}>팔로우</button>
             </div>
           ))}
 
-          <div style={{ marginTop: 30, fontSize: 11, color: 'var(--ft-text-tertiary)', lineHeight: 1.5 }}>
-            소개 · 도움말 · 홍보 센터 · API · 채용 정보 · <br />
-            개인정보처리방침 · 약관 · 위치 · 언어 · Luminary Verified
+          <div style={{ marginTop: 30, fontSize: 11, color: 'var(--ft-text-tertiary)', lineHeight: 1.6 }}>
+            도움말 · 약관 · 개인정보처리방침 · Luminary Verified
             <br /><br />
-            © 2026 LUMINARY FROM ASIAN CONNECT
+            © 2026 LUMINARY
           </div>
         </aside>
       </div>
 
-      {/* ═══ Floating Message Button ═══ */}
+      {/* ═══ Floating Message (PC 전용) ═══ */}
       <div className="ft-floating-msg" onClick={() => navigate('/messages')}>
-        <span className="material-symbols-outlined ft-msg-icon">send</span>
-        <span className="ft-msg-text">메시지</span>
-        <div className="ft-msg-avatars">
+        <span className="material-symbols-outlined">send</span>
+        <span style={{ fontWeight: 700, fontSize: 14, marginLeft: 4 }}>메시지</span>
+        <div style={{ display: 'flex', marginLeft: 8 }}>
           {recoCCAs.slice(0, 3).map(cca => (
             <img key={cca.id} src={cca.image} className="ft-msg-av" alt="" />
           ))}
         </div>
       </div>
 
-      {/* ═══ Mobile Tabbar ═══ */}
+      {/* ═══ Mobile Tabbar (CSS로 모바일에서만 노출) ═══ */}
       <nav className="ft-tabbar">
         {NAV_ITEMS.map(item => (
           <button
@@ -182,9 +180,11 @@ const FeedLayout: React.FC = () => {
             onClick={() => navigate(item.path)}
           >
             <span className="material-symbols-outlined">{item.icon}</span>
-            <span className="ft-tabbar-label">{item.label}</span>
           </button>
         ))}
+        <button className={`ft-tabbar-item ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => navigate('/settings')}>
+          <span className="material-symbols-outlined">person</span>
+        </button>
       </nav>
 
     </div>

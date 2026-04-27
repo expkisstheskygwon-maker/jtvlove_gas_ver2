@@ -61,7 +61,8 @@ const FeedHome: React.FC = () => {
       </div>
 
       {/* Tabs (Feed filter) */}
-      <div className="ft-tabs" style={{ marginBottom: 12 }}>
+      {/* Feed Tabs */}
+      <div className="ft-tabs">
         <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>전체</button>
         <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => setActiveTab('subscribed')}>구독</button>
         <button className={`ft-tab ${activeTab === 'following' ? 'active' : ''}`} onClick={() => setActiveTab('following')}>팔로우</button>
