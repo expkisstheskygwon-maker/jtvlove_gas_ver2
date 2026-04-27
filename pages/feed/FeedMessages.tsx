@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const MOCK_MESSAGES = [
   { id: '1', name: '하나', handle: 'relelew', preview: '대답 안하네', time: '13분 전', unread: 0, avatar: '' },
-  { id: '2', name: '이브', handle: 'eve_luv', preview: '기다렸자나야💜🥰', time: '17분 전', unread: 1, avatar: '' },
+  { id: '2', name: '이브', handle: 'eve_luv', preview: '기다렸자나야🧡🥰', time: '17분 전', unread: 1, avatar: '' },
 ];
 
 const FeedMessages: React.FC = () => {
@@ -52,7 +52,7 @@ const FeedMessages: React.FC = () => {
               <div className="ft-msg-info">
                 <div className="ft-msg-name">
                   {msg.name}
-                  <span style={{ color: 'var(--ft-accent)', fontSize: 12 }}>💜</span>
+                  <span style={{ color: 'var(--ft-accent)', fontSize: 12 }}>✨</span>
                 </div>
                 <div className="ft-msg-preview">{msg.preview}</div>
               </div>

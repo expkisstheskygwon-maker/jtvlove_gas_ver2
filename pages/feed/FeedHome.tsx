@@ -79,7 +79,7 @@ const FeedHome: React.FC = () => {
                       onClick={() => goToProfile(item.ccaNickname || item.ccaName)}
                     >
                       {item.ccaNickname || item.ccaName}
-                      <span style={{ color: 'var(--ft-primary)', fontSize: 14 }}>💜</span>
+                      <span style={{ color: 'var(--ft-primary)', fontSize: 14 }}>🔥</span>
                     </span>
                   </div>
                   <div className="ft-post-time">{timeAgo(item.date)}</div>
