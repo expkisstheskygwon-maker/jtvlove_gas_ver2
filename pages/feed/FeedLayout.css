@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   LUMINARY — Premium PC Fix
+   LUMINARY — Perfect Layout Fix
    ═══════════════════════════════════════════════ */
 
 :root {
@@ -79,27 +79,51 @@
 
 /* ═══ Main Layout ═══ */
 .ft-main-container { flex: 1; margin-left: var(--ft-rail-width); display: flex; justify-content: center; padding: 40px 20px; }
-.ft-center-col { width: 100%; max-width: var(--ft-content-max); }
+.ft-center-col { width: 100%; max-width: var(--ft-content-max); flex-shrink: 0; }
+
+/* ═══ Right Panel Fix ═══ */
 .ft-right-col { width: var(--ft-right-panel-width); margin-left: 60px; display: none; }
 @media (min-width: 1100px) { .ft-right-col { display: block; } }
 
-/* ═══ Tabs (Segmented) ═══ */
-.ft-tabs { display: flex; gap: 10px; padding: 20px 0; overflow-x: auto; scrollbar-width: none; }
-.ft-tabs::-webkit-scrollbar { display: none; }
+.ft-right-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.ft-right-avatar {
+  width: 50px !important; height: 50px !important;
+  border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  background: var(--ft-bg-tertiary); border: 1px solid var(--ft-border);
+}
+.ft-right-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ft-right-user-info { flex: 1; min-width: 0; }
+.ft-right-username { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ft-right-name { font-size: 12px; color: var(--ft-text-tertiary); }
+.ft-switch-btn { color: var(--ft-primary); font-size: 12px; font-weight: 700; border: none; background: none; cursor: pointer; padding: 4px 0; }
+
+.ft-reco-item { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; width: 100%; }
+.ft-reco-avatar {
+  width: 40px !important; height: 40px !important;
+  border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  background: var(--ft-bg-tertiary);
+}
+.ft-reco-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ft-reco-info { flex: 1; min-width: 0; }
+.ft-reco-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ft-reco-sub { font-size: 12px; color: var(--ft-text-tertiary); }
+.ft-follow-btn { color: var(--ft-primary); font-size: 12px; font-weight: 700; border: none; background: none; cursor: pointer; flex-shrink: 0; }
+
+/* ═══ Tabs ═══ */
+.ft-tabs { display: flex; gap: 10px; padding: 20px 0; }
 .ft-tab {
   padding: 10px 24px; font-size: 14px; font-weight: 600;
   color: var(--ft-text-secondary); background: var(--ft-bg-tertiary);
   border: 1px solid var(--ft-border); border-radius: var(--ft-radius-full);
-  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  cursor: pointer; transition: all 0.2s;
 }
-.ft-tab.active { color: #fff; background: var(--ft-gradient); border-color: transparent; font-weight: 700; box-shadow: 0 4px 12px rgba(232,82,122,0.3); }
+.ft-tab.active { color: #fff; background: var(--ft-gradient); border-color: transparent; }
 
 /* ═══ Stories ═══ */
 .ft-stories { display: flex; gap: 16px; padding-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
 .ft-story { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; min-width: 72px; }
 .ft-story-ring { width: 66px; height: 66px; border-radius: 50%; padding: 3px; background: var(--ft-gradient); }
 .ft-story-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--ft-bg); object-fit: cover; }
-.ft-story-name { font-size: 11px; color: var(--ft-text); max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ═══ Floating Msg ═══ */
 .ft-floating-msg {
@@ -109,20 +133,16 @@
   border-radius: 30px; display: flex; align-items: center; gap: 10px;
   cursor: pointer; z-index: 2000;
 }
-.ft-msg-av { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ft-bg); margin-left: -8px; }
 
-/* ═══ PC에서 모바일 요소 숨김 ═══ */
-.ft-tabbar { display: none !important; }
-.ft-topbar { display: none !important; }
+/* ═══ Hide ═══ */
+.ft-tabbar, .ft-topbar { display: none !important; }
 
 @media (max-width: 640px) {
   .ft-sidebar-pc { display: none; }
   .ft-main-container { margin-left: 0; padding: 10px; padding-bottom: 80px; }
-  .ft-right-col { display: none; }
-  .ft-floating-msg { display: none; }
   .ft-tabbar {
     position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
     background: var(--ft-bg); border-top: 1px solid var(--ft-border);
-    display: flex !important; justify-content: space-around; align-items: center; z-index: 1000;
+    display: flex !important; justify-content: space-around; align-items: center;
   }
 }

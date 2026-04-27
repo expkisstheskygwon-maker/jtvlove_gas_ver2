@@ -125,7 +125,7 @@ const FeedLayout: React.FC = () => {
         <aside className="ft-right-col">
           <div className="ft-right-profile">
             <div className="ft-right-avatar">
-              <img src={user?.profileImage || "https://ui-avatars.com/api/?name=" + (user?.nickname || "U")} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={user?.profileImage || "https://ui-avatars.com/api/?name=" + (user?.nickname || "U")} alt="" />
             </div>
             <div className="ft-right-user-info">
               <div className="ft-right-username">{user?.nickname || "Guest"}</div>
@@ -134,15 +134,15 @@ const FeedLayout: React.FC = () => {
             <button className="ft-switch-btn" onClick={() => navigate('/settings')}>전환</button>
           </div>
 
-          <div className="ft-right-section-head">
-            <div className="ft-right-section-title">추천 크리에이터</div>
-            <div className="ft-view-all">모두 보기</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ft-text-secondary)' }}>추천 크리에이터</div>
+            <div style={{ fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>모두 보기</div>
           </div>
 
           {recoCCAs.map(cca => (
             <div key={cca.id} className="ft-reco-item">
               <div className="ft-reco-avatar">
-                <img src={cca.image} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                <img src={cca.image} alt="" />
               </div>
               <div className="ft-reco-info">
                 <div className="ft-reco-name">{cca.nickname || cca.name}</div>
@@ -160,18 +160,13 @@ const FeedLayout: React.FC = () => {
         </aside>
       </div>
 
-      {/* ═══ Floating Message (PC 전용) ═══ */}
+      {/* ═══ Floating Message ═══ */}
       <div className="ft-floating-msg" onClick={() => navigate('/messages')}>
         <span className="material-symbols-outlined">send</span>
         <span style={{ fontWeight: 700, fontSize: 14, marginLeft: 4 }}>메시지</span>
-        <div style={{ display: 'flex', marginLeft: 8 }}>
-          {recoCCAs.slice(0, 3).map(cca => (
-            <img key={cca.id} src={cca.image} className="ft-msg-av" alt="" />
-          ))}
-        </div>
       </div>
 
-      {/* ═══ Mobile Tabbar (CSS로 모바일에서만 노출) ═══ */}
+      {/* ═══ Mobile Tabbar ═══ */}
       <nav className="ft-tabbar">
         {NAV_ITEMS.map(item => (
           <button
@@ -182,9 +177,6 @@ const FeedLayout: React.FC = () => {
             <span className="material-symbols-outlined">{item.icon}</span>
           </button>
         ))}
-        <button className={`ft-tabbar-item ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => navigate('/settings')}>
-          <span className="material-symbols-outlined">person</span>
-        </button>
       </nav>
 
     </div>
