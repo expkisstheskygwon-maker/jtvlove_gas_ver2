@@ -115,7 +115,7 @@ const FeedExplore: React.FC = () => {
         </div>
         <div className="ft-ex-grid">
           {creators.slice(2, 6).map(cca => (
-            <div key={cca.id} className="ft-ex-card" style={{ height: 200, aspect-ratio: 'auto' }}>
+            <div key={cca.id} className="ft-ex-card" style={{ height: 200, aspectRatio: 'auto' }}>
               <img src={cca.image} className="ft-ex-card-img" alt="" />
               <div className="ft-ex-card-overlay" style={{ background: 'linear-gradient(to top, rgba(232,82,122,0.8), transparent)' }}>
                 <div className="ft-ex-card-info">
