@@ -31,7 +31,7 @@ function getInitialTheme(): Theme {
   return 'dark';
 }
 
-const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => void) => {
+const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => void, handleNavigate: (path: string) => void) => {
   switch (pathname) {
     case '/explore': return <FeedExplore />;
     case '/search': return <FeedSearch />;
@@ -41,7 +41,7 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
     case '/':
     case '/feed':
     default:
-      return <FeedHome />;
+      return <FeedHome handleNavigate={handleNavigate} />;
   }
 };
 
@@ -138,7 +138,7 @@ const FeedLayout: React.FC = () => {
           
           {/* Center: Content */}
           <div className="ft-center-col">
-            {getPageComponent(location.pathname, theme, toggleTheme)}
+            {getPageComponent(location.pathname, theme, toggleTheme, handleNavigate)}
           </div>
 
           {/* Right: Recommendations */}
@@ -168,7 +168,7 @@ const FeedLayout: React.FC = () => {
                   <div className="ft-reco-name">{cca.nickname || cca.name}</div>
                   <div className="ft-reco-sub">최근 활동 중</div>
                 </div>
-                <button className="ft-follow-btn" onClick={() => navigate(`/@${cca.nickname || cca.name}`)}>팔로우</button>
+                <button className="ft-follow-btn" onClick={() => handleNavigate(`/@${cca.nickname || cca.name}`)}>팔로우</button>
               </div>
             ))}
 

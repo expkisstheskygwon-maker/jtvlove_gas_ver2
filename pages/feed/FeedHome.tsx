@@ -17,7 +17,11 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDay / 7)}주 전`;
 }
 
-const FeedHome: React.FC = () => {
+interface FeedHomeProps {
+  handleNavigate: (path: string) => void;
+}
+
+const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'following'>('all');
   const [feedItems, setFeedItems] = useState<any[]>([]);
@@ -43,7 +47,20 @@ const FeedHome: React.FC = () => {
   useEffect(() => { loadFeed(); }, [loadFeed]);
 
   const goToProfile = (nickname: string) => {
-    window.location.hash = `/@${nickname}`;
+    handleNavigate(`/@${nickname}`);
+  };
+
+  const handleAction = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleNavigate(window.location.pathname); // This will trigger the modal if guest
+  };
+
+  const onTabChange = (tab: 'all' | 'subscribed' | 'following') => {
+    if (tab !== 'all') {
+      handleNavigate(window.location.pathname);
+      return;
+    }
+    setActiveTab(tab);
   };
 
   return (
@@ -63,9 +80,9 @@ const FeedHome: React.FC = () => {
       {/* Tabs (Feed filter) */}
       {/* Feed Tabs */}
       <div className="ft-tabs">
-        <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>전체</button>
-        <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => setActiveTab('subscribed')}>구독</button>
-        <button className={`ft-tab ${activeTab === 'following' ? 'active' : ''}`} onClick={() => setActiveTab('following')}>팔로우</button>
+        <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => onTabChange('all')}>전체</button>
+        <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => onTabChange('subscribed')}>구독</button>
+        <button className={`ft-tab ${activeTab === 'following' ? 'active' : ''}`} onClick={() => onTabChange('following')}>팔로우</button>
       </div>
 
       {/* Feed Posts */}
@@ -117,17 +134,17 @@ const FeedHome: React.FC = () => {
               )}
 
               <div className="ft-post-actions">
-                <button className="ft-post-action">
+                <button className="ft-post-action" onClick={handleAction}>
                   <span className="material-symbols-outlined">favorite</span>
                 </button>
-                <button className="ft-post-action">
+                <button className="ft-post-action" onClick={handleAction}>
                   <span className="material-symbols-outlined">chat_bubble_outline</span>
                 </button>
-                <button className="ft-post-action">
+                <button className="ft-post-action" onClick={handleAction}>
                   <span className="material-symbols-outlined">send</span>
                 </button>
                 <div className="ft-post-action-spacer" />
-                <button className="ft-post-action">
+                <button className="ft-post-action" onClick={handleAction}>
                   <span className="material-symbols-outlined">bookmark</span>
                 </button>
               </div>
