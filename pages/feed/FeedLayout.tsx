@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useState } from 'react';
+
 import { apiService } from '../../services/apiService';
 import { CCA } from '../../types';
 import FeedHome from './FeedHome';
@@ -46,11 +46,26 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
 };
 
 const FeedLayout: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [isGuest, setIsGuest] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(!user && !isGuest);
 
   const openLoginModal = () => setShowLoginModal(true);
   const closeLoginModal = () => setShowLoginModal(false);
+
+  const handleNavigate = (path: string) => {
+    if (!user && !isGuest) {
+      openLoginModal();
+      return;
+    }
+    if (isGuest && path !== '/feed' && path !== '/settings') {
+      openLoginModal();
+      return;
+    }
+    navigate(path);
+  };
 
   const handleNavigate = (path: string) => {
     if (!user && !isGuest) {
@@ -199,25 +214,26 @@ const FeedLayout: React.FC = () => {
       </nav>
 
     </div>
-{showLoginModal && (
-  <div className="ft-login-overlay">
-    <div className="ft-login-modal">
-      <div className="ft-login-banner">가입하고 더 많은 콘텐츠를 자유롭게!</div>
-      <h2>로그인</h2>
-      <input type="email" placeholder="이메일" className="ft-input" />
-      <input type="password" placeholder="비밀번호" className="ft-input" />
-      <button className="ft-primary-btn" onClick={() => { /* placeholder login */ closeLoginModal(); }}>
-        로그인
-      </button>
-      <button className="ft-secondary-btn" onClick={() => { /* placeholder register */ closeLoginModal(); }}>
-        회원가입
-      </button>
-      <button className="ft-guest-btn" onClick={() => { setIsGuest(true); closeLoginModal(); }}>
-        게스트로 구경하기
-      </button>
+  </>
+  {showLoginModal && (
+    <div className="ft-login-overlay">
+      <div className="ft-login-modal">
+        <div className="ft-login-banner">가입하고 더 많은 콘텐츠를 자유롭게!</div>
+        <h2>로그인</h2>
+        <input type="email" placeholder="이메일" className="ft-input" />
+        <input type="password" placeholder="비밀번호" className="ft-input" />
+        <button className="ft-primary-btn" onClick={() => { /* placeholder login */ closeLoginModal(); }}>
+          로그인
+        </button>
+        <button className="ft-secondary-btn" onClick={() => { /* placeholder register */ closeLoginModal(); }}>
+          회원가입
+        </button>
+        <button className="ft-guest-btn" onClick={() => { setIsGuest(true); closeLoginModal(); }}>
+          게스트로 구경하기
+        </button>
+      </div>
     </div>
-  </div>
-)}
+  )
   );
 };
 
