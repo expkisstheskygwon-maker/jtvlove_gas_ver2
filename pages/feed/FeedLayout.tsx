@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useState } from 'react';
 import { apiService } from '../../services/apiService';
 import { CCA } from '../../types';
 import FeedHome from './FeedHome';
@@ -45,6 +46,24 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
 };
 
 const FeedLayout: React.FC = () => {
+  const [isGuest, setIsGuest] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(!user && !isGuest);
+
+  const openLoginModal = () => setShowLoginModal(true);
+  const closeLoginModal = () => setShowLoginModal(false);
+
+  const handleNavigate = (path: string) => {
+    if (!user && !isGuest) {
+      openLoginModal();
+      return;
+    }
+    // Guest can only go to home (feed) or stay on current page
+    if (isGuest && path !== '/feed' && path !== '/settings') {
+      openLoginModal();
+      return;
+    }
+    navigate(path);
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -91,13 +110,13 @@ const FeedLayout: React.FC = () => {
             <button
               key={item.path}
               className={`ft-side-item ${isActive(item.path) ? 'active' : ''}`}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavigate(item.path)}
             >
               <span className="material-symbols-outlined">{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
-          <button className={`ft-side-item ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => navigate('/settings')}>
+          <button className={`ft-side-item ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => handleNavigate('/settings')}>
             <span className="material-symbols-outlined">person</span>
             <span>프로필</span>
           </button>
@@ -114,7 +133,7 @@ const FeedLayout: React.FC = () => {
       </aside>
 
       {/* ═══ Main Body ═══ */}
-      <div className="ft-main-container">
+      <div className={`ft-main-container ${showLoginModal ? 'ft-blur' : ''}`}>
         
         {/* Center: Content */}
         <div className="ft-center-col">
@@ -161,7 +180,7 @@ const FeedLayout: React.FC = () => {
       </div>
 
       {/* ═══ Floating Message ═══ */}
-      <div className="ft-floating-msg" onClick={() => navigate('/messages')}>
+      <div className="ft-floating-msg" onClick={() => handleNavigate('/messages')}>
         <span className="material-symbols-outlined">send</span>
         <span style={{ fontWeight: 700, fontSize: 14, marginLeft: 4 }}>메시지</span>
       </div>
@@ -172,7 +191,7 @@ const FeedLayout: React.FC = () => {
           <button
             key={item.path}
             className={`ft-tabbar-item ${isActive(item.path) ? 'active' : ''}`}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigate(item.path)}
           >
             <span className="material-symbols-outlined">{item.icon}</span>
           </button>
@@ -180,6 +199,25 @@ const FeedLayout: React.FC = () => {
       </nav>
 
     </div>
+{showLoginModal && (
+  <div className="ft-login-overlay">
+    <div className="ft-login-modal">
+      <div className="ft-login-banner">가입하고 더 많은 콘텐츠를 자유롭게!</div>
+      <h2>로그인</h2>
+      <input type="email" placeholder="이메일" className="ft-input" />
+      <input type="password" placeholder="비밀번호" className="ft-input" />
+      <button className="ft-primary-btn" onClick={() => { /* placeholder login */ closeLoginModal(); }}>
+        로그인
+      </button>
+      <button className="ft-secondary-btn" onClick={() => { /* placeholder register */ closeLoginModal(); }}>
+        회원가입
+      </button>
+      <button className="ft-guest-btn" onClick={() => { setIsGuest(true); closeLoginModal(); }}>
+        게스트로 구경하기
+      </button>
+    </div>
+  </div>
+)}
   );
 };
 
