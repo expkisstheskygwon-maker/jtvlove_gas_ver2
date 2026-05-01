@@ -48,14 +48,55 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
 const FeedLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [isGuest, setIsGuest] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(!user && !isGuest);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [recoCCAs, setRecoCCAs] = useState<CCA[]>([]);
 
+  // Sync login modal state with user auth status
+  useEffect(() => {
+    if (user) {
+      setShowLoginModal(false);
+    }
+  }, [user]);
+
+  // Login Form State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
   const openLoginModal = () => setShowLoginModal(true);
-  const closeLoginModal = () => setShowLoginModal(false);
+  const closeLoginModal = () => {
+    setShowLoginModal(false);
+    setLoginError('');
+  };
+
+  const handleModalLogin = async () => {
+    if (!email || !password) {
+      setLoginError('이메일과 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    try {
+      const result = await apiService.login({ email, password });
+      if (result.success && result.user) {
+        const userData = typeof result.user === 'string' ? JSON.parse(result.user) : result.user;
+        login(userData);
+        closeLoginModal();
+      } else {
+        setLoginError(result.error || '로그인에 실패했습니다.');
+      }
+    } catch (err: any) {
+      setLoginError(err.message || '오류가 발생했습니다.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   const handleNavigate = (path: string) => {
     if (!user && !isGuest) {
@@ -205,12 +246,31 @@ const FeedLayout: React.FC = () => {
           <div className="ft-login-modal">
             <div className="ft-login-banner">가입하고 더 많은 콘텐츠를 자유롭게!</div>
             <h2>로그인</h2>
-            <input type="email" placeholder="이메일" className="ft-input" />
-            <input type="password" placeholder="비밀번호" className="ft-input" />
-            <button className="ft-primary-btn" onClick={() => { /* placeholder login */ closeLoginModal(); }}>
-              로그인
+            {loginError && <div className="ft-login-error">{loginError}</div>}
+            <input 
+              type="email" 
+              placeholder="이메일" 
+              className="ft-input" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleModalLogin()}
+            />
+            <input 
+              type="password" 
+              placeholder="비밀번호" 
+              className="ft-input" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleModalLogin()}
+            />
+            <button 
+              className="ft-primary-btn" 
+              onClick={handleModalLogin}
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? '로그인 중...' : '로그인'}
             </button>
-            <button className="ft-secondary-btn" onClick={() => { /* placeholder register */ closeLoginModal(); }}>
+            <button className="ft-secondary-btn" onClick={() => navigate('/register')}>
               회원가입
             </button>
             <button className="ft-guest-btn" onClick={() => { setIsGuest(true); closeLoginModal(); }}>

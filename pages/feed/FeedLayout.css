@@ -314,6 +314,18 @@
   box-shadow: 0 0 0 4px var(--ft-primary-light);
 }
 
+.ft-login-error {
+  background: #fff5f5;
+  color: #e03131;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid #ffc9c9;
+}
+
 .ft-primary-btn {
   background: var(--ft-gradient);
   color: #fff;
