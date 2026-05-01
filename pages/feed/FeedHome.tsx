@@ -27,6 +27,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [onDutyCCAs, setOnDutyCCAs] = useState<CCA[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -121,15 +122,38 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
               )}
 
               {item.url && (
-                <div className="ft-post-media">
+                <div className="ft-post-media" style={{ position: 'relative' }}>
                   {item.type === 'video' ? (
                     <video src={item.url} controls preload="metadata" />
                   ) : (
-                    <img src={item.url} alt="" loading="lazy" />
+                    <img 
+                      src={item.url} 
+                      alt="" 
+                      loading="lazy" 
+                      onClick={() => setExpandedImage(item.url)}
+                      style={{ cursor: 'pointer' }}
+                    />
                   )}
                   {item.isSubscriberOnly && (
                     <div className="ft-post-media-badge">구독자 전용</div>
                   )}
+                  {/* Watermark overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 12,
+                    right: 12,
+                    background: 'rgba(0,0,0,0.4)',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    pointerEvents: 'none',
+                    letterSpacing: '0.5px',
+                    backdropFilter: 'blur(4px)'
+                  }}>
+                    @{item.ccaNickname || item.ccaName}
+                  </div>
                 </div>
               )}
 
@@ -159,6 +183,29 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
         <div className="ft-empty">
           <span className="material-symbols-outlined">dynamic_feed</span>
           <p>아직 등록된 포스트가 없습니다.</p>
+        </div>
+      )}
+      {/* Image Viewer Modal */}
+      {expandedImage && (
+        <div 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 99999,
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}
+          onClick={() => setExpandedImage(null)}
+        >
+          <img src={expandedImage} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }} />
+          <button 
+            onClick={() => setExpandedImage(null)}
+            style={{
+              position: 'absolute', top: 20, right: 20, 
+              background: 'none', border: 'none', color: '#fff', 
+              fontSize: 32, cursor: 'pointer'
+            }}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
       )}
     </>

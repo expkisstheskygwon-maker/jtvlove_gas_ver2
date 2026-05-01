@@ -60,6 +60,7 @@ const CCAFeed: React.FC = () => {
   const [following, setFollowing] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroCCA, setHeroCCA] = useState<CCA | null>(null);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   // ─── Data Loading ──────────────────────────
   const init = useCallback(async () => {
@@ -242,7 +243,22 @@ const CCAFeed: React.FC = () => {
             <div className="luminary-feed-grid">
               {feedItems.map((item, idx) => (
                 <article key={item.id} className="luminary-feed-card">
-                  <img src={item.url} alt="" className="luminary-feed-media" onClick={() => goToProfile(item.ccaNickname || item.ccaName)} />
+                  <div style={{ position: 'relative' }}>
+                    <img 
+                      src={item.url} 
+                      alt="" 
+                      className="luminary-feed-media" 
+                      onClick={() => setExpandedImage(item.url)} 
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <div style={{
+                      position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.4)',
+                      padding: '4px 8px', borderRadius: 4, color: 'rgba(255,255,255,0.8)',
+                      fontSize: 12, fontWeight: 600, pointerEvents: 'none', letterSpacing: '0.5px', backdropFilter: 'blur(4px)'
+                    }}>
+                      @{item.ccaNickname || item.ccaName}
+                    </div>
+                  </div>
                   <div className="luminary-feed-content">
                     <div className="luminary-feed-header">
                       <img src={item.ccaImage} alt="" className="luminary-feed-avatar" onClick={() => goToProfile(item.ccaNickname || item.ccaName)} />
@@ -293,6 +309,26 @@ const CCAFeed: React.FC = () => {
           <span className="luminary-tabbar-label">Profile</span>
         </a>
       </nav>
+
+      {/* Image Viewer Modal */}
+      {expandedImage && (
+        <div 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 99999,
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}
+          onClick={() => setExpandedImage(null)}
+        >
+          <img src={expandedImage} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }} />
+          <button 
+            onClick={() => setExpandedImage(null)}
+            style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#fff', fontSize: 32, cursor: 'pointer' }}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
