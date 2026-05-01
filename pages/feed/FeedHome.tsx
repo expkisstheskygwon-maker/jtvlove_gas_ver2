@@ -141,7 +141,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   <div style={{
                     position: 'absolute',
                     bottom: 12,
-                    right: 12,
+                    left: 12,
                     background: 'rgba(0,0,0,0.4)',
                     padding: '4px 8px',
                     borderRadius: 4,

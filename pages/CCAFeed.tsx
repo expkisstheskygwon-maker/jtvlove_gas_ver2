@@ -252,7 +252,7 @@ const CCAFeed: React.FC = () => {
                       style={{ cursor: 'pointer' }}
                     />
                     <div style={{
-                      position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.4)',
+                      position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.4)',
                       padding: '4px 8px', borderRadius: 4, color: 'rgba(255,255,255,0.8)',
                       fontSize: 12, fontWeight: 600, pointerEvents: 'none', letterSpacing: '0.5px', backdropFilter: 'blur(4px)'
                     }}>
