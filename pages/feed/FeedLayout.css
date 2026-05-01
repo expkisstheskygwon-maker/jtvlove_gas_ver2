@@ -379,3 +379,123 @@
   color: var(--ft-text-secondary);
   text-decoration: underline;
 }
+
+/* ═══ Feed Post Styles (Missing previously) ═══ */
+.ft-post {
+  background: var(--ft-bg-tertiary);
+  border-radius: var(--ft-radius-lg);
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.ft-dark .ft-post {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid var(--ft-border);
+}
+
+.ft-post-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 12px;
+}
+
+.ft-post-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid var(--ft-primary);
+  padding: 2px;
+}
+
+.ft-post-meta {
+  flex: 1;
+}
+
+.ft-post-author-name {
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ft-post-time {
+  font-size: 12px;
+  color: var(--ft-text-tertiary);
+  margin-top: 2px;
+}
+
+.ft-post-more {
+  background: none;
+  border: none;
+  color: var(--ft-text-secondary);
+  cursor: pointer;
+}
+
+.ft-post-body {
+  padding: 0 16px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.ft-post-media {
+  width: 100%;
+  max-height: 600px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ft-post-media img, .ft-post-media video {
+  width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+}
+
+.ft-post-media-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+}
+
+.ft-post-actions {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 16px;
+}
+
+.ft-post-action {
+  background: none;
+  border: none;
+  color: var(--ft-text);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s;
+}
+
+.ft-post-action:hover {
+  transform: scale(1.1);
+  color: var(--ft-primary);
+}
+
+.ft-post-likes {
+  padding: 0 16px 16px;
+  font-weight: 800;
+  font-size: 14px;
+}
