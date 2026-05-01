@@ -30,41 +30,48 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       // ─── FEED MODE: All CCAs' gallery with Popularity & Follows ───
       if (feedMode === 'true') {
         const query = `
+          WITH RankedPosts AS (
+            SELECT 
+              g.id, g.type, g.url, g.caption, 
+              COALESCE(g.likes, 0) as likes, 
+              COALESCE(g.shares, 0) as shares, 
+              COALESCE(g.comments_count, 0) as comments_count, 
+              g.created_at,
+              g.cca_id,
+              c.name as cca_name,
+              c.nickname as cca_nickname,
+              c.image as cca_image,
+              c.grade as cca_grade,
+              c.score as cca_score,
+              v.name as venue_name,
+              v.region as venue_region,
+              (CASE WHEN (SELECT 1 FROM cca_follows f WHERE f.cca_id = c.id AND f.user_id = ? LIMIT 1) IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
+              ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
+            FROM gallery g
+            JOIN ccas c ON g.cca_id = c.id
+            LEFT JOIN venues v ON c.venue_id = v.id
+            WHERE c.status = 'active'
+          )
           SELECT 
-            g.id, g.type, g.url, g.caption, 
-            COALESCE(g.likes, 0) as likes, 
-            COALESCE(g.shares, 0) as shares, 
-            COALESCE(g.comments_count, 0) as comments_count, 
-            g.created_at,
-            g.cca_id,
-            c.name as cca_name,
-            c.nickname as cca_nickname,
-            c.image as cca_image,
-            c.grade as cca_grade,
-            c.score as cca_score,
-            v.name as venue_name,
-            v.region as venue_region,
-            (CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
+            *,
             (
               (
-                -- 인게이지먼트 기본 점수
-                (COALESCE(g.likes, 0) * 2.0 + COALESCE(g.comments_count, 0) * 3.0 + 1.0) 
-                -- CCA 티어/랭킹 점수 가산점 (예: CCA 점수의 5%)
-                + (COALESCE(c.score, 0) * 0.05)
+                (likes * 2.0 + comments_count * 3.0 + 1.0) 
+                + (COALESCE(cca_score, 0) * 0.05)
               ) 
-              -- 개인화 가중치 (팔로우한 CCA의 경우 점수 1.5배)
-              * (CASE WHEN f.id IS NOT NULL THEN 1.5 ELSE 1.0 END)
+              * (CASE WHEN is_followed = 1 THEN 1.5 ELSE 1.0 END)
             ) 
-            -- 최신성 (시간 경과에 따른 중력 감점. 시간 단위 경과 + 2 로 나누기)
-            / (MAX(0, (julianday('now') - julianday(g.created_at)) * 24) + 2.0) as final_rank_score
-          FROM gallery g
-          JOIN ccas c ON g.cca_id = c.id
-          LEFT JOIN venues v ON c.venue_id = v.id
-          LEFT JOIN cca_follows f ON f.cca_id = c.id AND f.user_id = ?
-          WHERE c.status = 'active'
-          ORDER BY 
-            final_rank_score DESC, 
-            g.created_at DESC
+            / (MAX(0, (julianday('now') - julianday(created_at)) * 24) + 2.0)
+            * (
+              CASE 
+                WHEN cca_post_rank = 1 THEN 1.0
+                WHEN cca_post_rank = 2 THEN 0.5
+                WHEN cca_post_rank = 3 THEN 0.25
+                ELSE 0.1
+              END
+            ) as final_rank_score
+          FROM RankedPosts
+          ORDER BY final_rank_score DESC, created_at DESC
           LIMIT ? OFFSET ?
         `;
 
@@ -84,32 +91,47 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           console.warn('DB Error (likely missing cca_follows table), running fallback query...', dbError);
           // FALLBACK: Run the original query without cca_follows if the new table isn't migrated yet
           const fallbackQuery = `
+            WITH RankedPosts AS (
+              SELECT 
+                g.id, g.type, g.url, g.caption, 
+                COALESCE(g.likes, 0) as likes, 
+                COALESCE(g.shares, 0) as shares, 
+                COALESCE(g.comments_count, 0) as comments_count, 
+                g.created_at,
+                g.cca_id,
+                c.name as cca_name,
+                c.nickname as cca_nickname,
+                c.image as cca_image,
+                c.grade as cca_grade,
+                c.score as cca_score,
+                v.name as venue_name,
+                v.region as venue_region,
+                0 as is_followed,
+                ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
+              FROM gallery g
+              JOIN ccas c ON g.cca_id = c.id
+              LEFT JOIN venues v ON c.venue_id = v.id
+              WHERE c.status = 'active'
+            )
             SELECT 
-              g.id, g.type, g.url, g.caption, 
-              COALESCE(g.likes, 0) as likes, 
-              COALESCE(g.shares, 0) as shares, 
-              COALESCE(g.comments_count, 0) as comments_count, 
-              g.created_at,
-              g.cca_id,
-              c.name as cca_name,
-              c.nickname as cca_nickname,
-              c.image as cca_image,
-              c.grade as cca_grade,
-              c.score as cca_score,
-              v.name as venue_name,
-              v.region as venue_region,
-              0 as is_followed,
+              *,
               (
                 (
-                  (COALESCE(g.likes, 0) * 2.0 + COALESCE(g.comments_count, 0) * 3.0 + 1.0) 
-                  + (COALESCE(c.score, 0) * 0.05)
+                  (likes * 2.0 + comments_count * 3.0 + 1.0) 
+                  + (COALESCE(cca_score, 0) * 0.05)
                 ) * 1.0
-              ) / (MAX(0, (julianday('now') - julianday(g.created_at)) * 24) + 2.0) as final_rank_score
-            FROM gallery g
-            JOIN ccas c ON g.cca_id = c.id
-            LEFT JOIN venues v ON c.venue_id = v.id
-            WHERE c.status = 'active'
-            ORDER BY final_rank_score DESC, g.created_at DESC
+              ) 
+              / (MAX(0, (julianday('now') - julianday(created_at)) * 24) + 2.0)
+              * (
+                CASE 
+                  WHEN cca_post_rank = 1 THEN 1.0
+                  WHEN cca_post_rank = 2 THEN 0.5
+                  WHEN cca_post_rank = 3 THEN 0.25
+                  ELSE 0.1
+                END
+              ) as final_rank_score
+            FROM RankedPosts
+            ORDER BY final_rank_score DESC, created_at DESC
             LIMIT ? OFFSET ?
           `;
           const res = await env.DB.prepare(fallbackQuery).bind(limit, offset).all();
