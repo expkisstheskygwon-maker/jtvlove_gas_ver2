@@ -125,9 +125,9 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
               * (
                 CASE 
                   WHEN cca_post_rank = 1 THEN 1.0
-                  WHEN cca_post_rank = 2 THEN 0.5
-                  WHEN cca_post_rank = 3 THEN 0.25
-                  ELSE 0.1
+                  WHEN cca_post_rank = 2 THEN 0.1
+                  WHEN cca_post_rank = 3 THEN 0.05
+                  ELSE 0.01
                 END
               ) as final_rank_score
             FROM RankedPosts
