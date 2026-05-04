@@ -1755,6 +1755,48 @@ export const apiService = {
       console.error('toggleCCAFollow error:', error);
       return { isFollowing: false };
     }
+  },
+
+  // ═══════════════════════════════════════════
+  // User Subscriptions
+  // ═══════════════════════════════════════════
+  async getSubscriptions(subscriberId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?subscriberId=${encodeURIComponent(subscriberId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.subscribedIds || [];
+    } catch (error) {
+      console.error('getSubscriptions error:', error);
+      return [];
+    }
+  },
+
+  async checkSubscription(subscriberId: string, targetId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?subscriberId=${encodeURIComponent(subscriberId)}&targetId=${encodeURIComponent(targetId)}`);
+      if (!response.ok) return false;
+      const data = await response.json();
+      return data.isSubscribed;
+    } catch (error) {
+      console.error('checkSubscription error:', error);
+      return false;
+    }
+  },
+
+  async toggleSubscription(subscriberId: string, targetId: string): Promise<{ success: boolean; isSubscribed: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriberId, targetId }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle subscription');
+      return await response.json();
+    } catch (error) {
+      console.error('toggleSubscription error:', error);
+      return { success: false, isSubscribed: false };
+    }
   }
 };
 

@@ -25,6 +25,7 @@ interface Conversation {
 const FeedMessages: React.FC = () => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [selectedUser, setSelectedUser] = useState<{ id: string, name: string } | null>(null);
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +34,8 @@ const FeedMessages: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'following'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [subscribedIds, setSubscribedIds] = useState<string[]>([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,10 +54,15 @@ const FeedMessages: React.FC = () => {
     if (!user) return;
     setLoading(true);
     try {
-      // Get messages where I am receiver
-      const received = await apiService.getMessages({ receiverId: user.id, receiverType: 'user', limit: 100 });
-      // Get messages where I am sender
-      const sent = await apiService.getMessages({ senderId: user.id, senderType: 'user', limit: 100 });
+      const [received, sent, subs, follows] = await Promise.all([
+        apiService.getMessages({ receiverId: user.id, receiverType: 'user', limit: 100 }),
+        apiService.getMessages({ senderId: user.id, senderType: 'user', limit: 100 }),
+        apiService.getSubscriptions(user.id),
+        apiService.checkCCAFollow(user.id, '')
+      ]);
+
+      setSubscribedIds(subs);
+      setFollowingIds(follows.followedIds || []);
       
       const allMessages = [...received, ...sent].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -78,13 +86,25 @@ const FeedMessages: React.FC = () => {
         }
       });
 
-      setConversations(Object.values(groups));
+      const convs = Object.values(groups);
+      setConversations(convs);
+      setFilteredConversations(convs);
     } catch (err) {
       console.error('Failed to load conversations', err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'all') {
+      setFilteredConversations(conversations);
+    } else if (activeTab === 'subscribed') {
+      setFilteredConversations(conversations.filter(c => subscribedIds.includes(c.participantId)));
+    } else if (activeTab === 'following') {
+      setFilteredConversations(conversations.filter(c => followingIds.includes(c.participantId)));
+    }
+  }, [activeTab, conversations, subscribedIds, followingIds]);
 
   const openChat = async (participantId: string, participantName: string) => {
     if (!user) return;
@@ -231,13 +251,13 @@ const FeedMessages: React.FC = () => {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>로딩 중...</div>
-        ) : conversations.length === 0 ? (
+        ) : filteredConversations.length === 0 ? (
           <div className="ft-msg-empty">
             <span className="material-symbols-outlined">chat_bubble</span>
             <p>아직 대화 내역이 없습니다.<br/>새로운 대화를 시작해보세요!</p>
           </div>
         ) : (
-          conversations.map(conv => (
+          filteredConversations.map(conv => (
             <div key={conv.participantId} className="ft-msg-item" onClick={() => openChat(conv.participantId, conv.participantName)}>
               <div style={{ position: 'relative' }}>
                 <div className="ft-sidebar-avatar-placeholder" style={{ width: 48, height: 48 }}>

@@ -24,20 +24,30 @@ interface FeedHomeProps {
 const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'following'>('all');
+  const [allFeedItems, setAllFeedItems] = useState<any[]>([]);
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [onDutyCCAs, setOnDutyCCAs] = useState<CCA[]>([]);
+  const [subscribedIds, setSubscribedIds] = useState<string[]>([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiService.getFeed(1, 30, user?.id);
+      const data = await apiService.getFeed(1, 100, user?.id);
+      setAllFeedItems(data.items || []);
       setFeedItems(data.items || []);
       
-      // 출근 중인 CCA 데이터 (여기서는 상위 점수 순으로 임시 로드)
       const ccas = await apiService.getCCAs();
       setOnDutyCCAs(ccas.slice(0, 10));
+
+      if (user?.id) {
+        const subs = await apiService.getSubscriptions(user.id);
+        setSubscribedIds(subs);
+        const follows = await apiService.checkCCAFollow(user.id, '');
+        setFollowingIds(follows.followedIds || []);
+      }
     } catch (err) {
       console.error('Feed load error:', err);
     } finally {
@@ -47,21 +57,41 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
 
+  const onTabChange = (tab: 'all' | 'subscribed' | 'following') => {
+    setActiveTab(tab);
+    if (tab === 'all') {
+      setFeedItems(allFeedItems);
+    } else if (tab === 'subscribed') {
+      setFeedItems(allFeedItems.filter(item => subscribedIds.includes(item.ccaId)));
+    } else if (tab === 'following') {
+      setFeedItems(allFeedItems.filter(item => followingIds.includes(item.ccaId)));
+    }
+  };
+
+  const handleSubscribe = async (e: React.MouseEvent, targetId: string) => {
+    e.stopPropagation();
+    if (!user) {
+      handleNavigate('/feed'); // Triggers login modal
+      return;
+    }
+    
+    const result = await apiService.toggleSubscription(user.id, targetId);
+    if (result.success) {
+      if (result.isSubscribed) {
+        setSubscribedIds(prev => [...prev, targetId]);
+      } else {
+        setSubscribedIds(prev => prev.filter(id => id !== targetId));
+      }
+    }
+  };
+
   const goToProfile = (nickname: string) => {
     handleNavigate(`/@${nickname}`);
   };
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleNavigate(window.location.pathname); // This will trigger the modal if guest
-  };
-
-  const onTabChange = (tab: 'all' | 'subscribed' | 'following') => {
-    if (tab !== 'all') {
-      handleNavigate(window.location.pathname);
-      return;
-    }
-    setActiveTab(tab);
+    handleNavigate(window.location.pathname);
   };
 
   return (
@@ -79,7 +109,6 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       </div>
 
       {/* Tabs (Feed filter) */}
-      {/* Feed Tabs */}
       <div className="ft-tabs">
         <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => onTabChange('all')}>전체</button>
         <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => onTabChange('subscribed')}>구독</button>
@@ -101,14 +130,28 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   onClick={() => goToProfile(item.ccaNickname || item.ccaName)}
                 />
                 <div className="ft-post-meta">
-                  <div className="ft-post-author">
+                  <div className="ft-post-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span
                       className="ft-post-author-name"
                       onClick={() => goToProfile(item.ccaNickname || item.ccaName)}
                     >
                       {item.ccaNickname || item.ccaName}
-                      <span style={{ color: 'var(--ft-primary)', fontSize: 14 }}>🔥</span>
+                      <span style={{ color: 'var(--ft-primary)', fontSize: 14, marginLeft: 4 }}>🔥</span>
                     </span>
+                    {user?.id !== item.ccaId && (
+                      <button 
+                        className={`ft-follow-btn ${subscribedIds.includes(item.ccaId) ? 'subscribed' : ''}`}
+                        onClick={(e) => handleSubscribe(e, item.ccaId)}
+                        style={{ 
+                          fontSize: 11, padding: '4px 10px', borderRadius: 12, 
+                          background: subscribedIds.includes(item.ccaId) ? 'var(--ft-bg-tertiary)' : 'var(--ft-gradient)',
+                          color: subscribedIds.includes(item.ccaId) ? 'var(--ft-text-secondary)' : '#fff',
+                          border: 'none', fontWeight: 800, cursor: 'pointer'
+                        }}
+                      >
+                        {subscribedIds.includes(item.ccaId) ? '구독 중' : '구독'}
+                      </button>
+                    )}
                   </div>
                   <div className="ft-post-time">{timeAgo(item.date)}</div>
                 </div>
