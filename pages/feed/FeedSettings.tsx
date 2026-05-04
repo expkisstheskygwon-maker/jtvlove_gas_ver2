@@ -8,21 +8,105 @@ interface FeedSettingsProps {
 }
 
 const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
+
+  // Modal States
+  const [activeModal, setActiveModal] = React.useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Form States
+  const [editNickname, setEditNickname] = React.useState(user?.nickname || '');
+  const [editRealName, setEditRealName] = React.useState(user?.realName || '');
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [message, setMessage] = React.useState({ text: '', type: '' });
 
   const handleLogout = () => {
     logout();
     navigate('/feed');
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      setIsUpdating(true);
+      try {
+        const result = await apiService.updateUser({ id: user.id, profile_image: base64String });
+        if (result.success) {
+          updateUser({ profileImage: base64String });
+          setMessage({ text: '프로필 이미지가 변경되었습니다.', type: 'success' });
+        } else {
+          alert('이미지 업로드에 실패했습니다.');
+        }
+      } catch (err) {
+        alert('오류가 발생했습니다.');
+      } finally {
+        setIsUpdating(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    setIsUpdating(true);
+    try {
+      const result = await apiService.updateUser({ 
+        id: user.id, 
+        nickname: editNickname,
+        real_name: editRealName
+      });
+      if (result.success) {
+        updateUser({ nickname: editNickname, realName: editRealName });
+        setMessage({ text: '프로필이 수정되었습니다.', type: 'success' });
+        setTimeout(() => setActiveModal(null), 1500);
+      } else {
+        setMessage({ text: result.error || '수정에 실패했습니다.', type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: '오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!user || !newPassword) return;
+    if (newPassword !== confirmPassword) {
+      setMessage({ text: '비밀번호가 일치하지 않습니다.', type: 'error' });
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const result = await apiService.updateUser({ id: user.id, password: newPassword });
+      if (result.success) {
+        setMessage({ text: '비밀번호가 성공적으로 변경되었습니다.', type: 'success' });
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setActiveModal(null), 1500);
+      } else {
+        setMessage({ text: result.error || '변경에 실패했습니다.', type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: '오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const menuItems = [
-    { icon: 'person', label: '프로필 수정', desc: '닉네임, 프로필 이미지 변경' },
-    { icon: 'notifications', label: '알림 설정', desc: '푸시 알림 및 이메일 설정' },
-    { icon: 'lock', label: '비밀번호 변경', desc: '계정 보안 설정' },
-    { icon: 'translate', label: '언어 설정', desc: '한국어 / English' },
-    { icon: 'help', label: '도움말', desc: 'FAQ 및 고객지원' },
+    { id: 'profile', icon: 'person', label: '프로필 수정', desc: '닉네임, 프로필 이미지 변경' },
+    { id: 'notifications', icon: 'notifications', label: '알림 설정', desc: '푸시 알림 및 이메일 설정' },
+    { id: 'password', icon: 'lock', label: '비밀번호 변경', desc: '계정 보안 설정' },
+    { id: 'language', icon: 'translate', label: '언어 설정', desc: '한국어 / English' },
+    { id: 'help', icon: 'help', label: '도움말', desc: 'FAQ 및 고객지원' },
   ];
 
   return (
@@ -36,9 +120,21 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
       <div style={{ padding: 20 }}>
         {/* Profile Card */}
         <div className="ft-membership-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div className="ft-sidebar-avatar-placeholder" style={{ width: 64, height: 64, flexShrink: 0 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 32 }}>person</span>
+          <div 
+            className="ft-sidebar-avatar-placeholder" 
+            style={{ width: 64, height: 64, flexShrink: 0, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {user?.profileImage ? (
+              <img src={user.profileImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span className="material-symbols-outlined" style={{ fontSize: 32 }}>person</span>
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
+              <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: 20 }}>photo_camera</span>
+            </div>
           </div>
+          <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
           <div style={{ flex: 1 }}>
             {user ? (
               <>
@@ -118,6 +214,11 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
               }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--ft-bg-secondary)')}
               onMouseLeave={e => (e.currentTarget.style.background = '')}
+              onClick={() => {
+                if (item.id === 'profile') { setEditNickname(user?.nickname || ''); setEditRealName(user?.realName || ''); }
+                setActiveModal(item.id);
+                setMessage({ text: '', type: '' });
+              }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: 22, color: 'var(--ft-text-tertiary)' }}>{item.icon}</span>
               <div style={{ flex: 1 }}>
@@ -145,6 +246,87 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
           </button>
         )}
       </div>
+
+      {/* Modals */}
+      {activeModal && (
+        <div className="ft-login-overlay" onClick={() => setActiveModal(null)}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ padding: 0 }}>
+            <div className="ft-login-banner">
+              {menuItems.find(m => m.id === activeModal)?.label}
+            </div>
+            
+            <div style={{ padding: '0 30px 30px' }}>
+              {message.text && (
+                <div style={{ 
+                  padding: 12, borderRadius: 12, marginBottom: 20, fontSize: 13, fontWeight: 700, textAlign: 'center',
+                  background: message.type === 'error' ? '#fff5f5' : '#f0fff4',
+                  color: message.type === 'error' ? '#e03131' : '#2f855a',
+                  border: `1px solid ${message.type === 'error' ? '#ffc9c9' : '#c6f6d5'}`
+                }}>
+                  {message.text}
+                </div>
+              )}
+
+              {activeModal === 'profile' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--ft-text-tertiary)', marginBottom: 8, display: 'block' }}>닉네임</label>
+                    <input 
+                      type="text" className="ft-input" value={editNickname} 
+                      onChange={e => setEditNickname(e.target.value)} 
+                      style={{ marginBottom: 0 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--ft-text-tertiary)', marginBottom: 8, display: 'block' }}>실명</label>
+                    <input 
+                      type="text" className="ft-input" value={editRealName} 
+                      onChange={e => setEditRealName(e.target.value)} 
+                      style={{ marginBottom: 0 }}
+                    />
+                  </div>
+                  <button className="ft-primary-btn" onClick={handleUpdateProfile} disabled={isUpdating}>
+                    {isUpdating ? '저장 중...' : '변경사항 저장'}
+                  </button>
+                </div>
+              )}
+
+              {activeModal === 'password' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--ft-text-tertiary)', marginBottom: 8, display: 'block' }}>새 비밀번호</label>
+                    <input 
+                      type="password" className="ft-input" value={newPassword} 
+                      onChange={e => setNewPassword(e.target.value)} 
+                      style={{ marginBottom: 0 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--ft-text-tertiary)', marginBottom: 8, display: 'block' }}>비밀번호 확인</label>
+                    <input 
+                      type="password" className="ft-input" value={confirmPassword} 
+                      onChange={e => setConfirmPassword(e.target.value)} 
+                      style={{ marginBottom: 0 }}
+                    />
+                  </div>
+                  <button className="ft-primary-btn" onClick={handleUpdatePassword} disabled={isUpdating}>
+                    {isUpdating ? '변경 중...' : '비밀번호 변경'}
+                  </button>
+                </div>
+              )}
+
+              {(activeModal === 'notifications' || activeModal === 'language' || activeModal === 'help') && (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 48, color: 'var(--ft-text-muted)', marginBottom: 16 }}>construction</span>
+                  <div style={{ fontWeight: 700, color: 'var(--ft-text-secondary)' }}>이 기능은 준비 중입니다.</div>
+                  <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)', marginTop: 8 }}>메인 페이지의 마이페이지에서 동일한 기능을 이용하실 수 있습니다.</div>
+                  <button className="ft-secondary-btn" style={{ width: '100%', marginTop: 24 }} onClick={() => setActiveModal(null)}>닫기</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

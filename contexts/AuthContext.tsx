@@ -46,6 +46,7 @@ interface User {
     email: string;
     nickname: string;
     realName?: string;
+    profileImage?: string;
     role: string;
     venueId?: string;
     ccaId?: string;
