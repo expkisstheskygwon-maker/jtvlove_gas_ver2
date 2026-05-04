@@ -198,8 +198,24 @@ export const apiService = {
   },
 
   async getCCAByNickname(nickname: string): Promise<CCA | null> {
-    const cleanNickname = nickname.startsWith('@') ? nickname.substring(1) : nickname;
-    return apiService.getCCAById(cleanNickname);
+    const cleanNick = nickname.startsWith('@') ? nickname.substring(1) : nickname;
+    return this.getCCAById(cleanNick);
+  },
+
+  async updateCCA(id: string, data: Partial<CCA | any>): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/ccas/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok) return { success: true, id: result.id };
+      return { success: false, error: result.error || 'Failed to update CCA' };
+    } catch (error: any) {
+      console.error('updateCCA error:', error);
+      return { success: false, error: error.message };
+    }
   },
 
   async updateCCAProfile(id: string, data: Partial<CCA> & { password?: string }): Promise<{ success: boolean; error?: string }> {

@@ -22,7 +22,7 @@ interface FeedHomeProps {
 }
 
 const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'following'>('all');
   const [allFeedItems, setAllFeedItems] = useState<any[]>([]);
   const [feedItems, setFeedItems] = useState<any[]>([]);
@@ -31,6 +31,14 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [followingCCAIds, setFollowingCCAIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+
+  // Subscription Modal State
+  const [subModal, setSubModal] = useState<{
+    isOpen: boolean;
+    ccaId: string;
+    ccaName: string;
+    cost: number;
+  }>({ isOpen: false, ccaId: '', ccaName: '', cost: 0 });
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -82,6 +90,40 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       setFollowingCCAIds(prev => [...prev, ccaId]);
     } else {
       setFollowingCCAIds(prev => prev.filter(id => id !== ccaId));
+    }
+  };
+
+  const handleSubscribeClick = (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    if (!user) {
+      handleNavigate('/feed');
+      return;
+    }
+    setSubModal({
+      isOpen: true,
+      ccaId: item.ccaId,
+      ccaName: item.ccaNickname || item.ccaName,
+      cost: item.subscriptionCost || 0
+    });
+  };
+
+  const confirmSubscription = async () => {
+    if (!user || !subModal.ccaId) return;
+    try {
+      const result = await apiService.toggleSubscription(user.id, subModal.ccaId);
+      if (result.success) {
+        setSubscribedIds(prev => [...prev, subModal.ccaId]);
+        // Update user points locally if possible, or just let them refresh
+        if (result.cost) {
+          updateUser({ points: (user.points || 0) - result.cost });
+        }
+        setSubModal(prev => ({ ...prev, isOpen: false }));
+        alert('구독이 완료되었습니다!');
+      } else {
+        alert(result.error || '구독에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('오류가 발생했습니다.');
     }
   };
 
@@ -138,7 +180,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                     >
                       {item.ccaNickname || item.ccaName}
                     </span>
-                    {user?.id !== item.ccaId && (
+                    <div style={{ display: 'flex', gap: 4 }}>
                       <button
                         onClick={(e) => handleFollow(e, item.ccaId)}
                         className="ft-follow-pill"
@@ -150,7 +192,33 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                       >
                         {followingCCAIds.includes(item.ccaId) ? '팔로잉' : '팔로우'}
                       </button>
-                    )}
+                      {!subscribedIds.includes(item.ccaId) && (
+                        <button
+                          onClick={(e) => handleSubscribeClick(e, item)}
+                          className="ft-follow-pill"
+                          style={{
+                            background: 'var(--ft-gradient)',
+                            color: '#fff',
+                            border: 'none',
+                          }}
+                        >
+                          구독
+                        </button>
+                      )}
+                      {subscribedIds.includes(item.ccaId) && (
+                        <button
+                          className="ft-follow-pill"
+                          style={{
+                            background: 'rgba(255,215,0,0.1)',
+                            color: '#daa520',
+                            border: '1px solid #daa520',
+                            cursor: 'default'
+                          }}
+                        >
+                          구독 중
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="ft-post-time">{timeAgo(item.date)}</div>
                 </div>
@@ -231,6 +299,52 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
           </p>
         </div>
       )}
+
+      {/* Subscription Confirmation Modal */}
+      {subModal.isOpen && (
+        <div className="ft-login-overlay" onClick={() => setSubModal(prev => ({ ...prev, isOpen: false }))}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ padding: '30px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ 
+                width: 70, height: 70, borderRadius: '50%', background: 'var(--ft-gradient)', 
+                margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 36, color: '#fff' }}>stars</span>
+              </div>
+              <h2 style={{ marginBottom: 8 }}>{subModal.ccaName} 구독하기</h2>
+              <p style={{ color: 'var(--ft-text-secondary)', fontSize: 14, marginBottom: 24 }}>
+                구독하시면 모든 독점 콘텐츠와 비공개 포스트를 <br /> 1개월간 자유롭게 이용하실 수 있습니다.
+              </p>
+              
+              <div style={{ 
+                background: 'var(--ft-bg-tertiary)', padding: '20px', borderRadius: 16, marginBottom: 30,
+                border: '1px solid var(--ft-border)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 13, color: 'var(--ft-text-tertiary)' }}>구독 기간</span>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>30일 (1개월)</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, color: 'var(--ft-text-tertiary)' }}>결제 금액</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--ft-primary)' }}>{subModal.cost.toLocaleString()} P</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="ft-secondary-btn" onClick={() => setSubModal(prev => ({ ...prev, isOpen: false }))}>취소</button>
+                <button className="ft-primary-btn" onClick={confirmSubscription} style={{ flex: 2 }}>지금 구독하기</button>
+              </div>
+              
+              {user && (
+                <div style={{ marginTop: 16, fontSize: 11, color: 'var(--ft-text-muted)' }}>
+                  현재 보유 포인트: {user.points?.toLocaleString() || 0} P
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Image Viewer Modal */}
       {expandedImage && (
         <div 

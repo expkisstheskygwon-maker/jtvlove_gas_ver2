@@ -21,6 +21,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       // Auto-migrate schema to prevent 500 error if columns don't exist yet
       try { await env.DB.prepare("ALTER TABLE ccas ADD COLUMN score INTEGER DEFAULT 50").run(); } catch(e) {}
       try { await env.DB.prepare("ALTER TABLE ccas ADD COLUMN score_updated_at TEXT").run(); } catch(e) {}
+      try { await env.DB.prepare("ALTER TABLE ccas ADD COLUMN subscription_cost INTEGER DEFAULT 0").run(); } catch(e) {}
       try { await env.DB.prepare("ALTER TABLE ccas ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP").run(); } catch(e) {}
 
       const getBusinessDate = () => {
@@ -88,6 +89,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           postsCount: result.posts_count,
           score: result.score,
           scoreUpdatedAt: result.score_updated_at,
+          subscriptionCost: result.subscription_cost || 0,
           isNew: result.is_new === 1
         }), {
           headers: { "Content-Type": "application/json" },
@@ -121,7 +123,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         sns: r.sns_links ? JSON.parse(r.sns_links) : {},
         isNew: r.is_new === 1,
         score: r.score,
-        scoreUpdatedAt: r.score_updated_at
+        scoreUpdatedAt: r.score_updated_at,
+        subscriptionCost: r.subscription_cost || 0
       }))), {
         headers: { "Content-Type": "application/json" },
       });
@@ -150,7 +153,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         image,
         venueId, venue_id,
         languages, isNew, is_new, weight, drinking, smoking, pets, specialties,
-        status, grade, media
+        status, grade, media,
+        subscriptionCost, subscription_cost
       } = body;
 
       const targetId = id || bodyId || `cca_${Date.now()}`;
@@ -169,6 +173,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       const f_languages = languages ?? null;
       const f_specialties = specialties ?? null;
       const f_name = nickname ?? name ?? null;
+      const f_subscriptionCost = subscriptionCost ?? subscription_cost ?? 0;
 
       if (!id && !bodyId) {
         // CREATE
@@ -179,8 +184,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             password, marital_status, children_status, special_notes,
             experience_history, languages, specialties,
             mbti, zodiac, one_line_story, sns_links,
-            is_new, weight, drinking, smoking, pets
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            is_new, weight, drinking, smoking, pets, subscription_cost
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           targetId,
           f_name,
@@ -210,7 +215,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           weight || '',
           drinking || '',
           smoking || '',
-          pets || ''
+          pets || '',
+          f_subscriptionCost
         ).run();
       } else {
         // UPDATE
@@ -223,7 +229,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             marital_status = ?, children_status = ?, special_notes = ?,
             image = ?, venue_id = ?, languages = ?, is_new = ?,
             weight = ?, drinking = ?, smoking = ?, pets = ?, specialties = ?,
-            status = ?, grade = ?
+            status = ?, grade = ?, subscription_cost = ?
           WHERE id = ?
         `).bind(
           f_name, nickname || '', f_realNameFirst, f_realNameMiddle, f_realNameLast,
@@ -232,7 +238,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           f_maritalStatus || 'SINGLE', f_childrenStatus || 'NONE', f_specialNotes || '',
           image || '', f_venueId || 'v1', JSON.stringify(f_languages || []), f_isNew ? 1 : 0,
           weight || '', drinking || '', smoking || '', pets || '', JSON.stringify(f_specialties || []),
-          status || 'active', grade || 'PRO',
+          status || 'active', grade || 'PRO', f_subscriptionCost,
           updateId
         ).run();
       }

@@ -43,6 +43,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
               c.image as cca_image,
               c.grade as cca_grade,
               c.score as cca_score,
+              c.subscription_cost as cca_subscription_cost,
               v.name as venue_name,
               v.region as venue_region,
               (CASE WHEN (SELECT 1 FROM cca_follows f WHERE f.cca_id = c.id AND f.user_id = ? LIMIT 1) IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
@@ -104,6 +105,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 c.image as cca_image,
                 c.grade as cca_grade,
                 c.score as cca_score,
+                c.subscription_cost as cca_subscription_cost,
                 v.name as venue_name,
                 v.region as venue_region,
                 0 as is_followed,
@@ -159,6 +161,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             ccaImage: item.cca_image,
             ccaGrade: item.cca_grade,
             ccaScore: item.cca_score,
+            subscriptionCost: item.cca_subscription_cost || 0,
             venueName: item.venue_name,
             venueRegion: item.venue_region
           })),

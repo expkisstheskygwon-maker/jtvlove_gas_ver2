@@ -20,6 +20,7 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
   // Form States
   const [editNickname, setEditNickname] = React.useState(user?.nickname || '');
   const [editRealName, setEditRealName] = React.useState(user?.realName || '');
+  const [subscriptionCost, setSubscriptionCost] = React.useState(0);
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [message, setMessage] = React.useState({ text: '', type: '' });
@@ -101,8 +102,45 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
     }
   };
 
+  const handleUpdateSubscriptionCost = async () => {
+    if (!user) return;
+    setIsUpdating(true);
+    try {
+      const ccas = await apiService.getCCAs();
+      const myCCA = ccas.find((c: any) => c.nickname === user.nickname);
+      
+      if (!myCCA) {
+        setMessage({ text: '크리에이터 계정을 찾을 수 없습니다.', type: 'error' });
+        return;
+      }
+
+      const result = await apiService.updateCCA(myCCA.id, { subscription_cost: subscriptionCost });
+      if (result.success) {
+        setMessage({ text: '구독료가 설정되었습니다.', type: 'success' });
+        setTimeout(() => setActiveModal(null), 1500);
+      } else {
+        setMessage({ text: '저장에 실패했습니다.', type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: '오류가 발생했습니다.', type: 'error' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeModal === 'creator' && user) {
+      apiService.getCCAs().then(ccas => {
+        const myCCA = ccas.find((c: any) => c.nickname === user.nickname);
+        if (myCCA) setSubscriptionCost(myCCA.subscriptionCost || 0);
+      });
+    }
+  }, [activeModal, user]);
+
   const menuItems = [
     { id: 'profile', icon: 'person', label: '프로필 수정', desc: '닉네임, 프로필 이미지 변경' },
+    { id: 'billing', icon: 'account_balance_wallet', label: '충전 및 결제', desc: '포인트 충전 및 사용 내역' },
+    { id: 'creator', icon: 'stars', label: '구독료 설정', desc: '내 채널의 월간 구독 금액 설정' },
     { id: 'notifications', icon: 'notifications', label: '알림 설정', desc: '푸시 알림 및 이메일 설정' },
     { id: 'password', icon: 'lock', label: '비밀번호 변경', desc: '계정 보안 설정' },
     { id: 'language', icon: 'translate', label: '언어 설정', desc: '한국어 / English' },
@@ -300,6 +338,47 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
                   </div>
                   <button className="ft-primary-btn" onClick={handleUpdateProfile} disabled={isUpdating}>
                     {isUpdating ? '저장 중...' : '변경사항 저장'}
+                  </button>
+                </div>
+              )}
+
+                </div>
+              )}
+
+              {activeModal === 'billing' && (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)', marginBottom: 20 }}>
+                    보유 포인트: <span style={{ fontWeight: 800, color: 'var(--ft-primary)', fontSize: 18 }}>{user?.points || 0} P</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                    {[5000, 10000, 30000, 50000].map(amt => (
+                      <button key={amt} className="ft-secondary-btn" style={{ margin: 0, padding: '12px 0' }}>
+                        {amt.toLocaleString()} P
+                      </button>
+                    ))}
+                  </div>
+                  <button className="ft-primary-btn" style={{ background: '#000' }}>결제 수단 등록</button>
+                  <p style={{ fontSize: 11, color: 'var(--ft-text-muted)', marginTop: 16 }}>* 실제 결제 기능은 현재 연동 준비 중입니다.</p>
+                </div>
+              )}
+
+              {activeModal === 'creator' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--ft-text-tertiary)', marginBottom: 8, display: 'block' }}>월간 구독료 (Point)</label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="number" className="ft-input" value={subscriptionCost} 
+                        onChange={e => setSubscriptionCost(parseInt(e.target.value) || 0)} 
+                        style={{ marginBottom: 0, paddingRight: 40 }}
+                        placeholder="0"
+                      />
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontWeight: 700, fontSize: 13, color: 'var(--ft-text-tertiary)' }}>P</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: 'var(--ft-text-muted)', marginTop: 8 }}>유저들이 내 채널을 1개월간 구독할 때 지불할 금액을 설정합니다.</p>
+                  </div>
+                  <button className="ft-primary-btn" onClick={handleUpdateSubscriptionCost} disabled={isUpdating}>
+                    {isUpdating ? '저장 중...' : '구독료 저장'}
                   </button>
                 </div>
               )}
