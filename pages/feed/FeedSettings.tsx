@@ -342,9 +342,6 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
                 </div>
               )}
 
-                </div>
-              )}
-
               {activeModal === 'billing' && (
                 <div style={{ textAlign: 'center', padding: '20px 0' }}>
                   <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)', marginBottom: 20 }}>
