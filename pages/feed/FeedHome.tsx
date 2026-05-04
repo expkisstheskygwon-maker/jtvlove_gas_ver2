@@ -28,7 +28,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [onDutyCCAs, setOnDutyCCAs] = useState<CCA[]>([]);
   const [subscribedIds, setSubscribedIds] = useState<string[]>([]);
-  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [followingCCAIds, setFollowingCCAIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
@@ -43,10 +43,12 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       setOnDutyCCAs(ccas.slice(0, 10));
 
       if (user?.id) {
-        const subs = await apiService.getSubscriptions(user.id);
+        const [subs, ccaFollows] = await Promise.all([
+          apiService.getSubscriptions(user.id),
+          apiService.checkCCAFollow(user.id, '')
+        ]);
         setSubscribedIds(subs);
-        const follows = await apiService.checkCCAFollow(user.id, '');
-        setFollowingIds(follows.followedIds || []);
+        setFollowingCCAIds(ccaFollows.followedIds || []);
       }
     } catch (err) {
       console.error('Feed load error:', err);
@@ -64,24 +66,22 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     } else if (tab === 'subscribed') {
       setFeedItems(allFeedItems.filter(item => subscribedIds.includes(item.ccaId)));
     } else if (tab === 'following') {
-      setFeedItems(allFeedItems.filter(item => followingIds.includes(item.ccaId)));
+      setFeedItems(allFeedItems.filter(item => followingCCAIds.includes(item.ccaId)));
     }
   };
 
-  const handleSubscribe = async (e: React.MouseEvent, targetId: string) => {
+  const handleFollow = async (e: React.MouseEvent, ccaId: string) => {
     e.stopPropagation();
     if (!user) {
-      handleNavigate('/feed'); // Triggers login modal
+      handleNavigate('/feed');
       return;
     }
     
-    const result = await apiService.toggleSubscription(user.id, targetId);
-    if (result.success) {
-      if (result.isSubscribed) {
-        setSubscribedIds(prev => [...prev, targetId]);
-      } else {
-        setSubscribedIds(prev => prev.filter(id => id !== targetId));
-      }
+    const result = await apiService.toggleCCAFollow(user.id, ccaId);
+    if (result.isFollowing) {
+      setFollowingCCAIds(prev => [...prev, ccaId]);
+    } else {
+      setFollowingCCAIds(prev => prev.filter(id => id !== ccaId));
     }
   };
 
@@ -111,8 +111,8 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       {/* Tabs (Feed filter) */}
       <div className="ft-tabs">
         <button className={`ft-tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => onTabChange('all')}>전체</button>
-        <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => onTabChange('subscribed')}>구독</button>
         <button className={`ft-tab ${activeTab === 'following' ? 'active' : ''}`} onClick={() => onTabChange('following')}>팔로우</button>
+        <button className={`ft-tab ${activeTab === 'subscribed' ? 'active' : ''}`} onClick={() => onTabChange('subscribed')}>구독</button>
       </div>
 
       {/* Feed Posts */}
@@ -130,26 +130,25 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   onClick={() => goToProfile(item.ccaNickname || item.ccaName)}
                 />
                 <div className="ft-post-meta">
-                  <div className="ft-post-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div className="ft-post-author" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span
                       className="ft-post-author-name"
                       onClick={() => goToProfile(item.ccaNickname || item.ccaName)}
+                      style={{ flex: 1, minWidth: 0 }}
                     >
                       {item.ccaNickname || item.ccaName}
-                      <span style={{ color: 'var(--ft-primary)', fontSize: 14, marginLeft: 4 }}>🔥</span>
                     </span>
                     {user?.id !== item.ccaId && (
-                      <button 
-                        className={`ft-follow-btn ${subscribedIds.includes(item.ccaId) ? 'subscribed' : ''}`}
-                        onClick={(e) => handleSubscribe(e, item.ccaId)}
-                        style={{ 
-                          fontSize: 11, padding: '4px 10px', borderRadius: 12, 
-                          background: subscribedIds.includes(item.ccaId) ? 'var(--ft-bg-tertiary)' : 'var(--ft-gradient)',
-                          color: subscribedIds.includes(item.ccaId) ? 'var(--ft-text-secondary)' : '#fff',
-                          border: 'none', fontWeight: 800, cursor: 'pointer'
+                      <button
+                        onClick={(e) => handleFollow(e, item.ccaId)}
+                        className="ft-follow-pill"
+                        style={{
+                          background: followingCCAIds.includes(item.ccaId) ? 'transparent' : 'var(--ft-primary)',
+                          color: followingCCAIds.includes(item.ccaId) ? 'var(--ft-text-secondary)' : '#fff',
+                          border: followingCCAIds.includes(item.ccaId) ? '1px solid var(--ft-border)' : 'none',
                         }}
                       >
-                        {subscribedIds.includes(item.ccaId) ? '구독 중' : '구독'}
+                        {followingCCAIds.includes(item.ccaId) ? '팔로잉' : '팔로우'}
                       </button>
                     )}
                   </div>
@@ -225,7 +224,11 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       ) : (
         <div className="ft-empty">
           <span className="material-symbols-outlined">dynamic_feed</span>
-          <p>아직 등록된 포스트가 없습니다.</p>
+          <p>
+            {activeTab === 'following' ? '팔로우한 CCA의 포스트가 없습니다.' :
+             activeTab === 'subscribed' ? '구독한 CCA의 포스트가 없습니다.' :
+             '아직 등록된 포스트가 없습니다.'}
+          </p>
         </div>
       )}
       {/* Image Viewer Modal */}

@@ -507,6 +507,17 @@
   font-size: 14px;
 }
 
+.ft-post-action-spacer { flex: 1; }
+
+/* ═══ Follow Button ═══ */
+.ft-follow-pill {
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 800;
+  cursor: pointer; transition: all 0.2s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.ft-follow-pill:hover { opacity: 0.85; transform: scale(1.03); }
+
 /* ═══ Messaging System ═══ */
 .ft-msg-item {
   display: flex; align-items: center; gap: 14px;

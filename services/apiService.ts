@@ -1798,6 +1798,59 @@ export const apiService = {
       console.error('toggleSubscription error:', error);
       return { success: false, isSubscribed: false };
     }
+  },
+
+  // ═══════════════════════════════════════════
+  // User Follows (유저 간 팔로우)
+  // ═══════════════════════════════════════════
+  async getUserFollowing(followerId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows?followerId=${encodeURIComponent(followerId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.followingIds || [];
+    } catch (error) {
+      console.error('getUserFollowing error:', error);
+      return [];
+    }
+  },
+
+  async checkUserFollow(followerId: string, followingId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows?followerId=${encodeURIComponent(followerId)}&followingId=${encodeURIComponent(followingId)}`);
+      if (!response.ok) return false;
+      const data = await response.json();
+      return data.isFollowing;
+    } catch (error) {
+      console.error('checkUserFollow error:', error);
+      return false;
+    }
+  },
+
+  async toggleUserFollow(followerId: string, followingId: string): Promise<{ success: boolean; isFollowing: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followerId, followingId }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle user follow');
+      return await response.json();
+    } catch (error) {
+      console.error('toggleUserFollow error:', error);
+      return { success: false, isFollowing: false };
+    }
+  },
+
+  async getUserFollowers(followingId: string): Promise<{ followerIds: string[]; count: number }> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows?followingId=${encodeURIComponent(followingId)}&mode=followers`);
+      if (!response.ok) return { followerIds: [], count: 0 };
+      return await response.json();
+    } catch (error) {
+      console.error('getUserFollowers error:', error);
+      return { followerIds: [], count: 0 };
+    }
   }
 };
 

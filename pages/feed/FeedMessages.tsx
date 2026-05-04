@@ -58,11 +58,11 @@ const FeedMessages: React.FC = () => {
         apiService.getMessages({ receiverId: user.id, receiverType: 'user', limit: 100 }),
         apiService.getMessages({ senderId: user.id, senderType: 'user', limit: 100 }),
         apiService.getSubscriptions(user.id),
-        apiService.checkCCAFollow(user.id, '')
+        apiService.getUserFollowing(user.id)
       ]);
 
       setSubscribedIds(subs);
-      setFollowingIds(follows.followedIds || []);
+      setFollowingIds(follows);
       
       const allMessages = [...received, ...sent].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
