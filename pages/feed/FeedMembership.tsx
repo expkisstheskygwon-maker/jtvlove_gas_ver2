@@ -16,7 +16,7 @@ const FeedMembership: React.FC = () => {
           color: '#fff', border: 'none'
         }}>
           <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.8, textTransform: 'uppercase', marginBottom: 8 }}>Premium</div>
-          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>LUMINARY Premium</div>
+          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>JTVLOVE Premium</div>
           <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 16 }}>모든 크리에이터의 독점 콘텐츠를 무제한으로 즐기세요</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 16 }}>
             <span style={{ fontSize: 28, fontWeight: 900 }}>₩9,900</span>

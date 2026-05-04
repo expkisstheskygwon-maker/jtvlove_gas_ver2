@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   LUMINARY — Perfect Layout Fix
+   JTVLOVE — Perfect Layout Fix
    ═══════════════════════════════════════════════ */
 
 :root {
@@ -60,10 +60,18 @@
 }
 .ft-sidebar-pc:hover { width: var(--ft-rail-expanded); box-shadow: var(--ft-shadow-lg); }
 
-.ft-side-logo { height: 48px; display: flex; align-items: center; padding-left: 12px; margin-bottom: 24px; }
-.ft-side-logo-icon { width: 32px; height: 32px; background: var(--ft-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; }
-.ft-side-logo-text { margin-left: 16px; font-weight: 800; font-size: 20px; opacity: 0; transition: opacity 0.2s; white-space: nowrap; }
-.ft-sidebar-pc:hover .ft-side-logo-text { opacity: 1; }
+.ft-side-logo { height: 48px; display: flex; align-items: center; padding-left: 8px; margin-bottom: 24px; overflow: hidden; }
+.ft-side-logo-emblem {
+  width: 36px; height: 36px; min-width: 36px; min-height: 36px;
+  background: var(--ft-gradient); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+}
+.ft-side-logo-full {
+  margin-left: 12px; opacity: 0; transition: opacity 0.2s; white-space: nowrap;
+  display: flex; align-items: center;
+}
+.ft-sidebar-pc:hover .ft-side-logo-full { opacity: 1; }
 
 .ft-side-nav { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .ft-side-item {

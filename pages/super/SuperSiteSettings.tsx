@@ -31,6 +31,7 @@ const SuperSiteSettings: React.FC = () => {
     hq_address: '',
     logo_url: '',
     favicon_url: '',
+    emblem_url: '',
     venues_hero_image: '',
     venues_hero_title: '',
     venues_hero_subtitle: '',
@@ -85,6 +86,7 @@ const SuperSiteSettings: React.FC = () => {
           hq_address: siteData.hq_address || '',
           logo_url: siteData.logo_url || '',
           favicon_url: siteData.favicon_url || '',
+          emblem_url: siteData.emblem_url || '',
           venues_hero_image: siteData.venues_hero_image || '',
           venues_hero_title: siteData.venues_hero_title || '',
           venues_hero_subtitle: siteData.venues_hero_subtitle || '',
@@ -310,6 +312,24 @@ const SuperSiteSettings: React.FC = () => {
                         <div className="flex-1 space-y-2">
                           <input type="file" onChange={(e) => e.target.files?.[0] && handleImageUpload('favicon_url', e.target.files[0])} className="w-full text-[10px] text-gray-500 file:bg-red-600/10 file:text-red-500 file:border-0 file:px-4 file:py-2 file:rounded-lg file:font-black file:mr-4 cursor-pointer" />
                           {settings.favicon_url && <p className="text-[8px] text-zinc-500 truncate max-w-[200px]">{settings.favicon_url.startsWith('data:') ? 'Base64 Encoded Icon' : settings.favicon_url}</p>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Emblem Upload <span className="text-[8px] text-[#ee9d2b]">(피드 사이드바 축소 시 표시용 아이콘)</span></label>
+                      <div className="flex items-center gap-4">
+                        <div className="size-16 bg-black rounded-xl border border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {settings.emblem_url ? (
+                            <img src={settings.emblem_url} className="size-10 object-contain" alt="Emblem" />
+                          ) : (
+                            <span className="text-[8px] font-black text-zinc-700 uppercase">No Emblem</span>
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <input type="file" onChange={(e) => e.target.files?.[0] && handleImageUpload('emblem_url', e.target.files[0])} className="w-full text-[10px] text-gray-500 file:bg-red-600/10 file:text-red-500 file:border-0 file:px-4 file:py-2 file:rounded-lg file:font-black file:mr-4 cursor-pointer" />
+                          {settings.emblem_url && <p className="text-[8px] text-zinc-500 truncate max-w-[200px]">{settings.emblem_url.startsWith('data:') ? 'Base64 Encoded Emblem' : settings.emblem_url}</p>}
+                          <p className="text-[8px] text-zinc-600">로고와 별도로 정사각형 아이콘/앰블럼을 등록하세요. 피드 사이드바가 접힐 때 표시됩니다.</p>
                         </div>
                       </div>
                     </div>

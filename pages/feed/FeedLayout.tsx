@@ -53,6 +53,7 @@ const FeedLayout: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(!user && !isGuest);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [recoCCAs, setRecoCCAs] = useState<CCA[]>([]);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
 
   // Sync login modal state with user auth status
   useEffect(() => {
@@ -118,8 +119,12 @@ const FeedLayout: React.FC = () => {
   useEffect(() => {
     const loadReco = async () => {
       try {
-        const data = await apiService.getCCAs();
+        const [data, settings] = await Promise.all([
+          apiService.getCCAs(),
+          apiService.getSiteSettings()
+        ]);
         setRecoCCAs(data.slice(0, 5));
+        if (settings) setSiteSettings(settings);
       } catch (e) { console.error(e); }
     };
     loadReco();
@@ -142,9 +147,23 @@ const FeedLayout: React.FC = () => {
         
         {/* ═══ PC Sidebar ═══ */}
         <aside className="ft-sidebar-pc">
-          <div className="ft-side-logo" onClick={() => navigate('/feed')}>
-            <div className="ft-side-logo-icon">L</div>
-            <div className="ft-side-logo-text">LUMINARY</div>
+          <div className="ft-side-logo" onClick={() => navigate('/feed')} style={{ cursor: 'pointer' }}>
+            <div className="ft-side-logo-emblem">
+              {siteSettings?.emblem_url ? (
+                <img src={siteSettings.emblem_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : siteSettings?.logo_url ? (
+                <img src={siteSettings.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>J</span>
+              )}
+            </div>
+            <div className="ft-side-logo-full">
+              {siteSettings?.logo_url ? (
+                <img src={siteSettings.logo_url} alt="JTVLOVE" style={{ height: 28, objectFit: 'contain' }} />
+              ) : (
+                <span style={{ fontWeight: 800, fontSize: 20 }}>JTVLOVE</span>
+              )}
+            </div>
           </div>
 
           <nav className="ft-side-nav">
@@ -190,7 +209,7 @@ const FeedLayout: React.FC = () => {
               </div>
               <div className="ft-right-user-info">
                 <div className="ft-right-username">{user?.nickname || "Guest"}</div>
-                <div className="ft-right-name">{user?.realName || "Luminary Member"}</div>
+                <div className="ft-right-name">{user?.realName || "JTVLOVE Member"}</div>
               </div>
               <button className="ft-switch-btn" onClick={() => navigate('/settings')}>전환</button>
             </div>
@@ -214,9 +233,9 @@ const FeedLayout: React.FC = () => {
             ))}
 
             <div style={{ marginTop: 30, fontSize: 11, color: 'var(--ft-text-tertiary)', lineHeight: 1.6 }}>
-              도움말 · 약관 · 개인정보처리방침 · Luminary Verified
+              도움말 · 약관 · 개인정보처리방침 · JTVLOVE Verified
               <br /><br />
-              © 2026 LUMINARY
+              © 2026 JTVLOVE
             </div>
           </aside>
         </div>
