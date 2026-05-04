@@ -1730,33 +1730,6 @@ export const apiService = {
     }
   },
 
-  // CCA Follows
-  async checkCCAFollow(userId: string, ccaId: string): Promise<{ isFollowing: boolean }> {
-    try {
-      const url = `${API_BASE}/cca-follows?userId=${encodeURIComponent(userId)}&ccaId=${encodeURIComponent(ccaId)}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to check follow');
-      return await response.json();
-    } catch (error) {
-      console.error('checkCCAFollow error:', error);
-      return { isFollowing: false };
-    }
-  },
-
-  async toggleCCAFollow(userId: string, ccaId: string): Promise<{ isFollowing: boolean }> {
-    try {
-      const response = await fetch(`${API_BASE}/cca-follows`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, ccaId }),
-      });
-      if (!response.ok) throw new Error('Failed to toggle follow');
-      return await response.json();
-    } catch (error) {
-      console.error('toggleCCAFollow error:', error);
-      return { isFollowing: false };
-    }
-  },
 
   // ═══════════════════════════════════════════
   // User Subscriptions
@@ -1851,6 +1824,18 @@ export const apiService = {
       console.error('getUserFollowers error:', error);
       return { followerIds: [], count: 0 };
     }
+  },
+
+  async checkCCAFollow(userId: string, ccaId: string): Promise<{ isFollowing: boolean; followedIds: string[] }> {
+    const followingIds = await this.getUserFollowing(userId);
+    return { 
+      isFollowing: ccaId ? followingIds.includes(ccaId) : false,
+      followedIds: followingIds
+    };
+  },
+
+  async toggleCCAFollow(userId: string, ccaId: string): Promise<{ success: boolean; isFollowing: boolean }> {
+    return this.toggleUserFollow(userId, ccaId);
   }
 };
 

@@ -46,7 +46,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
               c.subscription_cost as cca_subscription_cost,
               v.name as venue_name,
               v.region as venue_region,
-              (CASE WHEN (SELECT 1 FROM cca_follows f WHERE f.cca_id = c.id AND f.user_id = ? LIMIT 1) IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
+              (CASE WHEN (SELECT 1 FROM user_follows uf WHERE uf.follower_id = ? AND uf.following_id = c.id LIMIT 1) IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
               ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
             FROM gallery g
             JOIN ccas c ON g.cca_id = c.id
