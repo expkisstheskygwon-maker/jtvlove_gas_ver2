@@ -39,6 +39,13 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     ccaName: string;
     cost: number;
   }>({ isOpen: false, ccaId: '', ccaName: '', cost: 0 });
+  
+  // Unfollow Modal State
+  const [unfollowModal, setUnfollowModal] = useState<{
+    isOpen: boolean;
+    ccaId: string;
+    ccaName: string;
+  }>({ isOpen: false, ccaId: '', ccaName: '' });
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -78,19 +85,32 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     }
   };
 
-  const handleFollow = async (e: React.MouseEvent, ccaId: string) => {
+  const handleFollow = async (e: React.MouseEvent, ccaId: string, ccaName: string) => {
     e.stopPropagation();
     if (!user) {
       handleNavigate('/feed');
       return;
     }
     
+    // 이미 팔로우 중이라면 취소 확인 모달 띄우기
+    if (followingCCAIds.includes(ccaId)) {
+      setUnfollowModal({ isOpen: true, ccaId, ccaName });
+      return;
+    }
+    
     const result = await apiService.toggleCCAFollow(user.id, ccaId);
     if (result.isFollowing) {
       setFollowingCCAIds(prev => [...prev, ccaId]);
-    } else {
-      setFollowingCCAIds(prev => prev.filter(id => id !== ccaId));
     }
+  };
+
+  const confirmUnfollow = async () => {
+    if (!user || !unfollowModal.ccaId) return;
+    const result = await apiService.toggleCCAFollow(user.id, unfollowModal.ccaId);
+    if (!result.isFollowing) {
+      setFollowingCCAIds(prev => prev.filter(id => id !== unfollowModal.ccaId));
+    }
+    setUnfollowModal({ isOpen: false, ccaId: '', ccaName: '' });
   };
 
   const handleSubscribeClick = (e: React.MouseEvent, item: any) => {
@@ -182,7 +202,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                     </span>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button
-                        onClick={(e) => handleFollow(e, item.ccaId)}
+                        onClick={(e) => handleFollow(e, item.ccaId, item.ccaNickname || item.ccaName)}
                         className="ft-follow-pill"
                         style={{
                           background: followingCCAIds.includes(item.ccaId) ? 'transparent' : 'var(--ft-primary)',
@@ -340,6 +360,37 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   현재 보유 포인트: {user.points?.toLocaleString() || 0} P
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unfollow Confirmation Modal */}
+      {unfollowModal.isOpen && (
+        <div className="ft-login-overlay" onClick={() => setUnfollowModal(prev => ({ ...prev, isOpen: false }))}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ padding: '30px', maxWidth: '350px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ 
+                width: 60, height: 60, borderRadius: '50%', background: '#fff5f5', 
+                margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 32, color: '#e03131' }}>person_remove</span>
+              </div>
+              <h2 style={{ fontSize: 18, marginBottom: 8 }}>팔로우 취소</h2>
+              <p style={{ color: 'var(--ft-text-secondary)', fontSize: 14, marginBottom: 24, lineHeight: 1.5 }}>
+                <strong>{unfollowModal.ccaName}</strong> 님의 팔로우를 <br /> 취소하시겠습니까?
+              </p>
+              
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="ft-secondary-btn" onClick={() => setUnfollowModal(prev => ({ ...prev, isOpen: false }))} style={{ flex: 1 }}>아니오</button>
+                <button 
+                  className="ft-primary-btn" 
+                  onClick={confirmUnfollow} 
+                  style={{ flex: 1, background: '#e03131' }}
+                >
+                  네, 취소합니다
+                </button>
+              </div>
             </div>
           </div>
         </div>
