@@ -619,6 +619,7 @@ export const apiService = {
         hq_address: 'Metro Manila, Philippines',
         logo_url: '',
         favicon_url: '',
+        emblem_url: '',
         venues_hero_image: '',
         venues_hero_title: '이달의 추천 JTV',
         venues_hero_subtitle: '최고의 서비스와 품격을 보장합니다.',

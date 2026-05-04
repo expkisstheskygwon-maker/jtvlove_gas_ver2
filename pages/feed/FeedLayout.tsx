@@ -151,15 +151,15 @@ const FeedLayout: React.FC = () => {
             <div className="ft-side-logo-emblem">
               {siteSettings?.emblem_url ? (
                 <img src={siteSettings.emblem_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-              ) : siteSettings?.logo_url ? (
-                <img src={siteSettings.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>J</span>
+                <div style={{ width: 36, height: 36, background: 'var(--ft-gradient)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>J</span>
+                </div>
               )}
             </div>
             <div className="ft-side-logo-full">
               {siteSettings?.logo_url ? (
-                <img src={siteSettings.logo_url} alt="JTVLOVE" style={{ height: 28, objectFit: 'contain' }} />
+                <img src={siteSettings.logo_url} alt="JTVLOVE" style={{ height: 30, objectFit: 'contain' }} />
               ) : (
                 <span style={{ fontWeight: 800, fontSize: 20 }}>JTVLOVE</span>
               )}
