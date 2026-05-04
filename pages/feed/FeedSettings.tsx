@@ -251,8 +251,21 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
       {activeModal && (
         <div className="ft-login-overlay" onClick={() => setActiveModal(null)}>
           <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ padding: 0 }}>
-            <div className="ft-login-banner">
+            <div className="ft-login-banner" style={{ position: 'relative' }}>
               {menuItems.find(m => m.id === activeModal)?.label}
+              <button 
+                onClick={() => setActiveModal(null)}
+                style={{
+                  position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%',
+                  width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', cursor: 'pointer', transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
+              </button>
             </div>
             
             <div style={{ padding: '0 30px 30px' }}>
