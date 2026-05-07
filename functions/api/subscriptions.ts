@@ -25,26 +25,32 @@ export const onRequest: any = async (context: any) => {
         try { await env.DB.prepare("ALTER TABLE user_subscriptions ADD COLUMN expires_at DATETIME").run(); } catch(e) {}
     } catch (e) { }
 
-    // GET: Check subscription status
+    // GET: Check subscription status or list subscribers/subscriptions
     if (request.method === "GET") {
         const subscriberId = url.searchParams.get("subscriberId");
         const targetId = url.searchParams.get("targetId");
 
-        if (!subscriberId) {
-            return new Response(JSON.stringify({ error: "subscriberId is required" }), { status: 400, headers });
-        }
-
         try {
-            if (targetId) {
+            if (subscriberId && targetId) {
+                // Check specific status
                 const sub = await env.DB.prepare(
                     "SELECT * FROM user_subscriptions WHERE subscriber_id = ? AND target_id = ? AND (expires_at IS NULL OR expires_at > datetime('now')) AND status = 'active'"
                 ).bind(subscriberId, targetId).first();
                 return new Response(JSON.stringify({ isSubscribed: !!sub, subscription: sub }), { headers });
-            } else {
+            } else if (subscriberId) {
+                // List what I am subscribing to
                 const { results } = await env.DB.prepare(
                     "SELECT target_id FROM user_subscriptions WHERE subscriber_id = ? AND (expires_at IS NULL OR expires_at > datetime('now')) AND status = 'active'"
                 ).bind(subscriberId).all();
                 return new Response(JSON.stringify({ subscribedIds: results.map((r: any) => r.target_id) }), { headers });
+            } else if (targetId) {
+                // List who is subscribing to me
+                const { results } = await env.DB.prepare(
+                    "SELECT subscriber_id FROM user_subscriptions WHERE target_id = ? AND (expires_at IS NULL OR expires_at > datetime('now')) AND status = 'active'"
+                ).bind(targetId).all();
+                return new Response(JSON.stringify({ subscriberIds: results.map((r: any) => r.subscriber_id) }), { headers });
+            } else {
+                return new Response(JSON.stringify({ error: "subscriberId or targetId is required" }), { status: 400, headers });
             }
         } catch (error: any) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });

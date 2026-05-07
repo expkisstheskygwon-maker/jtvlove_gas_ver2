@@ -3,6 +3,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/apiService';
 
+interface UserItem {
+  id: string;
+  nickname: string;
+  realName: string;
+  profileImage: string;
+}
+
 interface FeedSettingsProps {
   theme?: 'dark' | 'light';
   toggleTheme?: () => void;
@@ -11,11 +18,60 @@ interface FeedSettingsProps {
 const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme }) => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
-
-  // Modal States
-  const [activeModal, setActiveModal] = React.useState<string | null>(null);
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [activeModal, setActiveModal] = React.useState<string | null>(null);
+
+  const [activeList, setActiveList] = React.useState<'following' | 'followers' | 'subscribed' | 'subscribers' | null>(null);
+  const [userList, setUserList] = React.useState<UserItem[]>([]);
+  const [loadingList, setLoadingList] = React.useState(false);
+  const [counts, setCounts] = React.useState({ following: 0, followers: 0, subscribed: 0, subscribers: 0 });
+
+  React.useEffect(() => {
+    if (user) {
+      loadStats();
+    }
+  }, [user]);
+
+  const loadStats = async () => {
+    if (!user) return;
+    try {
+      const [following, followers, subscribed, subscribers] = await Promise.all([
+        apiService.getUserFollowing(user.id),
+        apiService.getUserFollowers(user.id),
+        apiService.getSubscriptions(user.id),
+        apiService.getUserSubscribers(user.id)
+      ]);
+      setCounts({
+        following: following.length,
+        followers: followers.count || followers.length,
+        subscribed: subscribed.length,
+        subscribers: subscribers.length
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const loadUserList = async (type: 'following' | 'followers' | 'subscribed' | 'subscribers') => {
+    if (!user) return;
+    setActiveList(type);
+    setLoadingList(true);
+    setUserList([]);
+    try {
+      let ids: string[] = [];
+      if (type === 'following') ids = await apiService.getUserFollowing(user.id);
+      else if (type === 'followers') {
+        const res = await apiService.getUserFollowers(user.id);
+        ids = res.followerIds || res;
+      }
+      else if (type === 'subscribed') ids = await apiService.getSubscriptions(user.id);
+      else if (type === 'subscribers') ids = await apiService.getUserSubscribers(user.id);
+
+      if (ids.length > 0) {
+        const users = await apiService.getUsersByIds(ids);
+        setUserList(users);
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoadingList(false); }
+  };
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Form States
@@ -152,8 +208,17 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
   return (
     <>
       <div className="ft-page-header">
-        <div className="ft-page-title">
+        <div className="ft-page-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <span>개인 설정</span>
+          <button 
+            className="ft-theme-mini-btn" 
+            onClick={toggleTheme}
+            title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -179,7 +244,28 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
             {user ? (
               <>
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{user.nickname || user.realName || 'User'}</div>
-                <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)' }}>@{user.nickname || 'user'}</div>
+                <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)', marginBottom: 8 }}>@{user.nickname || 'user'}</div>
+                
+                <div className="ft-profile-stats">
+                  <div className="ft-stat-item" onClick={() => loadUserList('following')}>
+                    <div className="ft-stat-num">{counts.following}</div>
+                    <div className="ft-stat-label">팔로잉</div>
+                  </div>
+                  <div className="ft-stat-item" onClick={() => loadUserList('followers')}>
+                    <div className="ft-stat-num">{counts.followers}</div>
+                    <div className="ft-stat-label">팔로워</div>
+                  </div>
+                  <div className="ft-stat-item" onClick={() => loadUserList('subscribed')}>
+                    <div className="ft-stat-num">{counts.subscribed}</div>
+                    <div className="ft-stat-label">구독 중</div>
+                  </div>
+                  {(user?.role === 'cca' || user?.role === 'super_admin') && (
+                    <div className="ft-stat-item" onClick={() => loadUserList('subscribers')}>
+                      <div className="ft-stat-num">{counts.subscribers}</div>
+                      <div className="ft-stat-label">구독자</div>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -200,46 +286,38 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
           </div>
         </div>
 
-        {/* Theme Toggle Card */}
-        <div className="ft-membership-card">
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>테마 설정</div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {/* Dark */}
-            <button
-              onClick={() => isDark ? null : toggleTheme?.()}
-              style={{
-                flex: 1, padding: '16px 12px',
-                background: isDark ? 'var(--ft-primary)' : 'var(--ft-bg-tertiary)',
-                border: isDark ? '2px solid var(--ft-primary)' : '2px solid var(--ft-border)',
-                borderRadius: 'var(--ft-radius-md)',
-                color: isDark ? '#fff' : 'var(--ft-text-secondary)',
-                fontWeight: 700, fontSize: 13,
-                display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 8,
-                cursor: 'pointer', transition: 'all 0.2s',
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: 28 }}>dark_mode</span>
-              다크 모드
-            </button>
-            {/* Light */}
-            <button
-              onClick={() => !isDark ? null : toggleTheme?.()}
-              style={{
-                flex: 1, padding: '16px 12px',
-                background: !isDark ? 'var(--ft-primary)' : 'var(--ft-bg-tertiary)',
-                border: !isDark ? '2px solid var(--ft-primary)' : '2px solid var(--ft-border)',
-                borderRadius: 'var(--ft-radius-md)',
-                color: !isDark ? '#fff' : 'var(--ft-text-secondary)',
-                fontWeight: 700, fontSize: 13,
-                display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 8,
-                cursor: 'pointer', transition: 'all 0.2s',
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: 28 }}>light_mode</span>
-              라이트 모드
-            </button>
+        {activeList && (
+          <div className="ft-user-list-overlay" onClick={() => setActiveList(null)}>
+            <div className="ft-user-list-modal" onClick={e => e.stopPropagation()}>
+              <div className="ft-user-list-header">
+                <h3>{activeList === 'following' ? '팔로잉' : activeList === 'followers' ? '팔로워' : activeList === 'subscribed' ? '구독 중' : '구독자'}</h3>
+                <button className="ft-close-btn" onClick={() => setActiveList(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ft-text)' }}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="ft-user-list-body">
+                {loadingList ? (
+                  <div style={{ padding: 20, textAlign: 'center' }}>로딩 중...</div>
+                ) : userList.length === 0 ? (
+                  <div style={{ padding: 40, textAlign: 'center', color: 'var(--ft-text-tertiary)' }}>목록이 비어있습니다.</div>
+                ) : (
+                  userList.map(u => (
+                    <div key={u.id} className="ft-user-list-item" onClick={() => { navigate(`/@${u.nickname}`); setActiveList(null); }}>
+                      <div className="ft-user-list-avatar">
+                        <img src={u.profileImage || `https://ui-avatars.com/api/?name=${u.nickname}`} alt="" />
+                      </div>
+                      <div className="ft-user-list-info">
+                        <div className="ft-user-list-nick">{u.nickname}</div>
+                        <div className="ft-user-list-real">{u.realName}</div>
+                      </div>
+                      <button className="ft-user-list-action">방문</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Menu Items */}
         <div className="ft-membership-card" style={{ padding: 0, overflow: 'hidden' }}>

@@ -112,18 +112,36 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         }
     }
 
-    // GET: Single user info (in reality should be authenticated session based)
+    // GET: Single user info or Bulk fetch by IDs
     if (request.method === 'GET') {
         const userId = url.searchParams.get('id');
-        if (!userId) return new Response("userId is required", { status: 400 });
+        const idsParam = url.searchParams.get('ids');
 
         try {
+            if (idsParam) {
+                const ids = idsParam.split(',').filter(id => id.trim() !== '');
+                if (ids.length === 0) return new Response(JSON.stringify([]), { headers: { "Content-Type": "application/json" } });
+
+                // Construct query with multiple placeholders
+                const placeholders = ids.map(() => '?').join(',');
+                const query = `SELECT id, nickname, real_name, profile_image FROM users WHERE id IN (${placeholders})`;
+                const { results } = await env.DB.prepare(query).bind(...ids).all();
+
+                return new Response(JSON.stringify((results || []).map((u: any) => ({
+                    id: u.id,
+                    nickname: u.nickname,
+                    realName: u.real_name,
+                    profileImage: u.profile_image
+                }))), {
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
+            if (!userId) return new Response("userId is required", { status: 400 });
+
             const user = await env.DB.prepare("SELECT * FROM users WHERE id = ?").bind(userId).first();
             if (!user) return new Response("User not found", { status: 404 });
 
-            // Calculate XP for next level (placeholder logic matching user's table)
-            // Level 1: 80, Level 5: 108, Level 10: 159...
-            // For simplicity, let's use a function to get next level XP
             const getNextLevelXp = (lvl: number) => Math.floor(80 * Math.pow(1.05, lvl - 1));
             const nextLevelXp = getNextLevelXp(user.level);
 

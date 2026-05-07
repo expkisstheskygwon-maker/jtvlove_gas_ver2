@@ -1030,6 +1030,18 @@ export const apiService = {
     }
   },
 
+  async getUsersByIds(ids: string[]): Promise<any[]> {
+    if (!ids || ids.length === 0) return [];
+    try {
+      const response = await fetch(`${API_BASE}/users?ids=${encodeURIComponent(ids.join(','))}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getUsersByIds error:', error);
+      return [];
+    }
+  },
+
   // Board Configs
   async getBoardConfigs(): Promise<any[]> {
     try {
@@ -1726,6 +1738,18 @@ export const apiService = {
       return data.subscribedIds || [];
     } catch (error) {
       console.error('getSubscriptions error:', error);
+      return [];
+    }
+  },
+
+  async getUserSubscribers(targetId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?targetId=${encodeURIComponent(targetId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.subscriberIds || [];
+    } catch (error) {
+      console.error('getUserSubscribers error:', error);
       return [];
     }
   },
