@@ -10,6 +10,7 @@ import FeedSearch from './FeedSearch';
 import FeedMessages from './FeedMessages';
 import FeedMembership from './FeedMembership';
 import FeedSettings from './FeedSettings';
+import FeedNotifications from './FeedNotifications';
 import './FeedLayout.css';
 
 const NAV_ITEMS = [
@@ -38,6 +39,7 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
     case '/messages': return <FeedMessages />;
     case '/membership': return <FeedMembership />;
     case '/settings': return <FeedSettings theme={theme} toggleTheme={toggleTheme} />;
+    case '/notifications': return <FeedNotifications />;
     case '/':
     case '/feed':
     default:
@@ -56,7 +58,7 @@ const FeedLayout: React.FC = () => {
   const [siteSettings, setSiteSettings] = useState<any>(null);
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [showEmptyBubble, setShowEmptyBubble] = useState(false);
 
   // Sync login modal state with user auth status
   useEffect(() => {
@@ -148,27 +150,17 @@ const FeedLayout: React.FC = () => {
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
-  const handleMarkAllRead = async () => {
-    if (!user) return;
-    const success = await apiService.markAllNotificationsRead(user.id);
-    if (success) {
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
-      setUnreadNotifCount(0);
+  const handleNotificationButtonClick = () => {
+    if (!user && !isGuest) {
+      openLoginModal();
+      return;
     }
-  };
-
-  const handleNotificationClick = async (notif: any) => {
-    if (!notif.is_read) {
-      await apiService.markNotificationRead(notif.id);
-      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: 1 } : n));
-      setUnreadNotifCount(prev => Math.max(0, prev - 1));
+    if (notifications.length > 0) {
+      navigate('/notifications');
+    } else {
+      setShowEmptyBubble(true);
+      setTimeout(() => setShowEmptyBubble(false), 2000);
     }
-    setShowNotifDropdown(false);
-
-    if (notif.type === 'private') {
-      navigate('/messages');
-    }
-    // Other types could navigate elsewhere
   };
 
   const toggleTheme = useCallback(() => {
@@ -227,54 +219,17 @@ const FeedLayout: React.FC = () => {
           <div className="ft-side-footer">
             <div className="ft-nav-notif">
               <button 
-                className={`ft-side-item ${showNotifDropdown ? 'active' : ''}`} 
-                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                className={`ft-side-item ${location.pathname === '/notifications' ? 'active' : ''}`} 
+                onClick={handleNotificationButtonClick}
               >
                 <span className="material-symbols-outlined">notifications</span>
                 <span>알림</span>
                 {unreadNotifCount > 0 && <div className="ft-notif-badge" />}
               </button>
 
-              {showNotifDropdown && (
-                <div className="ft-notif-dropdown">
-                  <div className="ft-notif-header">
-                    <span>알림</span>
-                    <button 
-                      onClick={handleMarkAllRead}
-                      style={{ background: 'none', border: 'none', color: 'var(--ft-primary)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      모두 읽음
-                    </button>
-                  </div>
-                  <div className="ft-notif-list">
-                    {notifications.length === 0 ? (
-                      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ft-text-tertiary)', fontSize: 14 }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 40, opacity: 0.3, marginBottom: 12, display: 'block' }}>notifications_off</span>
-                        새로운 알림이 없습니다.
-                      </div>
-                    ) : (
-                      notifications.map((n: any) => (
-                        <div 
-                          key={n.id} 
-                          className={`ft-notif-item ${(!n.is_read && n.is_read !== undefined) ? 'unread' : ''}`}
-                          onClick={() => handleNotificationClick(n)}
-                        >
-                          <div className="ft-notif-icon">
-                            <span className="material-symbols-outlined">
-                              {n.type === 'private' ? 'mail' : n.type === 'system' ? 'info' : 'notifications'}
-                            </span>
-                          </div>
-                          <div className="ft-notif-content">
-                            <div className="ft-notif-title">{n.title}</div>
-                            <div className="ft-notif-desc">{n.content}</div>
-                            <div className="ft-notif-time">
-                              {new Date(n.created_at).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+              {showEmptyBubble && (
+                <div className="ft-empty-bubble">
+                  새로운 알림이 없습니다
                 </div>
               )}
             </div>
