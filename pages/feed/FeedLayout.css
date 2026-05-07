@@ -788,10 +788,16 @@
   border: 1px solid var(--ft-border-light);
   transition: all 0.2s;
 }
+.ft-dark .ft-search-modern-wrapper {
+  border-color: var(--ft-border);
+}
 .ft-search-modern-wrapper:focus-within {
   background: var(--ft-bg);
   border-color: var(--ft-primary);
   box-shadow: 0 0 0 4px var(--ft-primary-light);
+}
+.ft-dark .ft-search-modern-wrapper:focus-within {
+  box-shadow: 0 0 0 4px rgba(232, 82, 122, 0.2);
 }
 .ft-search-icon { color: var(--ft-text-tertiary); margin-right: 12px; font-size: 20px; }
 .ft-search-input-modern {
