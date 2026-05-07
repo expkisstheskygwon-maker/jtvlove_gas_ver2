@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 import { apiService } from '../../services/apiService';
-import { CCA } from '../../types';
+import { CCA, UserNotification } from '../../types';
 import FeedHome from './FeedHome';
 import FeedExplore from './FeedExplore';
 import FeedSearch from './FeedSearch';
@@ -54,6 +54,9 @@ const FeedLayout: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [recoCCAs, setRecoCCAs] = useState<CCA[]>([]);
   const [siteSettings, setSiteSettings] = useState<any>(null);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   // Sync login modal state with user auth status
   useEffect(() => {
@@ -130,6 +133,44 @@ const FeedLayout: React.FC = () => {
     loadReco();
   }, []);
 
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await apiService.getNotifications(user.id);
+      setNotifications(data);
+      setUnreadNotifCount(data.filter((n: any) => n.is_read === 0 || n.is_read === false).length);
+    } catch (e) { console.error(e); }
+  }, [user]);
+
+  useEffect(() => {
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, [loadNotifications]);
+
+  const handleMarkAllRead = async () => {
+    if (!user) return;
+    const success = await apiService.markAllNotificationsRead(user.id);
+    if (success) {
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+      setUnreadNotifCount(0);
+    }
+  };
+
+  const handleNotificationClick = async (notif: any) => {
+    if (!notif.is_read) {
+      await apiService.markNotificationRead(notif.id);
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: 1 } : n));
+      setUnreadNotifCount(prev => Math.max(0, prev - 1));
+    }
+    setShowNotifDropdown(false);
+
+    if (notif.type === 'private') {
+      navigate('/messages');
+    }
+    // Other types could navigate elsewhere
+  };
+
   const toggleTheme = useCallback(() => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   }, []);
@@ -181,6 +222,59 @@ const FeedLayout: React.FC = () => {
               <span className="material-symbols-outlined">person</span>
               <span>프로필</span>
             </button>
+
+            <div className="ft-nav-notif">
+              <button 
+                className={`ft-side-item ${showNotifDropdown ? 'active' : ''}`} 
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+              >
+                <span className="material-symbols-outlined">notifications</span>
+                <span>알림</span>
+                {unreadNotifCount > 0 && <div className="ft-notif-badge" />}
+              </button>
+
+              {showNotifDropdown && (
+                <div className="ft-notif-dropdown">
+                  <div className="ft-notif-header">
+                    <span>알림</span>
+                    <button 
+                      onClick={handleMarkAllRead}
+                      style={{ background: 'none', border: 'none', color: 'var(--ft-primary)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      모두 읽음
+                    </button>
+                  </div>
+                  <div className="ft-notif-list">
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: 30, textAlign: 'center', color: 'var(--ft-text-tertiary)', fontSize: 14 }}>
+                        알림이 없습니다.
+                      </div>
+                    ) : (
+                      notifications.map((n: any) => (
+                        <div 
+                          key={n.id} 
+                          className={`ft-notif-item ${(!n.is_read && n.is_read !== undefined) ? 'unread' : ''}`}
+                          onClick={() => handleNotificationClick(n)}
+                        >
+                          <div className="ft-notif-icon">
+                            <span className="material-symbols-outlined">
+                              {n.type === 'private' ? 'mail' : n.type === 'system' ? 'info' : 'notifications'}
+                            </span>
+                          </div>
+                          <div className="ft-notif-content">
+                            <div className="ft-notif-title">{n.title}</div>
+                            <div className="ft-notif-desc">{n.content}</div>
+                            <div className="ft-notif-time">
+                              {new Date(n.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="ft-side-footer">

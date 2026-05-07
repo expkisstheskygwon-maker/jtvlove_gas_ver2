@@ -566,3 +566,53 @@
   padding: 60px 20px; color: var(--ft-text-tertiary); text-align: center;
 }
 .ft-msg-empty span { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+/* ═══ Notifications ═══ */
+.ft-nav-notif { position: relative; }
+.ft-notif-badge {
+  position: absolute; top: 8px; right: 8px;
+  width: 10px; height: 10px; background: var(--ft-primary);
+  border-radius: 50%; border: 2px solid var(--ft-bg);
+}
+.ft-notif-dropdown {
+  position: absolute; left: calc(100% + 12px); top: 0;
+  width: 320px; background: var(--ft-bg);
+  border: 1px solid var(--ft-border); border-radius: var(--ft-radius-lg);
+  box-shadow: var(--ft-shadow-lg); z-index: 1001;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: dropdown-fade 0.2s ease-out;
+}
+@keyframes dropdown-fade {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.ft-notif-header {
+  padding: 16px; border-bottom: 1px solid var(--ft-border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; font-size: 15px;
+}
+.ft-notif-list { max-height: 400px; overflow-y: auto; }
+.ft-notif-item {
+  padding: 12px 16px; border-bottom: 1px solid var(--ft-border-light);
+  cursor: pointer; transition: background 0.2s;
+  display: flex; gap: 12px;
+}
+.ft-notif-item:hover { background: var(--ft-bg-tertiary); }
+.ft-notif-item.unread { background: var(--ft-primary-light); }
+.ft-app.ft-dark .ft-notif-item.unread { background: rgba(232, 82, 122, 0.1); }
+.ft-notif-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ft-bg-tertiary); color: var(--ft-primary);
+  flex-shrink: 0;
+}
+.ft-notif-content { flex: 1; min-width: 0; }
+.ft-notif-title { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.ft-notif-desc { font-size: 13px; color: var(--ft-text-secondary); line-height: 1.4; }
+.ft-notif-time { font-size: 11px; color: var(--ft-text-tertiary); margin-top: 4px; }
+
+@media (max-width: 640px) {
+  .ft-notif-dropdown {
+    position: fixed; inset: 0; top: 0; width: 100%; height: 100%;
+    border-radius: 0; z-index: 3000;
+  }
+}

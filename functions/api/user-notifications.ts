@@ -32,5 +32,29 @@ export const onRequest: any = async (context: any) => {
         }
     }
 
+    if (request.method === 'PATCH') {
+        try {
+            const { id, userId, all, is_read } = await request.json();
+
+            if (all && userId) {
+                // Mark all as read for user
+                await env.DB.prepare("UPDATE user_notifications SET is_read = ? WHERE user_id = ?")
+                    .bind(is_read ? 1 : 0, userId).run();
+            } else if (id) {
+                // Mark single as read
+                await env.DB.prepare("UPDATE user_notifications SET is_read = ? WHERE id = ?")
+                    .bind(is_read ? 1 : 0, id).run();
+            } else {
+                return new Response("id or (all and userId) required", { status: 400 });
+            }
+
+            return new Response(JSON.stringify({ success: true }), {
+                headers: { "Content-Type": "application/json" },
+            });
+        } catch (error: any) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
     return new Response("Method not allowed", { status: 405 });
 };

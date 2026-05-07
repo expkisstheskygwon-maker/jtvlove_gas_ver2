@@ -102,6 +102,26 @@ export const onRequest: any = async (context: any) => {
 
             await env.DB.batch(batch);
 
+            // Notify target user
+            try {
+                const subscriber = await env.DB.prepare("SELECT nickname FROM users WHERE id = ?").bind(subscriberId).first();
+                const subscriberName = subscriber?.nickname || '누군가';
+                const notifId = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                await env.DB.prepare(`
+                    INSERT INTO user_notifications (id, user_id, type, sender_name, title, content)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                `).bind(
+                    notifId,
+                    targetId,
+                    'system',
+                    subscriberName,
+                    '새 구독',
+                    `${subscriberName}님이 회원님을 구독했습니다.`
+                ).run();
+            } catch (e) {
+                console.error("Subscription notification failed", e);
+            }
+
             return new Response(JSON.stringify({ success: true, isSubscribed: true, cost }), { headers });
         } catch (error: any) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });

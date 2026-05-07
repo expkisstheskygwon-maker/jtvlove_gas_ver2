@@ -1820,6 +1820,50 @@ export const apiService = {
 
   async toggleCCAFollow(userId: string, ccaId: string): Promise<{ success: boolean; isFollowing: boolean }> {
     return this.toggleUserFollow(userId, ccaId);
+  },
+
+  // ═══════════════════════════════════════════
+  // User Notifications
+  // ═══════════════════════════════════════════
+  async getNotifications(userId: string, type?: string): Promise<any[]> {
+    try {
+      let url = `${API_BASE}/user-notifications?userId=${encodeURIComponent(userId)}`;
+      if (type) url += `&type=${encodeURIComponent(type)}`;
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getNotifications error:', error);
+      return [];
+    }
+  },
+
+  async markNotificationRead(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, is_read: 1 }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markNotificationRead error:', error);
+      return false;
+    }
+  },
+
+  async markAllNotificationsRead(userId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, all: true, is_read: 1 }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markAllNotificationsRead error:', error);
+      return false;
+    }
   }
 };
 
