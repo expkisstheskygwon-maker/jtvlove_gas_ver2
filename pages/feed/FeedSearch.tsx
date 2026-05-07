@@ -69,7 +69,7 @@ const FeedSearch: React.FC = () => {
           <div className="ft-spinner" style={{ margin: '0 auto' }}></div>
         </div>
       ) : (
-        <div style={{ padding: 8 }}>
+        <div style={{ padding: '0 16px 40px' }}>
           {filtered.length > 0 ? (
             <div className="ft-search-grid">
               {filtered.map(cca => (

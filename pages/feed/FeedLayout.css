@@ -814,7 +814,7 @@
 .ft-search-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  gap: 10px;
 }
 .ft-search-grid-item {
   aspect-ratio: 1/1;
@@ -822,6 +822,7 @@
   cursor: pointer;
   overflow: hidden;
   background: var(--ft-bg-tertiary);
+  border-radius: 14px;
 }
 .ft-search-thumb-wrapper { width: 100%; height: 100%; }
 .ft-search-thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
