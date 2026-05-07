@@ -78,23 +78,7 @@ export const apiService = {
 
     try {
       const compressedDataUrl = await compressImage(file);
-
-      // Blob으로 변환하여 서버 전송 시도
-      const response = await fetch(compressedDataUrl);
-      const blob = await response.blob();
-      const formData = new FormData();
-      formData.append('file', blob, 'image.jpg');
-
-      const uploadResult = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (uploadResult.ok) {
-        const data = await uploadResult.json();
-        if (data.url) return data.url;
-      }
-      return compressedDataUrl; // 서버 업로드 실패 시 로컬 Base64(압축본) 반환
+      return compressedDataUrl; 
     } catch (error) {
       console.error('uploadImage error:', error);
       return null;

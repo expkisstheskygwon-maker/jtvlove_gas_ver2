@@ -70,7 +70,13 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 return new Response(JSON.stringify({ error: 'Invalid super admin password' }), { status: 401 });
             }
 
-            return new Response(JSON.stringify({ success: true, user: superAdmin, venueId: null }), {
+            const superAdminCamel = {
+                ...superAdmin,
+                realName: superAdmin.real_name,
+                profileImage: superAdmin.profile_image
+            };
+
+            return new Response(JSON.stringify({ success: true, user: superAdminCamel, venueId: null }), {
                 headers: { 'Content-Type': 'application/json' },
             });
         }
@@ -89,10 +95,10 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 email: cca.id + '@cca.local', // Dummy email for frontend compat
                 nickname: cca.nickname || cca.name,
                 role: 'cca',
-                real_name: cca.name,
-                profile_image: cca.image,
+                realName: cca.name,
+                profileImage: cca.image,
                 level: 1,
-                total_xp: 0,
+                totalXp: 0,
                 points: 0
             };
 
@@ -113,6 +119,13 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
         }
 
+        const userCamel = {
+            ...user,
+            realName: user.real_name,
+            profileImage: user.profile_image,
+            totalXp: user.total_xp
+        };
+
         // Block deleted users from logging in
         if (user.status === 'deleted') {
             return new Response(JSON.stringify({ error: '계정이 삭제되었습니다. 관리자에게 문의하세요.' }), { status: 403 });
@@ -124,7 +137,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             if (venue) venueId = venue.id;
         }
 
-        return new Response(JSON.stringify({ success: true, user, venueId }), {
+        return new Response(JSON.stringify({ success: true, user: userCamel, venueId }), {
             headers: { 'Content-Type': 'application/json' },
         });
     } catch (error: any) {

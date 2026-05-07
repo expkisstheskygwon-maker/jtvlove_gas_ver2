@@ -38,7 +38,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
     }
     if (request.method === 'PATCH') {
         try {
-            const { id, email, password, phone, profile_image } = await request.json();
+            const { id, email, password, nickname, phone, profile_image } = await request.json();
 
             if (!id) {
                 return new Response(JSON.stringify({ error: "User ID missing" }), { status: 400 });
@@ -60,6 +60,10 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 updates.push("phone = ?");
                 values.push(phone);
             }
+            if (nickname !== undefined) {
+                updates.push("nickname = ?");
+                values.push(nickname);
+            }
             if (profile_image !== undefined) {
                 updates.push("profile_image = ?");
                 values.push(profile_image);
@@ -74,6 +78,28 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             const query = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
 
             await env.DB.prepare(query).bind(...values).run();
+
+            // Sync to ccas table if nickname or profile_image changed
+            try {
+                const ccaUpdates = [];
+                const ccaValues = [];
+                if (nickname !== undefined) {
+                    ccaUpdates.push("nickname = ?");
+                    ccaValues.push(nickname);
+                }
+                if (profile_image !== undefined) {
+                    ccaUpdates.push("image = ?");
+                    ccaValues.push(profile_image);
+                }
+
+                if (ccaUpdates.length > 0) {
+                    ccaValues.push(id);
+                    await env.DB.prepare(`UPDATE ccas SET ${ccaUpdates.join(", ")} WHERE id = ?`).bind(...ccaValues).run();
+                }
+            } catch (syncError) {
+                // Ignore if CCA record doesn't exist
+                console.error("Sync to CCAs failed:", syncError);
+            }
 
             return new Response(JSON.stringify({ success: true }), {
                 headers: { "Content-Type": "application/json" },
@@ -106,7 +132,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 realName: user.real_name,
                 totalXp: user.total_xp,
                 dailyXp: user.daily_xp,
-                profile_image: user.profile_image,
+                profileImage: user.profile_image,
                 nextLevelXp,
                 quests: user.quests ? JSON.parse(user.quests) : []
             };

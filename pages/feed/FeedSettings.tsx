@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../../services/apiService';
 
 interface FeedSettingsProps {
   theme?: 'dark' | 'light';
@@ -30,29 +31,30 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
     navigate('/feed');
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result as string;
-      setIsUpdating(true);
-      try {
-        const result = await apiService.updateUser({ id: user.id, profile_image: base64String });
-        if (result.success) {
-          updateUser({ profileImage: base64String });
-          setMessage({ text: '프로필 이미지가 변경되었습니다.', type: 'success' });
-        } else {
-          alert('이미지 업로드에 실패했습니다.');
-        }
-      } catch (err) {
-        alert('오류가 발생했습니다.');
-      } finally {
-        setIsUpdating(false);
+    setIsUpdating(true);
+    try {
+      const base64String = await apiService.uploadImage(file);
+      if (!base64String) {
+        alert('이미지 압축에 실패했습니다.');
+        return;
       }
-    };
-    reader.readAsDataURL(file);
+
+      const result = await apiService.updateUser({ id: user.id, profile_image: base64String });
+      if (result.success) {
+        updateUser({ profileImage: base64String });
+        setMessage({ text: '프로필 이미지가 변경되었습니다.', type: 'success' });
+      } else {
+        alert('이미지 업로드에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('오류가 발생했습니다.');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleUpdateProfile = async () => {
