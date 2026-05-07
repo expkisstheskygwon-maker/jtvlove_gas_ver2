@@ -222,68 +222,57 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
         </div>
       </div>
 
-      <div style={{ padding: 20 }}>
-        {/* Profile Card */}
-        <div className="ft-membership-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div 
-            className="ft-sidebar-avatar-placeholder" 
-            style={{ width: 64, height: 64, flexShrink: 0, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {user?.profileImage ? (
-              <img src={user.profileImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span className="material-symbols-outlined" style={{ fontSize: 32 }}>person</span>
-            )}
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
-              <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: 20 }}>photo_camera</span>
+      <div style={{ padding: '0 20px 40px' }}>
+        {/* Modern Profile Card */}
+        <div className="ft-profile-card">
+          <div className="ft-profile-avatar-wrapper" onClick={() => fileInputRef.current?.click()}>
+            <div className="ft-profile-avatar-inner">
+              {user?.profileImage ? (
+                <img src={user.profileImage} alt="" />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 48, color: 'var(--ft-text-muted)' }}>person</span>
+                </div>
+              )}
+            </div>
+            <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--ft-primary)', color: '#fff', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', border: '3px solid var(--ft-bg)', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>photo_camera</span>
             </div>
           </div>
           <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
-          <div style={{ flex: 1 }}>
-            {user ? (
-              <>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{user.nickname || user.realName || 'User'}</div>
-                <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)', marginBottom: 8 }}>@{user.nickname || 'user'}</div>
-                
-                <div className="ft-profile-stats">
-                  <div className="ft-stat-item" onClick={() => loadUserList('following')}>
-                    <div className="ft-stat-num">{counts.following}</div>
-                    <div className="ft-stat-label">팔로잉</div>
-                  </div>
-                  <div className="ft-stat-item" onClick={() => loadUserList('followers')}>
-                    <div className="ft-stat-num">{counts.followers}</div>
-                    <div className="ft-stat-label">팔로워</div>
-                  </div>
-                  <div className="ft-stat-item" onClick={() => loadUserList('subscribed')}>
-                    <div className="ft-stat-num">{counts.subscribed}</div>
-                    <div className="ft-stat-label">구독 중</div>
-                  </div>
-                  {(user?.role === 'cca' || user?.role === 'super_admin') && (
-                    <div className="ft-stat-item" onClick={() => loadUserList('subscribers')}>
-                      <div className="ft-stat-num">{counts.subscribers}</div>
-                      <div className="ft-stat-label">구독자</div>
-                    </div>
-                  )}
+
+          {user ? (
+            <>
+              <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 4 }}>{user.nickname || user.realName}</div>
+              <div style={{ fontSize: 14, color: 'var(--ft-text-tertiary)', fontWeight: 600 }}>@{user.nickname || 'user'}</div>
+              
+              <div className="ft-profile-stats-bar">
+                <div className="ft-profile-stat" onClick={() => loadUserList('following')}>
+                  <div className="ft-profile-stat-val">{counts.following}</div>
+                  <div className="ft-profile-stat-lab">팔로잉</div>
                 </div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ft-text-tertiary)' }}>로그인이 필요합니다</div>
-                <button
-                  onClick={() => navigate('/login')}
-                  style={{
-                    marginTop: 8, padding: '8px 20px',
-                    background: 'var(--ft-primary)', color: '#fff',
-                    border: 'none', borderRadius: 'var(--ft-radius-sm)',
-                    fontWeight: 700, fontSize: 13, cursor: 'pointer'
-                  }}
-                >
-                  로그인하기
-                </button>
-              </>
-            )}
-          </div>
+                <div className="ft-profile-stat" onClick={() => loadUserList('followers')}>
+                  <div className="ft-profile-stat-val">{counts.followers}</div>
+                  <div className="ft-profile-stat-lab">팔로워</div>
+                </div>
+                <div className="ft-profile-stat" onClick={() => loadUserList('subscribed')}>
+                  <div className="ft-profile-stat-val">{counts.subscribed}</div>
+                  <div className="ft-profile-stat-lab">구독 중</div>
+                </div>
+                {(user?.role === 'cca' || user?.role === 'super_admin') && (
+                  <div className="ft-profile-stat" onClick={() => loadUserList('subscribers')}>
+                    <div className="ft-profile-stat-val">{counts.subscribers}</div>
+                    <div className="ft-profile-stat-lab">구독자</div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ft-text-tertiary)' }}>로그인이 필요합니다</div>
+              <button className="ft-primary-btn" onClick={() => navigate('/login')}>로그인하기</button>
+            </div>
+          )}
         </div>
 
         {activeList && (
@@ -319,29 +308,69 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
           </div>
         )}
 
-        {/* Menu Items */}
-        <div className="ft-membership-card" style={{ padding: 0, overflow: 'hidden' }}>
-          {menuItems.map((item, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '16px 20px',
-                borderBottom: i < menuItems.length - 1 ? '1px solid var(--ft-border-light)' : 'none',
-                cursor: 'pointer', transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--ft-bg-secondary)')}
-              onMouseLeave={e => (e.currentTarget.style.background = '')}
-              onClick={() => {
-                if (item.id === 'profile') { setEditNickname(user?.nickname || ''); setEditRealName(user?.realName || ''); }
-                setActiveModal(item.id);
-                setMessage({ text: '', type: '' });
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: 22, color: 'var(--ft-text-tertiary)' }}>{item.icon}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{item.label}</div>
-                <div style={{ fontSize: 12, color: 'var(--ft-text-tertiary)' }}>{item.desc}</div>
+        {/* Settings Groups */}
+        <div className="ft-settings-section-title">계정 및 보안</div>
+        <div className="ft-settings-menu-card">
+          {[
+            { id: 'profile', icon: 'person', label: '프로필 수정', desc: '닉네임, 프로필 이미지 변경' },
+            { id: 'password', icon: 'lock', label: '비밀번호 변경', desc: '계정 보안 설정' },
+            { id: 'notifications', icon: 'notifications', label: '알림 설정', desc: '푸시 알림 및 이메일 설정' },
+          ].map((item, i) => (
+            <div key={item.id} className="ft-settings-menu-item" onClick={() => {
+              if (item.id === 'profile') { setEditNickname(user?.nickname || ''); setEditRealName(user?.realName || ''); }
+              setActiveModal(item.id);
+              setMessage({ text: '', type: '' });
+            }}>
+              <div className="ft-settings-menu-icon">
+                <span className="material-symbols-outlined">{item.icon}</span>
+              </div>
+              <div className="ft-settings-menu-info">
+                <div className="ft-settings-menu-label">{item.label}</div>
+                <div className="ft-settings-menu-desc">{item.desc}</div>
+              </div>
+              <span className="material-symbols-outlined" style={{ fontSize: 18, color: 'var(--ft-text-muted)' }}>chevron_right</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="ft-settings-section-title">금융 및 수익</div>
+        <div className="ft-settings-menu-card">
+          {[
+            { id: 'billing', icon: 'account_balance_wallet', label: '충전 및 결제', desc: '포인트 충전 및 사용 내역' },
+            { id: 'creator', icon: 'stars', label: '구독료 설정', desc: '내 채널의 월간 구독 금액 설정' },
+          ].map((item, i) => (
+            <div key={item.id} className="ft-settings-menu-item" onClick={() => {
+              setActiveModal(item.id);
+              setMessage({ text: '', type: '' });
+            }}>
+              <div className="ft-settings-menu-icon">
+                <span className="material-symbols-outlined">{item.icon}</span>
+              </div>
+              <div className="ft-settings-menu-info">
+                <div className="ft-settings-menu-label">{item.label}</div>
+                <div className="ft-settings-menu-desc">{item.desc}</div>
+              </div>
+              <span className="material-symbols-outlined" style={{ fontSize: 18, color: 'var(--ft-text-muted)' }}>chevron_right</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="ft-settings-section-title">기타</div>
+        <div className="ft-settings-menu-card">
+          {[
+            { id: 'language', icon: 'translate', label: '언어 설정', desc: '한국어 / English' },
+            { id: 'help', icon: 'help', label: '도움말', desc: 'FAQ 및 고객지원' },
+          ].map((item, i) => (
+            <div key={item.id} className="ft-settings-menu-item" onClick={() => {
+              setActiveModal(item.id);
+              setMessage({ text: '', type: '' });
+            }}>
+              <div className="ft-settings-menu-icon">
+                <span className="material-symbols-outlined">{item.icon}</span>
+              </div>
+              <div className="ft-settings-menu-info">
+                <div className="ft-settings-menu-label">{item.label}</div>
+                <div className="ft-settings-menu-desc">{item.desc}</div>
               </div>
               <span className="material-symbols-outlined" style={{ fontSize: 18, color: 'var(--ft-text-muted)' }}>chevron_right</span>
             </div>
