@@ -193,7 +193,7 @@ const FeedLayout: React.FC = () => {
               {siteSettings?.emblem_url ? (
                 <img src={siteSettings.emblem_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                <div style={{ width: 36, height: 36, background: 'var(--ft-gradient)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 36, height: 36, background: 'var(--ft-gradient)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyCenter: 'center' }}>
                   <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>J</span>
                 </div>
               )}
@@ -222,7 +222,9 @@ const FeedLayout: React.FC = () => {
               <span className="material-symbols-outlined">person</span>
               <span>프로필</span>
             </button>
+          </nav>
 
+          <div className="ft-side-footer">
             <div className="ft-nav-notif">
               <button 
                 className={`ft-side-item ${showNotifDropdown ? 'active' : ''}`} 
@@ -246,8 +248,9 @@ const FeedLayout: React.FC = () => {
                   </div>
                   <div className="ft-notif-list">
                     {notifications.length === 0 ? (
-                      <div style={{ padding: 30, textAlign: 'center', color: 'var(--ft-text-tertiary)', fontSize: 14 }}>
-                        알림이 없습니다.
+                      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ft-text-tertiary)', fontSize: 14 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 40, opacity: 0.3, marginBottom: 12, display: 'block' }}>notifications_off</span>
+                        새로운 알림이 없습니다.
                       </div>
                     ) : (
                       notifications.map((n: any) => (
@@ -275,9 +278,6 @@ const FeedLayout: React.FC = () => {
                 </div>
               )}
             </div>
-          </nav>
-
-          <div className="ft-side-footer">
             <button className="ft-side-item" onClick={toggleTheme}>
               <span className="material-symbols-outlined">
                 {isDark ? 'light_mode' : 'dark_mode'}

@@ -574,7 +574,7 @@
   border-radius: 50%; border: 2px solid var(--ft-bg);
 }
 .ft-notif-dropdown {
-  position: absolute; left: calc(100% + 12px); top: 0;
+  position: absolute; left: calc(100% + 12px); bottom: 0;
   width: 320px; background: var(--ft-bg);
   border: 1px solid var(--ft-border); border-radius: var(--ft-radius-lg);
   box-shadow: var(--ft-shadow-lg); z-index: 1001;
