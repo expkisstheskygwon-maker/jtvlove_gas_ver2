@@ -1671,18 +1671,19 @@ export const apiService = {
     }
   },
 
-  async createGalleryComment(data: { galleryId: string; authorName: string; authorId?: string; authorImage?: string; content: string }): Promise<{ success: boolean; id?: string; commentsCount?: number }> {
+  async createGalleryComment(data: { galleryId: string; authorName: string; authorId?: string; authorImage?: string; content: string }): Promise<{ success: boolean; id?: string; commentsCount?: number; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/gallery-comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create gallery comment');
-      return await response.json();
+      const result = await response.json();
+      if (!response.ok) return { success: false, error: result.error || 'Failed to create gallery comment' };
+      return result;
     } catch (error: any) {
       console.error('createGalleryComment error:', error);
-      return { success: false };
+      return { success: false, error: error.message };
     }
   },
 
