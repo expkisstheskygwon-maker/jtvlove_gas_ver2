@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS ccas (
   smoking TEXT,
   pets TEXT,
   specialties TEXT, -- JSON array string
+  login_id TEXT, -- Added for login
+  subscription_cost INTEGER DEFAULT 0, -- Added for subscriptions
   password TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (venue_id) REFERENCES venues(id)
@@ -377,6 +379,7 @@ CREATE TABLE IF NOT EXISTS users (
   frame_id TEXT,
   points INTEGER DEFAULT 0,
   role TEXT DEFAULT 'user', -- 'user', 'super_admin'
+  status TEXT DEFAULT 'active', -- Added for account status
   profile_image TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -460,3 +463,29 @@ CREATE TABLE IF NOT EXISTS cca_follows (
   FOREIGN KEY (cca_id) REFERENCES ccas(id) ON DELETE CASCADE,
   UNIQUE(user_id, cca_id)
 );
+
+-- 26. User Subscriptions (Paid)
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  id TEXT PRIMARY KEY,
+  subscriber_id TEXT NOT NULL,
+  target_id TEXT NOT NULL,
+  status TEXT DEFAULT 'active',
+  price_paid INTEGER DEFAULT 0,
+  expires_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(subscriber_id, target_id)
+);
+
+-- 27. User-to-User Follows
+CREATE TABLE IF NOT EXISTS user_follows (
+  id TEXT PRIMARY KEY,
+  follower_id TEXT NOT NULL,
+  following_id TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(follower_id, following_id)
+);
+
+-- Note: Ensure these columns exist in existing tables:
+-- ALTER TABLE ccas ADD COLUMN login_id TEXT;
+-- ALTER TABLE ccas ADD COLUMN subscription_cost INTEGER DEFAULT 0;
+-- ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';

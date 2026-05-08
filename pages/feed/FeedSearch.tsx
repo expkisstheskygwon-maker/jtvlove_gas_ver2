@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/apiService';
 import { CCA } from '../../types';
 
 const FeedSearch: React.FC = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [ccas, setCCAs] = useState<CCA[]>([]);
   const [filtered, setFiltered] = useState<CCA[]>([]);
@@ -39,7 +41,7 @@ const FeedSearch: React.FC = () => {
   }, [query, ccas]);
 
   const goToProfile = (nickname: string) => {
-    window.location.hash = `/@${nickname}`;
+    navigate(`/@${nickname}`);
   };
 
   return (

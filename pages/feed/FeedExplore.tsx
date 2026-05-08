@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/apiService';
 import { CCA } from '../../types';
 
@@ -11,6 +12,7 @@ const CATEGORIES = [
 ];
 
 const FeedExplore: React.FC = () => {
+  const navigate = useNavigate();
   const [activeCat, setActiveCat] = useState('all');
   const [creators, setCreators] = useState<CCA[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ const FeedExplore: React.FC = () => {
   }, []);
 
   const goToProfile = (nickname: string) => {
-    window.location.hash = `/@${nickname}`;
+    navigate(`/@${nickname}`);
   };
 
   return (
