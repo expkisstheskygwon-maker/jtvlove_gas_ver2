@@ -211,6 +211,16 @@ const FeedLayout: React.FC = () => {
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
+  // Auto-search CCA nickname when typing (Debounce)
+  useEffect(() => {
+    if (loginTab === 'star' && ccaStep === 'enter_nickname' && ccaNickname.length >= 2) {
+      const timer = setTimeout(() => {
+        handleCcaSearch();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [ccaNickname, loginTab, ccaStep]);
+
   const handleNotificationButtonClick = () => {
     if (!user && !isGuest) {
       openLoginModal();
@@ -446,7 +456,7 @@ const FeedLayout: React.FC = () => {
               /* STAR Login Flow */
               <div className="animate-fade-in">
                 {ccaStep === 'enter_nickname' && (
-                  <>
+                  <div style={{ position: 'relative' }}>
                     <input 
                       type="text" 
                       placeholder="STAR 닉네임 (대문자)" 
@@ -454,15 +464,15 @@ const FeedLayout: React.FC = () => {
                       value={ccaNickname}
                       onChange={(e) => setCcaNickname(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === 'Enter' && handleCcaSearch()}
+                      autoFocus
                     />
-                    <button 
-                      className="ft-primary-btn" 
-                      onClick={handleCcaSearch}
-                      disabled={isLoggingIn || !ccaNickname.trim()}
-                    >
-                      {isLoggingIn ? '검색 중...' : '다음'}
-                    </button>
-                  </>
+                    {isLoggingIn && (
+                      <div style={{ position: 'absolute', right: 15, top: 18 }}>
+                        <div className="ft-spinner-sm"></div>
+                      </div>
+                    )}
+                    <p style={{ fontSize: 11, color: 'var(--ft-text-tertiary)', textAlign: 'center', marginTop: -10, marginBottom: 20 }}>닉네임을 입력하면 자동으로 검색합니다.</p>
+                  </div>
                 )}
 
                 {ccaStep === 'select_cca' && (

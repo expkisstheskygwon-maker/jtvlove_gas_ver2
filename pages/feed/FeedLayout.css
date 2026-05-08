@@ -1005,3 +1005,16 @@
   margin-bottom: 20px;
   color: var(--ft-text);
 }
+
+.ft-spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(238, 189, 43, 0.2);
+  border-top-color: var(--ft-primary);
+  border-radius: 50%;
+  animation: ft-spin 0.6s linear infinite;
+}
+
+@keyframes ft-spin {
+  to { transform: rotate(360deg); }
+}
