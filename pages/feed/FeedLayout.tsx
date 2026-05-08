@@ -535,7 +535,7 @@ const FeedLayout: React.FC = () => {
               className="ft-secondary-btn" 
               onClick={() => {
                 if (loginTab === 'star') {
-                  navigate('/cca-portal/welcome');
+                  window.location.href = 'https://jtvstar.com/#/cca-portal/welcome';
                 } else {
                   navigate('/register');
                 }
