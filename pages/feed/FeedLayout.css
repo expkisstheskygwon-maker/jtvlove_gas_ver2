@@ -944,3 +944,64 @@
   text-align: center; font-size: 11px; color: var(--ft-text-tertiary);
   padding: 20px 0; border-bottom: 1px solid var(--ft-border-light); margin-bottom: 20px;
 }
+
+/* ═══ Login Modal Tabs & CCA Flow ═══ */
+.ft-login-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: var(--ft-bg-secondary);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.ft-login-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  color: var(--ft-text-tertiary);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ft-login-tab.active {
+  background: var(--ft-bg-primary);
+  color: var(--ft-text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ft-cca-select-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--ft-bg-secondary);
+  border: 1px solid var(--ft-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  margin-bottom: 8px;
+  color: var(--ft-text);
+}
+
+.ft-cca-select-item:hover {
+  border-color: var(--ft-primary);
+  background: rgba(238, 189, 43, 0.05);
+}
+
+.ft-cca-selected-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(238, 189, 43, 0.1);
+  border: 1px solid rgba(238, 189, 43, 0.2);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  color: var(--ft-text);
+}

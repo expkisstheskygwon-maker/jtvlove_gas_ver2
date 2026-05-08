@@ -68,10 +68,18 @@ const FeedLayout: React.FC = () => {
   }, [user]);
 
   // Login Form State
+  const [loginTab, setLoginTab] = useState<'general' | 'star'>('general');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
+
+  // CCA Login Step-by-Step
+  const [ccaStep, setCcaStep] = useState<'enter_nickname' | 'select_cca' | 'enter_password'>('enter_nickname');
+  const [ccaNickname, setCcaNickname] = useState('');
+  const [matchedCCAs, setMatchedCCAs] = useState<CCA[]>([]);
+  const [selectedCca, setSelectedCca] = useState<CCA | null>(null);
+  const [ccaPassword, setCcaPassword] = useState('');
 
   const openLoginModal = () => setShowLoginModal(true);
   const closeLoginModal = () => {
@@ -102,6 +110,59 @@ const FeedLayout: React.FC = () => {
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleCcaSearch = async () => {
+    if (!ccaNickname.trim()) return;
+    setIsLoggingIn(true);
+    setLoginError('');
+    try {
+      const allCCAs = await apiService.getCCAs();
+      const matches = allCCAs.filter(c => (c.nickname || c.name || '').toUpperCase() === ccaNickname.toUpperCase().trim());
+      if (matches.length > 0) {
+        setMatchedCCAs(matches);
+        if (matches.length === 1) {
+          setSelectedCca(matches[0]);
+          setCcaStep('enter_password');
+        } else {
+          setCcaStep('select_cca');
+        }
+      } else {
+        setLoginError('입력하신 닉네임의 STAR를 찾을 수 없습니다.');
+      }
+    } catch (err: any) {
+      setLoginError('검색 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleCcaLogin = async () => {
+    if (!selectedCca || !ccaPassword) return;
+    setIsLoggingIn(true);
+    setLoginError('');
+    try {
+      const result = await apiService.login({ ccaId: selectedCca.id, password: ccaPassword });
+      if (result.success && result.user) {
+        const userData = typeof result.user === 'string' ? JSON.parse(result.user) : result.user;
+        login({ ...userData, ccaId: selectedCca.id });
+        closeLoginModal();
+      } else {
+        setLoginError(result.error || '비밀번호가 일치하지 않습니다.');
+      }
+    } catch (err: any) {
+      setLoginError('로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const resetCcaFlow = () => {
+    setCcaStep('enter_nickname');
+    setSelectedCca(null);
+    setMatchedCCAs([]);
+    setCcaPassword('');
+    setLoginError('');
   };
 
   const handleNavigate = (path: string) => {
@@ -340,31 +401,123 @@ const FeedLayout: React.FC = () => {
         <div className="ft-login-overlay">
           <div className="ft-login-modal">
             <div className="ft-login-banner">가입하고 더 많은 콘텐츠를 자유롭게!</div>
-            <h2>로그인</h2>
+            
+            {/* Login Tabs */}
+            <div className="ft-login-tabs">
+              <button 
+                className={`ft-login-tab ${loginTab === 'general' ? 'active' : ''}`}
+                onClick={() => { setLoginTab('general'); setLoginError(''); }}
+              >일반 유저</button>
+              <button 
+                className={`ft-login-tab ${loginTab === 'star' ? 'active' : ''}`}
+                onClick={() => { setLoginTab('star'); resetCcaFlow(); }}
+              >STAR (CCA)</button>
+            </div>
+
             {loginError && <div className="ft-login-error">{loginError}</div>}
-            <input 
-              type="email" 
-              placeholder="이메일" 
-              className="ft-input" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleModalLogin()}
-            />
-            <input 
-              type="password" 
-              placeholder="비밀번호" 
-              className="ft-input" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleModalLogin()}
-            />
-            <button 
-              className="ft-primary-btn" 
-              onClick={handleModalLogin}
-              disabled={isLoggingIn}
-            >
-              {isLoggingIn ? '로그인 중...' : '로그인'}
-            </button>
+
+            {loginTab === 'general' ? (
+              <div className="animate-fade-in">
+                <input 
+                  type="email" 
+                  placeholder="이메일" 
+                  className="ft-input" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleModalLogin()}
+                />
+                <input 
+                  type="password" 
+                  placeholder="비밀번호" 
+                  className="ft-input" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleModalLogin()}
+                />
+                <button 
+                  className="ft-primary-btn" 
+                  onClick={handleModalLogin}
+                  disabled={isLoggingIn}
+                >
+                  {isLoggingIn ? '로그인 중...' : '로그인'}
+                </button>
+              </div>
+            ) : (
+              /* STAR Login Flow */
+              <div className="animate-fade-in">
+                {ccaStep === 'enter_nickname' && (
+                  <>
+                    <input 
+                      type="text" 
+                      placeholder="STAR 닉네임 (대문자)" 
+                      className="ft-input" 
+                      value={ccaNickname}
+                      onChange={(e) => setCcaNickname(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCcaSearch()}
+                    />
+                    <button 
+                      className="ft-primary-btn" 
+                      onClick={handleCcaSearch}
+                      disabled={isLoggingIn || !ccaNickname.trim()}
+                    >
+                      {isLoggingIn ? '검색 중...' : '다음'}
+                    </button>
+                  </>
+                )}
+
+                {ccaStep === 'select_cca' && (
+                  <div style={{ marginBottom: 20 }}>
+                    <p style={{ fontSize: 12, color: 'var(--ft-text-secondary)', marginBottom: 10 }}>본인의 프로필을 선택해주세요:</p>
+                    <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {matchedCCAs.map(cca => (
+                        <button 
+                          key={cca.id}
+                          className="ft-cca-select-item"
+                          onClick={() => { setSelectedCca(cca); setCcaStep('enter_password'); setLoginError(''); }}
+                        >
+                          <img src={cca.image} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                          <div style={{ textAlign: 'left' }}>
+                            <div style={{ fontSize: 13, fontWeight: 800 }}>{cca.nickname}</div>
+                            <div style={{ fontSize: 10, color: 'var(--ft-text-tertiary)' }}>{cca.venueName}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <button className="ft-guest-btn" onClick={resetCcaFlow} style={{ marginTop: 12 }}>다시 검색하기</button>
+                  </div>
+                )}
+
+                {ccaStep === 'enter_password' && selectedCca && (
+                  <>
+                    <div className="ft-cca-selected-info">
+                      <img src={selectedCca.image} alt="" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: 14, fontWeight: 900 }}>{selectedCca.nickname}</div>
+                        <div style={{ fontSize: 11, color: 'var(--ft-text-tertiary)' }}>{selectedCca.venueName}</div>
+                      </div>
+                    </div>
+                    <input 
+                      type="password" 
+                      placeholder="비밀번호" 
+                      className="ft-input" 
+                      value={ccaPassword}
+                      onChange={(e) => setCcaPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCcaLogin()}
+                      autoFocus
+                    />
+                    <button 
+                      className="ft-primary-btn" 
+                      onClick={handleCcaLogin}
+                      disabled={isLoggingIn || !ccaPassword}
+                    >
+                      {isLoggingIn ? '로그인 중...' : '로그인'}
+                    </button>
+                    <button className="ft-guest-btn" onClick={resetCcaFlow} style={{ marginTop: 12 }}>다른 STAR로 로그인</button>
+                  </>
+                )}
+              </div>
+            )}
+
             <button className="ft-secondary-btn" onClick={() => navigate('/register')}>
               회원가입
             </button>
