@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/apiService';
 import { CCA, MediaItem } from '../types';
 import './CCALinkInBio.css';
@@ -43,6 +44,7 @@ function timeAgo(dateStr: string): string {
 
 const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   const params = useParams();
+  const navigate = useNavigate();
   const username = forcedUsername || params.username;
 
   const { user } = useAuth();
@@ -284,7 +286,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   };
 
   const goToFeed = () => {
-    window.location.hash = '/feed';
+    navigate('/feed');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -659,7 +661,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
             <span className="lib-feed-tab-label">Profile</span>
           </button>
-          <button className="lib-feed-tab" onClick={() => { window.location.hash = '/'; }}>
+          <button className="lib-feed-tab" onClick={() => { navigate('/'); }}>
             <span className="material-symbols-outlined">language</span>
             <span className="lib-feed-tab-label">Main Site</span>
           </button>

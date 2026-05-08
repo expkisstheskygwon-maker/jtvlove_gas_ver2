@@ -11,6 +11,7 @@ import FeedMessages from './FeedMessages';
 import FeedMembership from './FeedMembership';
 import FeedSettings from './FeedSettings';
 import FeedNotifications from './FeedNotifications';
+import CCALinkInBio from '../CCALinkInBio';
 import './FeedLayout.css';
 
 const NAV_ITEMS = [
@@ -40,9 +41,11 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
     case '/membership': return <FeedMembership />;
     case '/settings': return <FeedSettings theme={theme} toggleTheme={toggleTheme} />;
     case '/notifications': return <FeedNotifications />;
-    case '/':
-    case '/feed':
     default:
+      if (pathname.startsWith('/@')) {
+        const username = pathname.substring(2);
+        return <CCALinkInBio forcedUsername={username} />;
+      }
       return <FeedHome handleNavigate={handleNavigate} />;
   }
 };
