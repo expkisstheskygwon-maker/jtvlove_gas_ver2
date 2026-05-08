@@ -224,7 +224,11 @@ const FeedLayout: React.FC = () => {
               >
                 <span className="material-symbols-outlined">notifications</span>
                 <span>알림</span>
-                {unreadNotifCount > 0 && <div className="ft-notif-badge" />}
+                {unreadNotifCount > 0 && (
+                  <div className="ft-notif-badge">
+                    {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                  </div>
+                )}
               </button>
 
               {showEmptyBubble && (
@@ -306,6 +310,18 @@ const FeedLayout: React.FC = () => {
               <span className="material-symbols-outlined">{item.icon}</span>
             </button>
           ))}
+          <button
+            className={`ft-tabbar-item ${location.pathname === '/notifications' ? 'active' : ''}`}
+            onClick={handleNotificationButtonClick}
+            style={{ position: 'relative' }}
+          >
+            <span className="material-symbols-outlined">notifications</span>
+            {unreadNotifCount > 0 && (
+              <div className="ft-notif-badge" style={{ top: -2, right: -2, left: 'auto' }}>
+                {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+              </div>
+            )}
+          </button>
         </nav>
 
       </div>

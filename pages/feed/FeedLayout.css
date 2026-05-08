@@ -76,6 +76,7 @@
   height: 48px; display: flex; align-items: center; padding: 0 12px;
   border-radius: var(--ft-radius-md); color: var(--ft-text);
   border: none; background: none; width: 100%; cursor: pointer; transition: background 0.2s;
+  position: relative;
 }
 .ft-side-item:hover { background: var(--ft-bg-tertiary); }
 .ft-side-item.active { color: var(--ft-primary); font-weight: 700; }
@@ -568,9 +569,13 @@
 /* ═══ Notifications ═══ */
 .ft-nav-notif { position: relative; }
 .ft-notif-badge {
-  position: absolute; top: 8px; right: 8px;
-  width: 10px; height: 10px; background: var(--ft-primary);
-  border-radius: 50%; border: 2px solid var(--ft-bg);
+  position: absolute; top: 4px; left: 24px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  background: var(--ft-primary);
+  border-radius: 9px; border: 2px solid var(--ft-bg);
+  color: #fff; font-size: 10px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
 }
 .ft-notif-dropdown {
   position: absolute; left: calc(100% + 12px); bottom: 0;
