@@ -531,7 +531,16 @@ const FeedLayout: React.FC = () => {
               </div>
             )}
 
-            <button className="ft-secondary-btn" onClick={() => navigate('/register')}>
+            <button 
+              className="ft-secondary-btn" 
+              onClick={() => {
+                if (loginTab === 'star') {
+                  navigate('/cca-portal/welcome');
+                } else {
+                  navigate('/register');
+                }
+              }}
+            >
               회원가입
             </button>
             <button className="ft-guest-btn" onClick={() => { setIsGuest(true); closeLoginModal(); }}>
