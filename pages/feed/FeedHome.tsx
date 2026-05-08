@@ -399,7 +399,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   <span className="material-symbols-outlined">chat_bubble_outline</span>
                 </button>
                 <button className="ft-post-action" onClick={(e) => handleShare(e, item)}>
-                  <span className="material-symbols-outlined">send</span>
+                  <span className="material-symbols-outlined">share</span>
                 </button>
                 <div className="ft-post-action-spacer" />
                 <button className="ft-post-action">
