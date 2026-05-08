@@ -107,12 +107,35 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             });
         }
 
-        // Standard User / Admin Login
+        // Standard Login (Auto-detect User or CCA)
         if (!email) {
-            return new Response(JSON.stringify({ error: 'Email required' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'Email/ID required' }), { status: 400 });
         }
 
-        // In a real application, password should be hashed and verified!
+        // 1. Try CCA Login first (CCAs often use uppercase IDs in the ID/Email field)
+        const cca = await env.DB.prepare('SELECT id, name, nickname, venue_id, image, grade, password as ccaPassword FROM ccas WHERE login_id = ?').bind(email.toUpperCase()).first();
+        
+        if (cca && cca.ccaPassword === password) {
+            // Return a CCA object mocked as a user profile
+            const user = {
+                id: cca.id,
+                email: cca.id + '@cca.local',
+                nickname: cca.nickname || cca.name,
+                role: 'cca',
+                ccaId: cca.id,
+                realName: cca.name,
+                profileImage: cca.image,
+                level: 1,
+                totalXp: 0,
+                points: 0
+            };
+
+            return new Response(JSON.stringify({ success: true, user, ccaId: cca.id, venueId: cca.venue_id }), {
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
+        // 2. Standard User / Admin Login (if not CCA)
         const user = await env.DB.prepare('SELECT id, email, nickname, role, real_name, level, total_xp, points, profile_image, COALESCE(status, \'active\') as status FROM users WHERE email = ? AND password = ?').bind(email, password).first() as any;
 
         if (!user) {
