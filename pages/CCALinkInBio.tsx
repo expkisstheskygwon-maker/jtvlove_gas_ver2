@@ -45,11 +45,21 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   const params = useParams();
   const username = forcedUsername || params.username;
 
+  const { user } = useAuth();
   const [cca, setCca] = useState<CCA | null>(null);
   const [gallery, setGallery] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Upload State
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadType, setUploadType] = useState<'photo' | 'video'>('photo');
+  const [caption, setCaption] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Hearts
   const [heartCount, setHeartCount] = useState(0);
@@ -105,6 +115,17 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
     };
     fetchData();
   }, [username]);
+
+  // Handle auto-open upload modal from query param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1]);
+    if (params.get('upload') === 'true' && user?.ccaId === cca?.id) {
+      setShowUploadModal(true);
+      // Clean up URL to prevent re-opening
+      const newUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [user?.ccaId, cca?.id]);
 
   // Record view
   useEffect(() => {
@@ -266,6 +287,66 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
     window.location.hash = '/feed';
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (uploadType === 'photo' && !selectedFile) {
+      showToastMsg('사진을 선택해주세요.');
+      return;
+    }
+    if (uploadType === 'video' && !videoUrl) {
+      showToastMsg('비디오 링크를 입력해주세요.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      let url = '';
+      if (uploadType === 'photo' && selectedFile) {
+        url = await apiService.uploadImage(selectedFile) || '';
+      } else {
+        url = videoUrl;
+      }
+
+      if (!url) throw new Error("업로드 실패: URL을 생성하지 못했습니다.");
+
+      const result = await apiService.createGalleryItem({
+        ccaId: cca?.id || '',
+        type: uploadType,
+        url,
+        caption
+      });
+
+      if (result.success) {
+        setShowUploadModal(false);
+        setCaption('');
+        setVideoUrl('');
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        showToastMsg('성공적으로 업로드되었습니다! ✨');
+        // Refresh gallery
+        const updatedGallery = await apiService.getGallery(cca?.id || '');
+        setGallery(updatedGallery);
+      } else {
+        showToastMsg('업로드 실패: ' + result.error);
+      }
+    } catch (err: any) {
+      showToastMsg('오류: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const isOwner = user?.ccaId === cca?.id;
+
   // Lightbox controls
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
@@ -350,6 +431,11 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
             <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#eebd2b' }}>verified</span>
           </span>
           <div className="lib-header-actions">
+            {isOwner && (
+              <button className="lib-header-btn" onClick={() => setShowUploadModal(true)} style={{ color: 'var(--luminary-gold)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 24 }}>add_circle</span>
+              </button>
+            )}
             <button className="lib-header-btn" onClick={handleCopyLink} aria-label="Copy Link">
               <span className="material-symbols-outlined" style={{ fontSize: 22 }}>share</span>
             </button>
@@ -724,6 +810,94 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Upload Modal */}
+        {showUploadModal && (
+          <div className="lib-modal-overlay" onClick={() => !isUploading && setShowUploadModal(false)}>
+            <div className="lib-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+              <div className="lib-modal-header">
+                <div className="lib-modal-title">
+                  <h3>콘텐츠 업로드</h3>
+                  <p>나의 새로운 소식을 전해보세요</p>
+                </div>
+                <button className="lib-modal-close" onClick={() => setShowUploadModal(false)}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="lib-modal-body">
+                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                  <button 
+                    onClick={() => setUploadType('photo')}
+                    style={{
+                      flex: 1, padding: '12px', borderRadius: 12, border: 'none',
+                      background: uploadType === 'photo' ? 'var(--luminary-gold)' : 'rgba(255,255,255,0.05)',
+                      color: uploadType === 'photo' ? '#000' : '#fff', fontWeight: 800, fontSize: 12
+                    }}
+                  >사진</button>
+                  <button 
+                    onClick={() => setUploadType('video')}
+                    style={{
+                      flex: 1, padding: '12px', borderRadius: 12, border: 'none',
+                      background: uploadType === 'video' ? 'var(--luminary-gold)' : 'rgba(255,255,255,0.05)',
+                      color: uploadType === 'video' ? '#000' : '#fff', fontWeight: 800, fontSize: 12
+                    }}
+                  >비디오</button>
+                </div>
+
+                {uploadType === 'photo' ? (
+                  <label style={{
+                    display: 'block', width: '100%', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)',
+                    borderRadius: 16, border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden', marginBottom: 20
+                  }}>
+                    {previewUrl ? (
+                      <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined" style={{ fontSize: 40, opacity: 0.3 }}>add_a_photo</span>
+                        <span style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>사진 선택하기</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" onChange={handleFileChange} hidden />
+                  </label>
+                ) : (
+                  <div className="lib-form-group" style={{ marginBottom: 20 }}>
+                    <label>비디오 링크 (유튜브 등)</label>
+                    <input 
+                      type="text" 
+                      placeholder="https://youtube.com/watch?v=..." 
+                      value={videoUrl}
+                      onChange={e => setVideoUrl(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div className="lib-form-group">
+                  <label>캡션 (내용)</label>
+                  <textarea 
+                    rows={4} 
+                    placeholder="팬들에게 전할 말을 적어주세요..."
+                    value={caption}
+                    onChange={e => setCaption(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="lib-modal-footer">
+                <button 
+                  className="lib-modal-submit-btn" 
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  style={{ background: 'var(--ft-gradient)', color: '#fff' }}
+                >
+                  {isUploading ? '업로드 중...' : '게시하기'}
+                </button>
+              </div>
             </div>
           </div>
         )}

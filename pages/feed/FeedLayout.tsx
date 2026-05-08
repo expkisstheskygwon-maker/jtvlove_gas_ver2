@@ -214,6 +214,17 @@ const FeedLayout: React.FC = () => {
               <span className="material-symbols-outlined">person</span>
               <span>프로필</span>
             </button>
+
+            {user?.ccaId && (
+              <button
+                className="ft-side-item"
+                onClick={() => handleNavigate(`/@${user.nickname}?upload=true`)}
+                style={{ marginTop: 16, background: 'var(--ft-gradient)', color: '#fff', borderRadius: 14, boxShadow: '0 4px 15px rgba(238, 189, 43, 0.3)' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>
+                <span style={{ fontWeight: 800 }}>업로드</span>
+              </button>
+            )}
           </nav>
 
           <div className="ft-side-footer">
