@@ -217,23 +217,26 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     if (!user || !newComment.trim() || !commentModal.galleryId) return;
 
     const content = newComment.trim();
-    setNewComment('');
-
+    
     try {
       const result = await apiService.createGalleryComment({
         galleryId: commentModal.galleryId,
         authorId: user.id,
-        authorName: user.nickname || user.realName,
+        authorName: user.nickname || user.realName || '익명 사용자',
         authorImage: user.profileImage,
         content
       });
 
       if (result.success) {
+        setNewComment('');
         const updatedComments = await apiService.getGalleryComments(commentModal.galleryId);
         setCommentModal(prev => ({ ...prev, comments: updatedComments }));
+      } else {
+        alert(result.error || '댓글 등록에 실패했습니다.');
       }
     } catch (err) {
-      alert('댓글 등록에 실패했습니다.');
+      console.error('Add comment error:', err);
+      alert('오류가 발생했습니다.');
     }
   };
 
