@@ -192,7 +192,9 @@ const FeedLayout: React.FC = () => {
           apiService.getCCAs(),
           apiService.getSiteSettings()
         ]);
-        setRecoCCAs(data.slice(0, 5));
+        // Filter to only show live CCAs (isWorking === true)
+        const liveCCAs = data.filter((c: any) => (c as any).isWorking === true);
+        setRecoCCAs(liveCCAs.slice(0, 5));
         if (settings) setSiteSettings(settings);
       } catch (e) { console.error(e); }
     };
@@ -259,7 +261,7 @@ const FeedLayout: React.FC = () => {
               {siteSettings?.emblem_url ? (
                 <img src={siteSettings.emblem_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                <div style={{ width: 36, height: 36, background: 'var(--ft-gradient)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyCenter: 'center' }}>
+                <div style={{ width: 36, height: 36, background: 'var(--ft-gradient)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>J</span>
                 </div>
               )}
