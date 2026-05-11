@@ -94,6 +94,7 @@ const FeedExplore: React.FC = () => {
           setLastUpdated(rankingData.lastUpdated);
         } else {
           console.error('Rankings failed:', rankingData);
+          console.error('Rankings error details:', rankingData.error, rankingData.details);
           setRankings([]);
           setRankingError(rankingData.error || '랭킹 데이터를 가져오지 못했습니다');
         }
@@ -101,6 +102,7 @@ const FeedExplore: React.FC = () => {
           setNewCCAs(newCCAData.ccas);
         } else {
           console.error('New CCAs failed:', newCCAData);
+          console.error('New CCAs error details:', newCCAData.error, newCCAData.details);
           setNewCCAs([]);
           setNewCCAError(newCCAData.error || '신규 CCA 데이터를 가져오지 못했습니다');
         }

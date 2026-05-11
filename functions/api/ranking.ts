@@ -65,7 +65,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       console.error('Ranking API error:', error);
       return new Response(JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        details: error.toString()
       }), {
         status: 500,
         headers
