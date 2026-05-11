@@ -27,36 +27,61 @@ interface RankingItem {
   rankingScore: number;
 }
 
+interface NewCCAItem {
+  id: string;
+  name: string;
+  nickname: string;
+  image: string;
+  score: number;
+  createdAt: string;
+  isWorking: boolean;
+  postCount: number;
+  totalFollowers: number;
+}
+
 const FeedExplore: React.FC = () => {
   const navigate = useNavigate();
   const [activeCat, setActiveCat] = useState('all');
   const [creators, setCreators] = useState<CCA[]>([]);
   const [rankings, setRankings] = useState<RankingItem[]>([]);
+  const [newCCAs, setNewCCAs] = useState<NewCCAItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rankingLoading, setRankingLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   const loadRankings = useCallback(async () => {
+    setRankingLoading(true);
     try {
       const data = await apiService.getRankings(5);
       if (data.success) {
         setRankings(data.rankings);
         setLastUpdated(data.lastUpdated);
+      } else {
+        console.error('Rankings API returned success: false');
       }
-    } catch (e) { console.error('Load rankings error:', e); }
+    } catch (e) {
+      console.error('Load rankings error:', e);
+    } finally {
+      setRankingLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [ccaData, rankingData] = await Promise.all([
+        const [ccaData, rankingData, newCCAData] = await Promise.all([
           apiService.getCCAs(),
-          apiService.getRankings(5)
+          apiService.getRankings(5),
+          apiService.getNewCCAs(10, 30)
         ]);
         setCreators(ccaData);
         if (rankingData.success) {
           setRankings(rankingData.rankings);
           setLastUpdated(rankingData.lastUpdated);
+        }
+        if (newCCAData.success) {
+          setNewCCAs(newCCAData.ccas);
         }
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
@@ -145,10 +170,10 @@ const FeedExplore: React.FC = () => {
       <section className="ft-ex-section">
         <div className="ft-ex-head">
           <h2 className="ft-ex-title">새로운 원석의 발견</h2>
-          <span className="ft-ex-subtitle">신규 크리에이터를 만나보세요</span>
+          <span className="ft-ex-subtitle">최근 30일 내 신규 크리에이터</span>
         </div>
         <div className="ft-ex-grid">
-          {creators.slice(5, 15).map(cca => (
+          {newCCAs.length > 0 ? newCCAs.map(cca => (
             <div key={cca.id} className="ft-ex-card" onClick={() => goToProfile(cca.nickname || cca.name)}>
               <img src={cca.image} className="ft-ex-card-img" alt="" />
               <div className="ft-ex-card-overlay">
@@ -159,12 +184,17 @@ const FeedExplore: React.FC = () => {
                   </div>
                   <div className="ft-ex-card-stats">
                     <span className="ft-ex-glass-tag">NEW</span>
-                    <span className="ft-ex-glass-tag">POST {Math.floor(Math.random() * 50)}</span>
+                    <span className="ft-ex-glass-tag">POST {cca.postCount}</span>
+                    <span className="ft-ex-glass-tag">👥 {cca.totalFollowers}</span>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>
+              신규 크리에이터를 찾는 중...
+            </div>
+          )}
         </div>
       </section>
 

@@ -1900,6 +1900,17 @@ export const apiService = {
       console.error('getRankings error:', error);
       return { success: false, rankings: [] };
     }
+  },
+
+  async getNewCCAs(limit: number = 10, days: number = 30): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/new-ccas?limit=${limit}&days=${days}`);
+      if (!response.ok) throw new Error('Failed to fetch new CCAs');
+      return await response.json();
+    } catch (error) {
+      console.error('getNewCCAs error:', error);
+      return { success: false, ccas: [] };
+    }
   }
 };
 
