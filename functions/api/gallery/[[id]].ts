@@ -31,11 +31,11 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       if (feedMode === 'true') {
         const query = `
           WITH RankedPosts AS (
-            SELECT 
-              g.id, g.type, g.url, g.caption, 
-              COALESCE(g.likes, 0) as likes, 
-              COALESCE(g.shares, 0) as shares, 
-              COALESCE(g.comments_count, 0) as comments_count, 
+            SELECT
+              g.id, g.type, g.url, g.caption,
+              COALESCE(g.likes, 0) as likes,
+              COALESCE(g.shares, 0) as shares,
+              COALESCE(g.comments_count, 0) as comments_count,
               g.created_at,
               g.cca_id,
               c.name as cca_name,
@@ -47,6 +47,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
               v.name as venue_name,
               v.region as venue_region,
               (CASE WHEN (SELECT 1 FROM user_follows uf WHERE uf.follower_id = ? AND uf.following_id = c.id LIMIT 1) IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
+              (SELECT COUNT(*) FROM user_follows uf WHERE uf.following_id = c.id) as followers_count,
               ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
             FROM gallery g
             JOIN ccas c ON g.cca_id = c.id
@@ -93,11 +94,11 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           // FALLBACK: Run the original query without cca_follows if the new table isn't migrated yet
           const fallbackQuery = `
             WITH RankedPosts AS (
-              SELECT 
-                g.id, g.type, g.url, g.caption, 
-                COALESCE(g.likes, 0) as likes, 
-                COALESCE(g.shares, 0) as shares, 
-                COALESCE(g.comments_count, 0) as comments_count, 
+              SELECT
+                g.id, g.type, g.url, g.caption,
+                COALESCE(g.likes, 0) as likes,
+                COALESCE(g.shares, 0) as shares,
+                COALESCE(g.comments_count, 0) as comments_count,
                 g.created_at,
                 g.cca_id,
                 c.name as cca_name,
@@ -109,6 +110,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 v.name as venue_name,
                 v.region as venue_region,
                 0 as is_followed,
+                (SELECT COUNT(*) FROM user_follows uf WHERE uf.following_id = c.id) as followers_count,
                 ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
               FROM gallery g
               JOIN ccas c ON g.cca_id = c.id
@@ -163,7 +165,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             ccaScore: item.cca_score,
             subscriptionCost: item.cca_subscription_cost || 0,
             venueName: item.venue_name,
-            venueRegion: item.venue_region
+            venueRegion: item.venue_region,
+            followersCount: item.followers_count || 0
           })),
           page,
           limit,

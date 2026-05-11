@@ -314,10 +314,12 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                           justifyContent: 'center',
                           gap: '4px',
                           padding: '6px 12px',
+                          height: '32px',
+                          lineHeight: '1',
                         }}
                       >
                         {followingCCAIds.includes(item.ccaId) ? '팔로잉' : '팔로우'}
-                        <span style={{ fontSize: '11px', opacity: 0.8 }}>{item.followersCount || 0}</span>
+                        <span style={{ fontSize: '11px', opacity: 0.8, marginLeft: '2px' }}>{item.followersCount || 0}</span>
                       </button>
                       {!subscribedIds.includes(item.ccaId) && (
                         <button
