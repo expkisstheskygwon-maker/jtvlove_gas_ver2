@@ -26,8 +26,12 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
       const getBusinessDate = () => {
         const now = new Date();
-        const hour = now.getUTCHours() + 8; // Manila Time
-        if (hour < 5) {
+        const utcHours = now.getUTCHours();
+        const utcMinutes = now.getUTCMinutes();
+
+        // 9:30 AM Local (UTC+9) = 00:30 AM UTC
+        // 00:00 ~ 00:29 (UTC) == 09:00 ~ 09:29 (Local) -> Still yesterday's business day
+        if (utcHours === 0 && utcMinutes < 30) {
           const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
           return yesterday.toISOString().split('T')[0];
         }

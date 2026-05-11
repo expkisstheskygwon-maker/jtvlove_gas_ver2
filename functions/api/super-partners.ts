@@ -119,12 +119,38 @@ export const onRequest: any = async (context: any) => {
             }
 
             if (action === 'listCCAs') {
+                const getBusinessDate = () => {
+                    const now = new Date();
+                    const utcHours = now.getUTCHours();
+                    const utcMinutes = now.getUTCMinutes();
+
+                    // 9:30 AM Local (UTC+9) = 00:30 AM UTC
+                    // 00:00 ~ 00:29 (UTC) == 09:00 ~ 09:29 (Local) -> Still yesterday's business day
+                    if (utcHours === 0 && utcMinutes < 30) {
+                        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                        return yesterday.toISOString().split('T')[0];
+                    }
+                    return now.toISOString().split('T')[0];
+                };
+
                 const today = new Date().toISOString().split('T')[0];
+                const currentBusinessDate = getBusinessDate();
+                
                 const query = `
           SELECT c.*, v.name as venue_name, v.name as venueName, v.region as region,
-          (SELECT COUNT(*) FROM reservations r WHERE r.cca_id = c.id AND r.reservation_date = ?) as today_reservations
+          (SELECT COUNT(*) FROM reservations r WHERE r.cca_id = c.id AND r.reservation_date = ?) as today_reservations,
+          a.status as attendanceStatus, a.check_in_at as checkInAt, a.attendance_date
           FROM ccas c 
           LEFT JOIN venues v ON c.venue_id = v.id
+          LEFT JOIN (
+             SELECT ca.* FROM cca_attendance ca
+             INNER JOIN (
+                SELECT cca_id, MAX(check_in_at) as max_check_in
+                FROM cca_attendance 
+                WHERE status = 'checked_in'
+                GROUP BY cca_id
+             ) latest ON ca.cca_id = latest.cca_id AND ca.check_in_at = latest.max_check_in
+          ) a ON c.id = a.cca_id
           ORDER BY c.created_at DESC
         `;
                 let results: any[] = [];
@@ -137,9 +163,19 @@ export const onRequest: any = async (context: any) => {
                     if (dbErr.message && dbErr.message.includes("column")) {
                         const fallbackQuery = `
                             SELECT c.*, v.name as venue_name, v.name as venueName, v.region as region,
-                            (SELECT COUNT(*) FROM reservations r WHERE r.cca_id = c.id AND r.reservation_date = ?) as today_reservations
+                            (SELECT COUNT(*) FROM reservations r WHERE r.cca_id = c.id AND r.reservation_date = ?) as today_reservations,
+                            a.status as attendanceStatus, a.check_in_at as checkInAt, a.attendance_date
                             FROM ccas c 
                             LEFT JOIN venues v ON c.venue_id = v.id
+                            LEFT JOIN (
+                               SELECT ca.* FROM cca_attendance ca
+                               INNER JOIN (
+                                  SELECT cca_id, MAX(check_in_at) as max_check_in
+                                  FROM cca_attendance 
+                                  WHERE status = 'checked_in'
+                                  GROUP BY cca_id
+                               ) latest ON ca.cca_id = latest.cca_id AND ca.check_in_at = latest.max_check_in
+                            ) a ON c.id = a.cca_id
                         `;
                         const fbResult = await env.DB.prepare(fallbackQuery).bind(today).all();
                         results = fbResult.results || [];
@@ -156,10 +192,17 @@ export const onRequest: any = async (context: any) => {
                     try { if (c.languages) languages = typeof c.languages === 'string' ? JSON.parse(c.languages) : c.languages; } catch(e) {}
                     try { if (c.experience_history) experience_history = typeof c.experience_history === 'string' ? JSON.parse(c.experience_history) : c.experience_history; } catch(e) {}
                     
+                    // Calculate isWorking based on attendance status and business date
+                    const isWorking = c.attendanceStatus === 'checked_in' && c.attendance_date === currentBusinessDate;
+                    
                     return {
                         ...c,
                         venueName: c.venueName || c.venue_name,
                         isNew: c.is_new === 1,
+                        isWorking,
+                        is_working: isWorking ? 1 : 0,
+                        attendanceStatus: c.attendanceStatus,
+                        checkInAt: c.checkInAt,
                         specialties,
                         languages,
                         experience_history
