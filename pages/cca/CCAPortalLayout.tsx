@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/apiService';
@@ -11,24 +11,29 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
    const [ccaImage, setCcaImage] = useState<string>('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200/200');
    const [isClockedIn, setIsClockedIn] = useState<boolean>(false);
 
-   useEffect(() => {
-      const fetchCcaData = async () => {
-         if (user?.ccaId) {
-            const ccaInfo = await apiService.getCCAById(user.ccaId);
-            if (ccaInfo) {
-               if (ccaInfo.image) setCcaImage(ccaInfo.image);
-               setIsClockedIn((ccaInfo as any).attendanceStatus === 'checked_in');
-            }
+   const fetchCcaData = useCallback(async () => {
+      if (user?.ccaId) {
+         const ccaInfo = await apiService.getCCAById(user.ccaId);
+         if (ccaInfo) {
+            if (ccaInfo.image) setCcaImage(ccaInfo.image);
+            // Use isWorking field for attendance status
+            setIsClockedIn((ccaInfo as any).isWorking === true);
          }
-      };
-      
+      }
+   }, [user?.ccaId]);
+
+   useEffect(() => {
       fetchCcaData();
 
       // Listen for real-time dispatch events from CCAPortalHome when the CCA checks in or out
-      const handleStatusUpdate = (e: any) => setIsClockedIn(e.detail);
+      const handleStatusUpdate = (e: any) => {
+         setIsClockedIn(e.detail);
+         // Refresh CCA data to ensure consistency
+         fetchCcaData();
+      };
       window.addEventListener('ccaAttendanceUpdate', handleStatusUpdate);
       return () => window.removeEventListener('ccaAttendanceUpdate', handleStatusUpdate);
-   }, [user?.ccaId]);
+   }, [fetchCcaData]);
 
    const handleSignOut = () => {
       if (confirm("Sign out of CCA Portal?")) {

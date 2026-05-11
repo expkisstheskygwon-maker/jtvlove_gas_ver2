@@ -45,6 +45,8 @@ const CCAPortalHome: React.FC = () => {
       const result = await apiService.ccaCheckIn(user.ccaId, data.cca.venue_id || 'v1');
       if (result.success) {
          setAttendance({ status: 'checked_in', check_in_at: result.time || new Date().toISOString() });
+         // Update CCA isWorking status
+         await apiService.updateCCA(user.ccaId, { isWorking: true });
          window.dispatchEvent(new CustomEvent('ccaAttendanceUpdate', { detail: true }));
       }
       setCheckingIn(false);
@@ -56,6 +58,8 @@ const CCAPortalHome: React.FC = () => {
       const result = await apiService.ccaCheckOut(user.ccaId, data.cca.venue_id || 'v1');
       if (result.success) {
          setAttendance({ ...attendance, status: 'checked_out', check_out_at: result.time || new Date().toISOString() });
+         // Update CCA isWorking status
+         await apiService.updateCCA(user.ccaId, { isWorking: false });
          window.dispatchEvent(new CustomEvent('ccaAttendanceUpdate', { detail: false }));
       }
       setCheckingOut(false);
@@ -130,8 +134,9 @@ const CCAPortalHome: React.FC = () => {
    const customerMessages = data?.customerMessages || [];
    const adminMessages = data?.adminMessages || [];
    const notices = data?.notices || [];
-   const isCheckedIn = attendance?.status === 'checked_in';
-   const isCheckedOut = attendance?.status === 'checked_out';
+   // Use isWorking field from CCA data for consistent status with main site/feed
+   const isCheckedIn = cca?.isWorking === true || attendance?.status === 'checked_in';
+   const isCheckedOut = !isCheckedIn && (attendance?.status === 'checked_out' || attendance?.check_out_at);
    const unreadMsgCount = customerMessages.filter((m: any) => !m.replied).length;
 
    return (
@@ -150,7 +155,7 @@ const CCAPortalHome: React.FC = () => {
                         className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border-2 border-primary/30 shadow-xl"
                         alt="Profile"
                      />
-                     {isCheckedIn && !isCheckedOut && (
+                     {isCheckedIn && (
                         <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-[#1a1612] flex items-center justify-center">
                            <span className="text-[8px] text-white font-black">ON</span>
                         </div>
@@ -184,7 +189,7 @@ const CCAPortalHome: React.FC = () => {
                         <span className="material-symbols-outlined text-lg">login</span>
                         {checkingIn ? 'Processing...' : 'Clock-in'}
                      </button>
-                  ) : isCheckedIn && !isCheckedOut ? (
+                  ) : isCheckedIn ? (
                      <div className="text-right">
                         <div className="flex items-center gap-2 mb-2 justify-end">
                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
