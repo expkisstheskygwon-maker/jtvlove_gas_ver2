@@ -16,12 +16,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   if (request.method === 'GET') {
     try {
       const limit = parseInt(url.searchParams.get('limit') || '10');
-      const days = parseInt(url.searchParams.get('days') || '30');
 
-      // Calculate date N days ago in SQLite format
-      const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').replace('Z', '');
-
-      // Query for new CCAs based on created_at date
+      // Simple query to get active CCAs ordered by creation date
       const query = `
         SELECT
           c.id,
@@ -35,14 +31,15 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           (SELECT COUNT(*) FROM user_follows uf WHERE uf.following_id = c.id) as total_followers
         FROM ccas c
         WHERE c.status = 'active'
-          AND c.created_at >= ?
         ORDER BY c.created_at DESC
         LIMIT ?
       `;
 
       const { results } = await env.DB.prepare(query)
-        .bind(daysAgo, limit)
+        .bind(limit)
         .all();
+
+      console.log('New CCAs query results:', results);
 
       const newCCAs = results.map((r: any) => ({
         id: r.id,

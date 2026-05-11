@@ -48,19 +48,27 @@ const FeedExplore: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [rankingLoading, setRankingLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [rankingError, setRankingError] = useState<string>('');
+  const [newCCAError, setNewCCAError] = useState<string>('');
 
   const loadRankings = useCallback(async () => {
     setRankingLoading(true);
+    setRankingError('');
     try {
       const data = await apiService.getRankings(5);
-      if (data.success) {
+      console.log('Rankings response:', data);
+      if (data.success && data.rankings) {
         setRankings(data.rankings);
         setLastUpdated(data.lastUpdated);
       } else {
-        console.error('Rankings API returned success: false');
+        console.error('Rankings API returned success: false or no rankings');
+        setRankings([]);
+        setRankingError(data.error || '랭킹 데이터를 가져오지 못했습니다');
       }
     } catch (e) {
       console.error('Load rankings error:', e);
+      setRankings([]);
+      setRankingError('랭킹 로딩 중 오류 발생');
     } finally {
       setRankingLoading(false);
     }
@@ -70,21 +78,39 @@ const FeedExplore: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       try {
+        console.log('Loading explore data...');
         const [ccaData, rankingData, newCCAData] = await Promise.all([
           apiService.getCCAs(),
           apiService.getRankings(5),
           apiService.getNewCCAs(10, 30)
         ]);
+        console.log('CCA data:', ccaData);
+        console.log('Ranking data:', rankingData);
+        console.log('New CCA data:', newCCAData);
+
         setCreators(ccaData);
-        if (rankingData.success) {
+        if (rankingData.success && rankingData.rankings) {
           setRankings(rankingData.rankings);
           setLastUpdated(rankingData.lastUpdated);
+        } else {
+          console.error('Rankings failed:', rankingData);
+          setRankings([]);
+          setRankingError(rankingData.error || '랭킹 데이터를 가져오지 못했습니다');
         }
-        if (newCCAData.success) {
+        if (newCCAData.success && newCCAData.ccas) {
           setNewCCAs(newCCAData.ccas);
+        } else {
+          console.error('New CCAs failed:', newCCAData);
+          setNewCCAs([]);
+          setNewCCAError(newCCAData.error || '신규 CCA 데이터를 가져오지 못했습니다');
         }
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
+      } catch (e) {
+        console.error('Load data error:', e);
+        setRankings([]);
+        setNewCCAs([]);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
 
@@ -158,7 +184,11 @@ const FeedExplore: React.FC = () => {
               </div>
               <span className="material-symbols-outlined" style={{ color: 'var(--ft-primary)', fontSize: 18 }}>trending_up</span>
             </div>
-          )) : (
+          )) : rankingError ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--ft-danger)' }}>
+              {rankingError}
+            </div>
+          ) : (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>
               랭킹 데이터를 불러오는 중...
             </div>
@@ -190,7 +220,11 @@ const FeedExplore: React.FC = () => {
                 </div>
               </div>
             </div>
-          )) : (
+          )) : newCCAError ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--ft-danger)' }}>
+              {newCCAError}
+            </div>
+          ) : (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>
               신규 크리에이터를 찾는 중...
             </div>
