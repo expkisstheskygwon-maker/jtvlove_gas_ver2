@@ -72,12 +72,12 @@ const CCAFeed: React.FC = () => {
       ]);
       
       setFeedItems(feedData.items || []);
-      const activeCCAs = ccasData.filter((c: any) => c.status === 'active');
-      setCCAs(activeCCAs);
+      const checkedInCCAs = ccasData.filter((c: any) => c.status === 'active' && c.isWorking === true);
+      setCCAs(checkedInCCAs);
       
       // Select hero (top rated or random high score)
-      if (activeCCAs.length > 0) {
-        const top = [...activeCCAs].sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+      if (checkedInCCAs.length > 0) {
+        const top = [...checkedInCCAs].sort((a, b) => (b.score || 0) - (a.score || 0))[0];
         setHeroCCA(top);
       }
 
