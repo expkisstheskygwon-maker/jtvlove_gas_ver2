@@ -1894,22 +1894,34 @@ export const apiService = {
   async getRankings(limit: number = 5): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/ranking?limit=${limit}`);
-      if (!response.ok) throw new Error('Failed to fetch rankings');
+      console.log('Rankings API response status:', response.status);
+      console.log('Rankings API response ok:', response.ok);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Rankings API error response:', text);
+        throw new Error('Failed to fetch rankings');
+      }
       return await response.json();
     } catch (error) {
       console.error('getRankings error:', error);
-      return { success: false, rankings: [] };
+      return { success: false, rankings: [], error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
 
   async getNewCCAs(limit: number = 10, days: number = 30): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/new-ccas?limit=${limit}&days=${days}`);
-      if (!response.ok) throw new Error('Failed to fetch new CCAs');
+      console.log('New CCAs API response status:', response.status);
+      console.log('New CCAs API response ok:', response.ok);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('New CCAs API error response:', text);
+        throw new Error('Failed to fetch new CCAs');
+      }
       return await response.json();
     } catch (error) {
       console.error('getNewCCAs error:', error);
-      return { success: false, ccas: [] };
+      return { success: false, ccas: [], error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 };
