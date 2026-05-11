@@ -148,13 +148,13 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       if (result.success) {
         setSubscribedIds(prev => [...prev, subModal.ccaId]);
         // Update user points locally if possible, or just let them refresh
-        if (result.cost) {
-          updateUser({ points: (user.points || 0) - result.cost });
+        if ((result as any).cost) {
+          updateUser({ points: (user.points || 0) - (result as any).cost });
         }
         setSubModal(prev => ({ ...prev, isOpen: false }));
         alert('구독이 완료되었습니다!');
       } else {
-        alert(result.error || '구독에 실패했습니다.');
+        alert((result as any).error || '구독에 실패했습니다.');
       }
     } catch (err) {
       alert('오류가 발생했습니다.');
@@ -307,9 +307,15 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                           background: followingCCAIds.includes(item.ccaId) ? 'transparent' : 'var(--ft-primary)',
                           color: followingCCAIds.includes(item.ccaId) ? 'var(--ft-text-secondary)' : '#fff',
                           border: followingCCAIds.includes(item.ccaId) ? '1px solid var(--ft-border)' : 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
                         }}
                       >
                         {followingCCAIds.includes(item.ccaId) ? '팔로잉' : '팔로우'}
+                        <span style={{ fontSize: '11px', opacity: 0.8 }}>{item.followersCount || 0}</span>
                       </button>
                       {!subscribedIds.includes(item.ccaId) && (
                         <button
