@@ -589,6 +589,7 @@ const SuperPartners: React.FC = () => {
                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Name</th>
                            {activeTab === 'ccas' && <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Venue</th>}
                            {activeTab === 'ccas' && <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Info / Score</th>}
+                           {activeTab === 'ccas' && <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Status</th>}
                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Res.</th>
                            {activeTab === 'venues' && <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">CCAs</th>}
                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Actions</th>
@@ -616,6 +617,16 @@ const SuperPartners: React.FC = () => {
                                        <span className="inline-flex max-w-max items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/40 border border-white/5">
                                           <span className="text-[9px] font-black text-primary uppercase">{item.grade || 'NEW'}</span>
                                           <span className="text-[9px] font-bold text-gray-300">{item.score || 0} pts</span>
+                                       </span>
+                                    </div>
+                                 </td>
+                              )}
+                              {activeTab === 'ccas' && (
+                                 <td className="px-8 py-6 text-center">
+                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${item.is_working === 1 || item.isWorking === true ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-gray-500/10 border border-gray-500/20'}`}>
+                                       <span className={`w-2 h-2 rounded-full ${item.is_working === 1 || item.isWorking === true ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                                       <span className={`text-[9px] font-black uppercase ${item.is_working === 1 || item.isWorking === true ? 'text-emerald-400' : 'text-gray-400'}`}>
+                                          {item.is_working === 1 || item.isWorking === true ? 'IN' : 'OUT'}
                                        </span>
                                     </div>
                                  </td>
