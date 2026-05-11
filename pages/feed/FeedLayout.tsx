@@ -287,8 +287,8 @@ const FeedLayout: React.FC = () => {
               </button>
             ))}
             <button className={`ft-side-item ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => handleNavigate('/settings')}>
-              <span className="material-symbols-outlined">person</span>
-              <span>프로필</span>
+              <span className="material-symbols-outlined">settings</span>
+              <span>설정</span>
             </button>
 
             {user?.ccaId && (
