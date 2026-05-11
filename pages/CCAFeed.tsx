@@ -57,6 +57,7 @@ const CCAFeed: React.FC = () => {
   
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [ccas, setCCAs] = useState<CCA[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [following, setFollowing] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroCCA, setHeroCCA] = useState<CCA | null>(null);
@@ -66,19 +67,29 @@ const CCAFeed: React.FC = () => {
   const init = useCallback(async () => {
     setLoading(true);
     try {
-      const [feedData, ccasData] = await Promise.all([
+      const [feedData, ccasData, fetchedSettings] = await Promise.all([
         apiService.getFeed(1, 20, user?.id),
-        apiService.getCCAs()
+        apiService.getCCAs(),
+        apiService.getSiteSettings()
       ]);
-      
+
       setFeedItems(feedData.items || []);
+      setSettings(fetchedSettings);
       const activeCCAs = ccasData.filter((c: any) => c.status === 'active');
       setCCAs(activeCCAs);
-      
-      // Select hero (top rated or random high score)
+
+      // Select hero - prioritize live CCAs, then top rated
       if (activeCCAs.length > 0) {
-        const top = [...activeCCAs].sort((a, b) => (b.score || 0) - (a.score || 0))[0];
-        setHeroCCA(top);
+        const liveCCAs = activeCCAs.filter((c: any) => c.isWorking === true);
+        if (liveCCAs.length > 0) {
+          // Show a random live CCA
+          const randomLive = liveCCAs[Math.floor(Math.random() * liveCCAs.length)];
+          setHeroCCA(randomLive);
+        } else {
+          // Fall back to top rated
+          const top = [...activeCCAs].sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+          setHeroCCA(top);
+        }
       }
 
       if (user?.id) {
@@ -97,6 +108,26 @@ const CCAFeed: React.FC = () => {
   useEffect(() => {
     init();
   }, [init]);
+
+  // Live CCAs - same logic as Home.tsx for consistency
+  const liveCCAs = React.useMemo(() => {
+    const isMock = settings?.marketing_live_ccas === 'true';
+
+    if (isMock) {
+      const activeCcas = ccas.filter(cca => cca.status === 'active');
+      return [...activeCcas].sort(() => 0.5 - Math.random()).slice(0, 8);
+    } else {
+      // Use backend-calculated isWorking for consistent display across all pages
+      return ccas
+        .filter(cca => (cca as any).isWorking === true)
+        .sort((a, b) => {
+          const timeA = new Date((a as any).checkInAt || 0).getTime();
+          const timeB = new Date((b as any).checkInAt || 0).getTime();
+          return timeB - timeA;
+        })
+        .slice(0, 10);
+    }
+  }, [ccas, settings]);
 
   // ─── Handlers ─────────────────────────────
   const toggleFollow = async (ccaId: string, e: React.MouseEvent) => {
@@ -204,35 +235,37 @@ const CCAFeed: React.FC = () => {
           </section>
         )}
 
-        {/* Trending Section */}
-        <section style={{ marginBottom: 48 }}>
-          <div className="luminary-section-header">
-            <h3 className="luminary-section-title">{t.trending}</h3>
-            <a href="#/ccas" style={{ fontSize: 12, fontWeight: 700, color: 'var(--luminary-gold)', textDecoration: 'none' }}>{t.ccas} →</a>
-          </div>
-          <div className="luminary-trending-scroll">
-            {ccas.slice(0, 10).map(cca => (
-              <a key={cca.id} onClick={() => goToProfile(cca.nickname || cca.name)} className="luminary-cca-card">
-                <img src={cca.image} alt="" className="luminary-cca-avatar" />
-                <div className="luminary-cca-info">
-                  <div className="luminary-cca-name">{cca.nickname || cca.name}</div>
-                  <div className="luminary-cca-branch">{cca.venueName}</div>
-                </div>
-                <button 
-                  onClick={(e) => toggleFollow(cca.id, e)}
-                  style={{
-                    backgroundColor: following.includes(cca.id) ? 'transparent' : 'var(--luminary-gold)',
-                    border: following.includes(cca.id) ? '1px solid #444' : 'none',
-                    color: following.includes(cca.id) ? '#888' : '#000',
-                    width: '100%', padding: '6px 0', borderRadius: 8, fontSize: 11, fontWeight: 800
-                  }}
-                >
-                  {following.includes(cca.id) ? t.following_btn : t.follow}
-                </button>
-              </a>
-            ))}
-          </div>
-        </section>
+        {/* Trending Section - Live CCAs only */}
+        {liveCCAs.length > 0 && (
+          <section style={{ marginBottom: 48 }}>
+            <div className="luminary-section-header">
+              <h3 className="luminary-section-title">{t.trending}</h3>
+              <a href="#/ccas" style={{ fontSize: 12, fontWeight: 700, color: 'var(--luminary-gold)', textDecoration: 'none' }}>{t.ccas} →</a>
+            </div>
+            <div className="luminary-trending-scroll">
+              {liveCCAs.map(cca => (
+                <a key={cca.id} onClick={() => goToProfile(cca.nickname || cca.name)} className="luminary-cca-card">
+                  <img src={cca.image} alt="" className="luminary-cca-avatar" />
+                  <div className="luminary-cca-info">
+                    <div className="luminary-cca-name">{cca.nickname || cca.name}</div>
+                    <div className="luminary-cca-branch">{cca.venueName}</div>
+                  </div>
+                  <button
+                    onClick={(e) => toggleFollow(cca.id, e)}
+                    style={{
+                      backgroundColor: following.includes(cca.id) ? 'transparent' : 'var(--luminary-gold)',
+                      border: following.includes(cca.id) ? '1px solid #444' : 'none',
+                      color: following.includes(cca.id) ? '#888' : '#000',
+                      width: '100%', padding: '6px 0', borderRadius: 8, fontSize: 11, fontWeight: 800
+                    }}
+                  >
+                    {following.includes(cca.id) ? t.following_btn : t.follow}
+                  </button>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Home Feed */}
         <section>
