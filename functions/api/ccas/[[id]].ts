@@ -42,14 +42,15 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
       let query = `
         SELECT c.*, v.name as venueName, v.name as venue_name, v.region as region,
-               a.status as attendanceStatus, a.check_in_at as checkInAt, a.attendance_date
-        FROM ccas c 
+               a.status as attendanceStatus, a.check_in_at as checkInAt, a.attendance_date,
+               (SELECT COUNT(*) FROM user_follows uf WHERE uf.following_id = c.id) as followers_count
+        FROM ccas c
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN (
            SELECT ca.* FROM cca_attendance ca
            INNER JOIN (
               SELECT cca_id, MAX(check_in_at) as max_check_in
-              FROM cca_attendance 
+              FROM cca_attendance
               WHERE status = 'checked_in'
               GROUP BY cca_id
            ) latest ON ca.cca_id = latest.cca_id AND ca.check_in_at = latest.max_check_in
@@ -71,6 +72,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           isWorking,
           attendanceStatus: result.attendanceStatus,
           checkInAt: result.checkInAt,
+          followersCount: result.followers_count || 0,
           languages: result.languages ? JSON.parse(result.languages) : [],
           venueId: result.venue_id,
           sns: result.sns_links ? JSON.parse(result.sns_links) : {},

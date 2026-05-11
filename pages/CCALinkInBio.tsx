@@ -69,6 +69,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
 
   // Follow
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
 
   // Views
   const [todayViews, setTodayViews] = useState(0);
@@ -113,6 +114,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
           setHeartCount(ccaData.likesCount || 0);
           setTodayViews(ccaData.viewsCount || 0);
           setIsWorking(ccaData.isWorking || false);
+          setFollowersCount((ccaData as any).followersCount || 0);
         }
       } catch (err) {
         console.error("Fetch data error:", err);
@@ -517,6 +519,10 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                 </span>
                 <span className="lib-profile-stat-label">{isHearted ? '❤️ Hearts' : 'Hearts'}</span>
               </button>
+              <div className="lib-profile-stat">
+                <span className="lib-profile-stat-value">{followersCount.toLocaleString()}</span>
+                <span className="lib-profile-stat-label">Followers</span>
+              </div>
               <div className="lib-profile-stat">
                 <span className="lib-profile-stat-value">{todayViews.toLocaleString()}</span>
                 <span className="lib-profile-stat-label">Views</span>
