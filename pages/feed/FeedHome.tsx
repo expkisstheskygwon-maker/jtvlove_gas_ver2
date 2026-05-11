@@ -63,7 +63,9 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       setFeedItems(data.items || []);
       
       const ccas = await apiService.getCCAs();
-      setOnDutyCCAs(ccas.slice(0, 10));
+      // Only show CCAs who are actually checked in (isWorking === true)
+      const workingCCAs = ccas.filter((c: any) => c.isWorking === true);
+      setOnDutyCCAs(workingCCAs.slice(0, 10));
 
       if (user?.id) {
         const [subs, ccaFollows, feedData] = await Promise.all([

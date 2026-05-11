@@ -93,6 +93,10 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   // Gallery tab
   const [galleryTab, setGalleryTab] = useState<'grid' | 'info'>('grid');
 
+  // Attendance state
+  const [isWorking, setIsWorking] = useState(false);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
   // ─── Fetch Data ───
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +112,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
         if (ccaData) {
           setHeartCount(ccaData.likesCount || 0);
           setTodayViews(ccaData.viewsCount || 0);
+          setIsWorking(ccaData.isWorking || false);
         }
       } catch (err) {
         console.error("Fetch data error:", err);
@@ -282,6 +287,42 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
       if (result.isFollowing) showToastMsg('팔로우했습니다!');
     } catch {
       setIsFollowing(!isFollowing); // Revert
+    }
+  };
+
+  const handleAttendanceToggle = async () => {
+    if (!cca?.id || !user?.ccaId) return;
+    setAttendanceLoading(true);
+    try {
+      const action = isWorking ? 'check_out' : 'check_in';
+      const response = await fetch('/api/cca-portal/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ccaId: cca.id,
+          venueId: (cca as any).venueId,
+          action
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setIsWorking(!isWorking);
+        showToastMsg(isWorking ? '퇴근했습니다.' : '출근했습니다.');
+        // Refresh CCA data to get updated status
+        const updatedCca = await apiService.getCCAByNickname(username || '');
+        if (updatedCca) {
+          setCca(updatedCca);
+          setIsWorking(updatedCca.isWorking || false);
+        }
+      } else {
+        showToastMsg('오류가 발생했습니다.');
+      }
+    } catch (err) {
+      console.error('Attendance error:', err);
+      showToastMsg('오류가 발생했습니다.');
+    } finally {
+      setAttendanceLoading(false);
     }
   };
 
@@ -531,8 +572,25 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
 
             {/* Action Buttons */}
             <div className="lib-profile-actions">
-              <button 
-                className={`lib-profile-action-btn ${isFollowing ? 'secondary' : 'primary'}`} 
+              {isOwner && (
+                <button
+                  className="lib-profile-action-btn"
+                  onClick={handleAttendanceToggle}
+                  disabled={attendanceLoading}
+                  style={{
+                    background: isWorking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                    color: isWorking ? '#ef4444' : '#22c55e',
+                    border: `1px solid ${isWorking ? '#ef4444' : '#22c55e'}`
+                  }}
+                >
+                  <span className="material-symbols-outlined">
+                    {isWorking ? 'logout' : 'login'}
+                  </span>
+                  {attendanceLoading ? '처리 중...' : (isWorking ? '퇴근하기' : '출근하기')}
+                </button>
+              )}
+              <button
+                className={`lib-profile-action-btn ${isFollowing ? 'secondary' : 'primary'}`}
                 onClick={handleFollowToggle}
                 style={!isFollowing ? { background: '#eebd2b', color: '#1b180d' } : {}}
               >
@@ -852,9 +910,9 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
 
                 {uploadType === 'photo' ? (
                   <label style={{
-                    display: 'block', width: '100%', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)',
-                    borderRadius: 16, border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    width: '100%', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)',
+                    borderRadius: 16, border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer',
                     overflow: 'hidden', marginBottom: 20
                   }}>
                     {previewUrl ? (
