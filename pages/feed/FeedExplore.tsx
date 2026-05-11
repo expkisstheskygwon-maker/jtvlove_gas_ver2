@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/apiService';
 import { CCA } from '../../types';
@@ -11,23 +11,62 @@ const CATEGORIES = [
   { id: 'secret', label: '시크릿' },
 ];
 
+interface RankingItem {
+  rank: number;
+  id: string;
+  name: string;
+  nickname: string;
+  image: string;
+  baseScore: number;
+  recentLikes: number;
+  recentComments: number;
+  recentViews: number;
+  newFollowers7d: number;
+  totalFollowers: number;
+  isWorking: boolean;
+  rankingScore: number;
+}
+
 const FeedExplore: React.FC = () => {
   const navigate = useNavigate();
   const [activeCat, setActiveCat] = useState('all');
   const [creators, setCreators] = useState<CCA[]>([]);
+  const [rankings, setRankings] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  const loadRankings = useCallback(async () => {
+    try {
+      const data = await apiService.getRankings(5);
+      if (data.success) {
+        setRankings(data.rankings);
+        setLastUpdated(data.lastUpdated);
+      }
+    } catch (e) { console.error('Load rankings error:', e); }
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const data = await apiService.getCCAs();
-        setCreators(data);
+        const [ccaData, rankingData] = await Promise.all([
+          apiService.getCCAs(),
+          apiService.getRankings(5)
+        ]);
+        setCreators(ccaData);
+        if (rankingData.success) {
+          setRankings(rankingData.rankings);
+          setLastUpdated(rankingData.lastUpdated);
+        }
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
     loadData();
-  }, []);
+
+    // Auto-refresh rankings every 30 seconds
+    const interval = setInterval(loadRankings, 30000);
+    return () => clearInterval(interval);
+  }, [loadRankings]);
 
   const goToProfile = (nickname: string) => {
     navigate(`/@${nickname}`);
@@ -65,20 +104,40 @@ const FeedExplore: React.FC = () => {
       <section className="ft-ex-section">
         <div className="ft-ex-head">
           <h2 className="ft-ex-title">실시간 랭킹 Top 5</h2>
-          <span className="ft-ex-subtitle">팬들이 가장 많이 찾은 크리에이터</span>
+          <span className="ft-ex-subtitle">
+            팬들이 가장 많이 찾은 크리에이터
+            {lastUpdated && (
+              <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 8 }}>
+                업데이트: {new Date(lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-          {creators.slice(0, 5).map((cca, i) => (
-            <div key={cca.id} className="ft-ex-rank-item" onClick={() => goToProfile(cca.nickname || cca.name)}>
-              <span className="ft-ex-rank-num">{i + 1}</span>
-              <img src={cca.image} className="ft-ex-rank-av" alt="" />
+          {rankings.length > 0 ? rankings.map((item) => (
+            <div key={item.id} className="ft-ex-rank-item" onClick={() => goToProfile(item.nickname || item.name)}>
+              <span className={`ft-ex-rank-num ${item.rank <= 3 ? 'top-3' : ''}`}>{item.rank}</span>
+              <div style={{ position: 'relative' }}>
+                <img src={item.image} className="ft-ex-rank-av" alt="" />
+                {item.isWorking && (
+                  <div style={{ position: 'absolute', bottom: -4, right: -4, background: '#22c55e', color: '#fff', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, border: '2px solid var(--ft-bg)' }}>
+                    ON
+                  </div>
+                )}
+              </div>
               <div className="ft-ex-rank-info">
-                <div className="ft-ex-rank-name">{cca.nickname || cca.name}</div>
-                <div className="ft-ex-rank-sub">오늘 {Math.floor(Math.random() * 1000)}명 방문</div>
+                <div className="ft-ex-rank-name">{item.nickname || item.name}</div>
+                <div className="ft-ex-rank-sub">
+                  ❤️ {item.recentLikes} • 💬 {item.recentComments} • 👥 +{item.newFollowers7d}
+                </div>
               </div>
               <span className="material-symbols-outlined" style={{ color: 'var(--ft-primary)', fontSize: 18 }}>trending_up</span>
             </div>
-          ))}
+          )) : (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>
+              랭킹 데이터를 불러오는 중...
+            </div>
+          )}
         </div>
       </section>
 

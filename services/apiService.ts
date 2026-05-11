@@ -1889,6 +1889,17 @@ export const apiService = {
       console.error('markAllNotificationsRead error:', error);
       return false;
     }
+  },
+
+  async getRankings(limit: number = 5): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/ranking?limit=${limit}`);
+      if (!response.ok) throw new Error('Failed to fetch rankings');
+      return await response.json();
+    } catch (error) {
+      console.error('getRankings error:', error);
+      return { success: false, rankings: [] };
+    }
   }
 };
 
