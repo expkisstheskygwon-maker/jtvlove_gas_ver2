@@ -305,8 +305,8 @@ const FeedLayout: React.FC = () => {
 
           <div className="ft-side-footer">
             <div className="ft-nav-notif">
-              <button 
-                className={`ft-side-item ${location.pathname === '/notifications' ? 'active' : ''}`} 
+              <button
+                className={`ft-side-item ${location.pathname === '/notifications' ? 'active' : ''}`}
                 onClick={handleNotificationButtonClick}
               >
                 <span className="material-symbols-outlined">notifications</span>
@@ -324,6 +324,15 @@ const FeedLayout: React.FC = () => {
                 </div>
               )}
             </div>
+            {user?.ccaId && (
+              <button
+                className="ft-side-item"
+                onClick={() => handleNavigate(`/@${user.nickname}`)}
+              >
+                <span className="material-symbols-outlined">account_circle</span>
+                <span>내 프로필</span>
+              </button>
+            )}
             <button className="ft-side-item" onClick={toggleTheme}>
               <span className="material-symbols-outlined">
                 {isDark ? 'light_mode' : 'dark_mode'}
