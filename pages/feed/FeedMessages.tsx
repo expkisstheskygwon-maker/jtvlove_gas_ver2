@@ -198,9 +198,9 @@ const FeedMessages: React.FC = () => {
   }
 
   return (
-    <div style={{ position: 'relative', height: 'calc(100vh - 120px)' }}>
+    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div className="ft-page-header">
+      <div className="ft-page-header" style={{ flexShrink: 0 }}>
         <div className="ft-page-title">
           <span>메시지</span>
           <div className="ft-page-title-icon" onClick={() => setSearchQuery('')}>
@@ -215,131 +215,158 @@ const FeedMessages: React.FC = () => {
       </div>
 
       {/* Conversation List */}
-      <div style={{ overflowY: 'auto', height: 'calc(100% - 100px)' }}>
-        {/* Search Input */}
-        <div className="ft-search-bar" style={{ margin: '0 16px 16px' }}>
-          <span className="material-symbols-outlined">search</span>
-          <input 
-            type="text" 
-            placeholder="대화 상대 검색" 
-            value={searchQuery}
-            onChange={e => handleSearch(e.target.value)}
-          />
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 20px' }}>
+        {/* Modern Search Bar */}
+        <div style={{ padding: '0 16px 16px' }}>
+          <div className="ft-search-modern-wrapper" style={{ height: 44, borderRadius: 12 }}>
+            <span className="material-symbols-outlined ft-search-icon" style={{ fontSize: 18 }}>search</span>
+            <input 
+              type="text" 
+              className="ft-search-input-modern"
+              placeholder="대화 상대 검색" 
+              value={searchQuery}
+              onChange={e => handleSearch(e.target.value)}
+              style={{ fontSize: 14 }}
+            />
+          </div>
         </div>
 
         {searchQuery.length >= 2 && (
-          <div style={{ padding: '0 16px 16px', borderBottom: '1px solid var(--ft-border)' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ft-text-tertiary)', marginBottom: 8 }}>검색 결과</div>
+          <div style={{ padding: '0 16px 20px' }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ft-primary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>검색 결과</div>
             {searchResults.map(res => (
               <div 
                 key={res.id} 
-                className="ft-msg-item" 
-                style={{ padding: '10px 0', border: 'none' }}
+                className="ft-msg-item-modern" 
                 onClick={() => { setSearchQuery(''); openChat(res.id, res.nickname || res.realName); }}
               >
-                <div className="ft-sidebar-avatar-placeholder" style={{ width: 40, height: 40 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>person</span>
+                <div className="ft-msg-avatar-modern">
+                  <img src={res.profileImage || `https://ui-avatars.com/api/?name=${res.nickname || res.realName}&background=random`} alt="" />
                 </div>
-                <div className="ft-msg-info">
-                  <div className="ft-msg-name">{res.nickname || res.realName}</div>
+                <div className="ft-msg-body-modern">
+                  <div className="ft-msg-name-modern">{res.nickname || res.realName}</div>
+                  <div className="ft-msg-sub-modern">새로운 대화를 시작해보세요</div>
                 </div>
               </div>
             ))}
-            {searchResults.length === 0 && <div style={{ fontSize: 13, color: 'var(--ft-text-tertiary)' }}>검색 결과가 없습니다.</div>}
+            {searchResults.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: 14, color: 'var(--ft-text-tertiary)' }}>일치하는 사용자가 없습니다.</div>}
           </div>
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>로딩 중...</div>
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <div className="ft-spinner" style={{ margin: '0 auto' }}></div>
+          </div>
         ) : filteredConversations.length === 0 ? (
-          <div className="ft-msg-empty">
-            <span className="material-symbols-outlined">chat_bubble</span>
-            <p>아직 대화 내역이 없습니다.<br/>새로운 대화를 시작해보세요!</p>
+          <div className="ft-msg-empty-modern">
+            <div className="ft-msg-empty-icon-wrapper">
+              <span className="material-symbols-outlined">forum</span>
+            </div>
+            <h3>대화가 없습니다</h3>
+            <p>친구들과 자유롭게 대화를 나누어 보세요.</p>
+            <button className="ft-primary-btn" style={{ marginTop: 20, padding: '10px 24px', borderRadius: 12 }} onClick={() => handleSearch(' ')}>
+              친구 찾기
+            </button>
           </div>
         ) : (
-          filteredConversations.map(conv => (
-            <div key={conv.participantId} className="ft-msg-item" onClick={() => openChat(conv.participantId, conv.participantName)}>
-              <div style={{ position: 'relative' }}>
-                <div className="ft-sidebar-avatar-placeholder" style={{ width: 48, height: 48 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 24 }}>person</span>
+          <div className="ft-conversations-container">
+            {filteredConversations.map(conv => (
+              <div key={conv.participantId} className={`ft-msg-item-modern ${conv.unreadCount > 0 ? 'unread' : ''}`} onClick={() => openChat(conv.participantId, conv.participantName)}>
+                <div className="ft-msg-avatar-modern">
+                  <img src={`https://ui-avatars.com/api/?name=${conv.participantName}&background=random`} alt="" />
+                  {conv.unreadCount > 0 && <div className="ft-unread-badge-modern" />}
                 </div>
-                {conv.unreadCount > 0 && (
-                  <div className="ft-msg-unread-dot">{conv.unreadCount}</div>
-                )}
-              </div>
-              <div className="ft-msg-info">
-                <div className="ft-msg-name">
-                  {conv.participantName}
-                  <span style={{ color: 'var(--ft-accent)', fontSize: 12 }}>✨</span>
+                <div className="ft-msg-body-modern">
+                  <div className="ft-msg-top-modern">
+                    <span className="ft-msg-name-modern">{conv.participantName}</span>
+                    <span className="ft-msg-time-modern">
+                      {new Date(conv.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="ft-msg-preview-modern">{conv.lastMessage.content}</div>
                 </div>
-                <div className="ft-msg-preview">{conv.lastMessage.content}</div>
               </div>
-              <div className="ft-msg-time">
-                {new Date(conv.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
       {/* Chat Room Overlay */}
       {selectedUser && (
-        <div className="ft-chat-room">
-          <div className="ft-chat-header">
-            <button 
-              onClick={() => setSelectedUser(null)}
-              style={{ background: 'none', border: 'none', color: 'var(--ft-text)', cursor: 'pointer' }}
-            >
+        <div className="ft-chat-room-modern">
+          <div className="ft-chat-header-modern">
+            <button className="ft-chat-back-btn" onClick={() => setSelectedUser(null)}>
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
-            <div className="ft-sidebar-avatar-placeholder" style={{ width: 36, height: 36 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>person</span>
+            <div className="ft-chat-user-info-modern">
+              <div className="ft-chat-avatar-small">
+                <img src={`https://ui-avatars.com/api/?name=${selectedUser.name}&background=random`} alt="" />
+              </div>
+              <div className="ft-chat-name-modern">{selectedUser.name}</div>
             </div>
-            <div style={{ fontWeight: 700, flex: 1 }}>{selectedUser.name}</div>
-            <span className="material-symbols-outlined" style={{ color: 'var(--ft-text-tertiary)', cursor: 'pointer' }}>info</span>
-          </div>
-
-          <div className="ft-chat-body">
-            {chatLoading ? (
-              <div style={{ textAlign: 'center', color: 'var(--ft-text-tertiary)', padding: 20 }}>대화 내용을 불러오는 중...</div>
-            ) : (
-              chatHistory.map((msg, idx) => (
-                <div key={msg.id || idx} className={`ft-bubble ${msg.sender_id === user.id ? 'me' : 'other'}`}>
-                  {msg.content}
-                  <div style={{ 
-                    fontSize: 10, opacity: 0.7, marginTop: 4, 
-                    textAlign: msg.sender_id === user.id ? 'right' : 'left' 
-                  }}>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              ))
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <form className="ft-chat-input-area" onSubmit={handleSendMessage}>
-            <span className="material-symbols-outlined" style={{ color: 'var(--ft-text-tertiary)', cursor: 'pointer' }}>image</span>
-            <input 
-              type="text" 
-              className="ft-input" 
-              style={{ marginBottom: 0, borderRadius: 24, padding: '10px 20px' }}
-              placeholder="메시지 보내기..."
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-            />
-            <button 
-              type="submit"
-              disabled={!newMessage.trim()}
-              style={{ 
-                background: 'none', border: 'none', 
-                color: newMessage.trim() ? 'var(--ft-primary)' : 'var(--ft-text-muted)',
-                cursor: newMessage.trim() ? 'pointer' : 'default'
-              }}
-            >
-              <span className="material-symbols-outlined">send</span>
+            <button className="ft-chat-action-btn">
+              <span className="material-symbols-outlined">more_vert</span>
             </button>
-          </form>
+          </div>
+
+          <div className="ft-chat-body-modern">
+            {chatLoading ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="ft-spinner"></div>
+              </div>
+            ) : (
+              <div className="ft-messages-flow">
+                {chatHistory.length === 0 && (
+                  <div className="ft-chat-start-hint">
+                    대화의 시작입니다. 매너 있는 대화를 나누어 주세요.
+                  </div>
+                )}
+                {chatHistory.map((msg, idx) => {
+                  const isMe = msg.sender_id === user.id;
+                  return (
+                    <div key={msg.id || idx} className={`ft-msg-bubble-wrapper ${isMe ? 'me' : 'other'}`}>
+                      {!isMe && (
+                        <div className="ft-bubble-avatar">
+                          <img src={`https://ui-avatars.com/api/?name=${msg.sender_name}&background=random`} alt="" />
+                        </div>
+                      )}
+                      <div className="ft-msg-bubble-content">
+                        <div className="ft-bubble-text">{msg.content}</div>
+                        <div className="ft-bubble-time">
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
+              </div>
+            )}
+          </div>
+
+          <div className="ft-chat-footer-modern">
+            <div className="ft-chat-input-wrapper-modern">
+              <button className="ft-chat-util-btn">
+                <span className="material-symbols-outlined">add_circle</span>
+              </button>
+              <form className="ft-chat-form-modern" onSubmit={handleSendMessage}>
+                <input 
+                  type="text" 
+                  className="ft-chat-input-modern" 
+                  placeholder="메시지를 입력하세요..."
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                />
+                <button 
+                  type="submit"
+                  className={`ft-chat-send-btn ${newMessage.trim() ? 'active' : ''}`}
+                  disabled={!newMessage.trim()}
+                >
+                  <span className="material-symbols-outlined">send</span>
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -78,23 +78,7 @@ export const apiService = {
 
     try {
       const compressedDataUrl = await compressImage(file);
-
-      // Blob으로 변환하여 서버 전송 시도
-      const response = await fetch(compressedDataUrl);
-      const blob = await response.blob();
-      const formData = new FormData();
-      formData.append('file', blob, 'image.jpg');
-
-      const uploadResult = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (uploadResult.ok) {
-        const data = await uploadResult.json();
-        if (data.url) return data.url;
-      }
-      return compressedDataUrl; // 서버 업로드 실패 시 로컬 Base64(압축본) 반환
+      return compressedDataUrl; 
     } catch (error) {
       console.error('uploadImage error:', error);
       return null;
@@ -1046,6 +1030,18 @@ export const apiService = {
     }
   },
 
+  async getUsersByIds(ids: string[]): Promise<any[]> {
+    if (!ids || ids.length === 0) return [];
+    try {
+      const response = await fetch(`${API_BASE}/users?ids=${encodeURIComponent(ids.join(','))}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getUsersByIds error:', error);
+      return [];
+    }
+  },
+
   // Board Configs
   async getBoardConfigs(): Promise<any[]> {
     try {
@@ -1675,18 +1671,19 @@ export const apiService = {
     }
   },
 
-  async createGalleryComment(data: { galleryId: string; authorName: string; authorId?: string; authorImage?: string; content: string }): Promise<{ success: boolean; id?: string; commentsCount?: number }> {
+  async createGalleryComment(data: { galleryId: string; authorName: string; authorId?: string; authorImage?: string; content: string }): Promise<{ success: boolean; id?: string; commentsCount?: number; error?: string }> {
     try {
       const response = await fetch(`${API_BASE}/gallery-comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create gallery comment');
-      return await response.json();
+      const result = await response.json();
+      if (!response.ok) return { success: false, error: result.error || 'Failed to create gallery comment' };
+      return result;
     } catch (error: any) {
       console.error('createGalleryComment error:', error);
-      return { success: false };
+      return { success: false, error: error.message };
     }
   },
 
@@ -1742,6 +1739,18 @@ export const apiService = {
       return data.subscribedIds || [];
     } catch (error) {
       console.error('getSubscriptions error:', error);
+      return [];
+    }
+  },
+
+  async getUserSubscribers(targetId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?targetId=${encodeURIComponent(targetId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.subscriberIds || [];
+    } catch (error) {
+      console.error('getUserSubscribers error:', error);
       return [];
     }
   },
@@ -1836,6 +1845,50 @@ export const apiService = {
 
   async toggleCCAFollow(userId: string, ccaId: string): Promise<{ success: boolean; isFollowing: boolean }> {
     return this.toggleUserFollow(userId, ccaId);
+  },
+
+  // ═══════════════════════════════════════════
+  // User Notifications
+  // ═══════════════════════════════════════════
+  async getNotifications(userId: string, type?: string): Promise<any[]> {
+    try {
+      let url = `${API_BASE}/user-notifications?userId=${encodeURIComponent(userId)}`;
+      if (type) url += `&type=${encodeURIComponent(type)}`;
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getNotifications error:', error);
+      return [];
+    }
+  },
+
+  async markNotificationRead(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, is_read: 1 }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markNotificationRead error:', error);
+      return false;
+    }
+  },
+
+  async markAllNotificationsRead(userId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, all: true, is_read: 1 }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markAllNotificationsRead error:', error);
+      return false;
+    }
   }
 };
 

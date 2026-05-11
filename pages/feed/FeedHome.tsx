@@ -31,6 +31,14 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [followingCCAIds, setFollowingCCAIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [likedIds, setLikedIds] = useState<string[]>([]);
+  const [commentModal, setCommentModal] = useState<{
+    isOpen: boolean;
+    galleryId: string;
+    comments: any[];
+    loading: boolean;
+  }>({ isOpen: false, galleryId: '', comments: [], loading: false });
+  const [newComment, setNewComment] = useState('');
 
   // Subscription Modal State
   const [subModal, setSubModal] = useState<{
@@ -58,12 +66,18 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       setOnDutyCCAs(ccas.slice(0, 10));
 
       if (user?.id) {
-        const [subs, ccaFollows] = await Promise.all([
+        const [subs, ccaFollows, feedData] = await Promise.all([
           apiService.getSubscriptions(user.id),
-          apiService.checkCCAFollow(user.id, '')
+          apiService.checkCCAFollow(user.id, ''),
+          apiService.getFeed(1, 100, user.id)
         ]);
         setSubscribedIds(subs);
         setFollowingCCAIds(ccaFollows.followedIds || []);
+        // Get already liked IDs from feed data if available
+        const liked = (feedData.items || [])
+          .filter((item: any) => item.isLiked)
+          .map((item: any) => item.id);
+        setLikedIds(liked);
       }
     } catch (err) {
       console.error('Feed load error:', err);
@@ -151,9 +165,94 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     handleNavigate(`/@${nickname}`);
   };
 
-  const handleAction = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent, itemId: string) => {
     e.stopPropagation();
-    handleNavigate(window.location.pathname);
+    if (!user) {
+      handleNavigate('/feed');
+      return;
+    }
+
+    const isCurrentlyLiked = likedIds.includes(itemId);
+    
+    // Optimistic UI update
+    if (isCurrentlyLiked) {
+      setLikedIds(prev => prev.filter(id => id !== itemId));
+      setFeedItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, likes: Math.max(0, (item.likes || 0) - 1) } : item
+      ));
+    } else {
+      setLikedIds(prev => [...prev, itemId]);
+      setFeedItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, likes: (item.likes || 0) + 1 } : item
+      ));
+    }
+
+    try {
+      await apiService.toggleGalleryLike(itemId, user.id);
+    } catch (err) {
+      console.error('Like error:', err);
+      // Revert if failed (optional, usually ignored for likes for better UX)
+    }
+  };
+
+  const handleCommentClick = async (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    if (!user) {
+      handleNavigate('/feed');
+      return;
+    }
+
+    setCommentModal({ isOpen: true, galleryId: itemId, comments: [], loading: true });
+    
+    try {
+      const comments = await apiService.getGalleryComments(itemId);
+      setCommentModal(prev => ({ ...prev, comments, loading: false }));
+    } catch (err) {
+      console.error('Fetch comments error:', err);
+      setCommentModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!user || !newComment.trim() || !commentModal.galleryId) return;
+
+    const content = newComment.trim();
+    
+    try {
+      const result = await apiService.createGalleryComment({
+        galleryId: commentModal.galleryId,
+        authorId: user.id,
+        authorName: user.nickname || user.realName || '익명 사용자',
+        authorImage: user.profileImage,
+        content
+      });
+
+      if (result.success) {
+        setNewComment('');
+        const updatedComments = await apiService.getGalleryComments(commentModal.galleryId);
+        setCommentModal(prev => ({ ...prev, comments: updatedComments }));
+      } else {
+        alert(result.error || '댓글 등록에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Add comment error:', err);
+      alert('오류가 발생했습니다.');
+    }
+  };
+
+  const handleShare = (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    if (navigator.share) {
+      navigator.share({
+        title: `${item.ccaNickname || item.ccaName}님의 포스트`,
+        text: item.caption,
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert('링크가 클립보드에 복사되었습니다.');
+    }
   };
 
   return (
@@ -288,17 +387,22 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
               )}
 
               <div className="ft-post-actions">
-                <button className="ft-post-action" onClick={handleAction}>
-                  <span className="material-symbols-outlined">favorite</span>
+                <button 
+                  className={`ft-post-action ${likedIds.includes(item.id) ? 'liked' : ''}`} 
+                  onClick={(e) => handleLike(e, item.id)}
+                >
+                  <span className="material-symbols-outlined" style={{ color: likedIds.includes(item.id) ? '#ff3040' : 'inherit', fontVariationSettings: likedIds.includes(item.id) ? "'FILL' 1" : "''" }}>
+                    {likedIds.includes(item.id) ? 'favorite' : 'favorite'}
+                  </span>
                 </button>
-                <button className="ft-post-action" onClick={handleAction}>
+                <button className="ft-post-action" onClick={(e) => handleCommentClick(e, item.id)}>
                   <span className="material-symbols-outlined">chat_bubble_outline</span>
                 </button>
-                <button className="ft-post-action" onClick={handleAction}>
-                  <span className="material-symbols-outlined">send</span>
+                <button className="ft-post-action" onClick={(e) => handleShare(e, item)}>
+                  <span className="material-symbols-outlined">share</span>
                 </button>
                 <div className="ft-post-action-spacer" />
-                <button className="ft-post-action" onClick={handleAction}>
+                <button className="ft-post-action">
                   <span className="material-symbols-outlined">bookmark</span>
                 </button>
               </div>
@@ -417,6 +521,92 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
           >
             <span className="material-symbols-outlined">close</span>
           </button>
+        </div>
+      )}
+
+      {/* Comment Modal */}
+      {commentModal.isOpen && (
+        <div className="ft-login-overlay" onClick={() => setCommentModal(prev => ({ ...prev, isOpen: false }))}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ 
+            padding: 0, 
+            width: '100%', 
+            maxWidth: '500px', 
+            height: '80vh', 
+            display: 'flex', 
+            flexDirection: 'column',
+            borderRadius: '24px 24px 0 0',
+            position: 'absolute',
+            bottom: 0
+          }}>
+            <div className="ft-notif-header" style={{ padding: '20px', borderBottom: '1px solid var(--ft-border)' }}>
+              <span>댓글</span>
+              <button onClick={() => setCommentModal(prev => ({ ...prev, isOpen: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+              {commentModal.loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                  <div className="ft-spinner"></div>
+                </div>
+              ) : commentModal.comments.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ft-text-tertiary)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 48, opacity: 0.2, marginBottom: 16 }}>chat</span>
+                  <p>첫 댓글을 남겨보세요!</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {commentModal.comments.map((comment: any) => (
+                    <div key={comment.id} style={{ display: 'flex', gap: 12 }}>
+                      <img 
+                        src={comment.authorImage || `https://ui-avatars.com/api/?name=${comment.authorName}`} 
+                        alt="" 
+                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, fontSize: 13 }}>{comment.authorName}</span>
+                          <span style={{ fontSize: 11, color: 'var(--ft-text-tertiary)' }}>{timeAgo(comment.createdAt)}</span>
+                        </div>
+                        <div style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--ft-text)' }}>{comment.content}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: '16px', borderTop: '1px solid var(--ft-border)', display: 'flex', gap: 12, alignItems: 'center' }}>
+              <img 
+                src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.nickname}`} 
+                alt="" 
+                style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+              />
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input 
+                  type="text" 
+                  placeholder="댓글 추가..." 
+                  className="ft-input" 
+                  style={{ margin: 0, padding: '10px 16px', paddingRight: '50px', fontSize: 14, borderRadius: '20px' }}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                />
+                <button 
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                  style={{ 
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: newComment.trim() ? 'var(--ft-primary)' : 'var(--ft-text-muted)',
+                    fontWeight: 700, fontSize: 14, cursor: 'pointer'
+                  }}
+                >
+                  게시
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>

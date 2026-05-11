@@ -45,16 +45,18 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   if (request.method === 'POST') {
     try {
       const body = await request.json();
-      const { galleryId, authorName, authorId, authorImage, content } = body;
+      const { galleryId, authorName, content } = body;
+      const authorId = body.authorId || body.author_id;
+      const authorImage = body.authorImage || body.author_image;
 
-      if (!galleryId || !authorName || !content) {
-        return new Response(JSON.stringify({ error: 'galleryId, authorName, and content required' }), { status: 400, headers });
+      if (!galleryId || !authorName || !authorId || !content) {
+        return new Response(JSON.stringify({ error: 'galleryId, authorName, authorId, and content required' }), { status: 400, headers });
       }
 
       const newId = crypto.randomUUID();
       await env.DB.prepare(
         'INSERT INTO gallery_comments (id, gallery_id, author_name, author_id, author_image, content) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(newId, galleryId, authorName, authorId || null, authorImage || null, content).run();
+      ).bind(newId, galleryId, authorName, authorId, authorImage || null, content).run();
 
       // Update comments_count on gallery
       const countResult = await env.DB.prepare(

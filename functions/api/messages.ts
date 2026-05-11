@@ -81,6 +81,22 @@ export const onRequest: any = async (context: any) => {
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             ).bind(id, sender_id, sender_type, sender_name || '', receiver_id, receiver_type, receiver_name || '', subject || '', content, parent_id || null).run();
 
+            // Notify receiver (if it's a user)
+            if (receiver_type === 'user') {
+                const notifId = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                await env.DB.prepare(`
+                    INSERT INTO user_notifications (id, user_id, type, sender_name, title, content)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                `).bind(
+                    notifId, 
+                    receiver_id, 
+                    'private', 
+                    sender_name || '사용자', 
+                    '새 메시지', 
+                    `${sender_name || '누군가'}님이 메시지를 보냈습니다.`
+                ).run();
+            }
+
             return new Response(JSON.stringify({ success: true, id }), {
                 headers: { "Content-Type": "application/json" },
             });

@@ -241,6 +241,28 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           status || 'active', grade || 'PRO', f_subscriptionCost,
           updateId
         ).run();
+
+        // Sync to users table if image or nickname changed
+        try {
+          const userUpdates = [];
+          const userValues = [];
+          if (nickname !== undefined || f_name !== undefined) {
+            userUpdates.push("nickname = ?");
+            userValues.push(nickname || f_name);
+          }
+          if (image !== undefined) {
+            userUpdates.push("profile_image = ?");
+            userValues.push(image);
+          }
+
+          if (userUpdates.length > 0) {
+            userValues.push(updateId);
+            await env.DB.prepare(`UPDATE users SET ${userUpdates.join(", ")} WHERE id = ?`).bind(...userValues).run();
+          }
+        } catch (syncError) {
+          // Ignore if user record doesn't exist
+          console.error("Sync to users failed:", syncError);
+        }
       }
 
       // Sync Neural Media (Gallery)
