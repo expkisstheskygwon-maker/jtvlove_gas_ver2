@@ -11,7 +11,7 @@ import FeedMessages from './FeedMessages';
 import FeedMembership from './FeedMembership';
 import FeedSettings from './FeedSettings';
 import FeedNotifications from './FeedNotifications';
-import CCALinkInBio from '../CCALinkInBio';
+import FeedProfile from './FeedProfile';
 import './FeedLayout.css';
 
 const NAV_ITEMS = [
@@ -44,7 +44,7 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
     default:
       if (pathname.startsWith('/@')) {
         const username = pathname.substring(2);
-        return <CCALinkInBio forcedUsername={username} />;
+        return <FeedProfile forcedUsername={username} />;
       }
       return <FeedHome handleNavigate={handleNavigate} />;
   }
