@@ -168,6 +168,36 @@ export const onRequest: any = async (context: any) => {
         ]);
       }
 
+      // 4. Notify Receiver
+      try {
+        const receiverId = senderRole === 'user' ? ccaId : fanId;
+        const senderNameQuery = senderRole === 'user' 
+          ? `SELECT nickname, real_name as name FROM users WHERE id = ?`
+          : `SELECT nickname, name FROM ccas WHERE id = ?`;
+        
+        const sender = await env.DB.prepare(senderNameQuery).bind(senderId).first();
+        const senderName = sender?.nickname || sender?.name || '누군가';
+        
+        const notifId = makeId('notif');
+        const title = paid ? '💰 유료 비밀대화 도착' : '🔒 새 비밀대화 도착';
+        const notifContent = paid 
+          ? `${senderName}님이 유료 메시지(${charged}P)를 보냈습니다.`
+          : `${senderName}님이 비밀대화를 보냈습니다.`;
+
+        await env.DB.prepare(`
+          INSERT INTO user_notifications (id, user_id, type, sender_name, title, content)
+          VALUES (?, ?, 'private', ?, ?, ?)
+        `).bind(
+          notifId,
+          receiverId,
+          senderName,
+          title,
+          notifContent
+        ).run();
+      } catch (e) {
+        console.error("Secret chat notification failed", e);
+      }
+
       return new Response(JSON.stringify({
         success: true,
         messageId,

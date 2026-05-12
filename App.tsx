@@ -442,10 +442,12 @@ const AdminLayoutRoutes = () => (
 
 import CCAMessages from './pages/cca/CCAMessages';
 import CCAInquiry from './pages/cca/CCAInquiry';
+import CCAPortalSecret from './pages/cca/CCAPortalSecret';
 
 const CCAPortalRoutes = () => (
   <Routes>
     <Route path="/" element={<CCAPortalHome />} />
+    <Route path="/secret" element={<CCAPortalSecret />} />
     <Route path="/messages" element={<CCAMessages />} />
     <Route path="/schedule" element={<CCAMySchedule />} />
     <Route path="/gallery" element={<CCAGalleryManager />} />
