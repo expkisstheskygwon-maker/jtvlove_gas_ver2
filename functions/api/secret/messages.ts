@@ -171,12 +171,16 @@ export const onRequest: any = async (context: any) => {
       // 4. Notify Receiver
       try {
         const receiverId = senderRole === 'user' ? ccaId : fanId;
-        const senderNameQuery = senderRole === 'user' 
-          ? `SELECT nickname, real_name as name FROM users WHERE id = ?`
-          : `SELECT nickname, name FROM ccas WHERE id = ?`;
         
-        const sender = await env.DB.prepare(senderNameQuery).bind(senderId).first();
-        const senderName = sender?.nickname || sender?.name || '누군가';
+        // 발신자 이름 찾기
+        let senderName = '누군가';
+        if (senderRole === 'user') {
+          const sender = await env.DB.prepare(`SELECT nickname, real_name FROM users WHERE id = ?`).bind(senderId).first();
+          senderName = sender?.nickname || sender?.real_name || '팬';
+        } else {
+          const sender = await env.DB.prepare(`SELECT nickname, name FROM ccas WHERE id = ?`).bind(senderId).first();
+          senderName = sender?.nickname || sender?.name || 'STAR';
+        }
         
         const notifId = makeId('notif');
         const title = paid ? '💰 유료 비밀대화 도착' : '🔒 새 비밀대화 도착';
@@ -184,9 +188,10 @@ export const onRequest: any = async (context: any) => {
           ? `${senderName}님이 유료 메시지(${charged}P)를 보냈습니다.`
           : `${senderName}님이 비밀대화를 보냈습니다.`;
 
+        // 알림 테이블에 삽입 (user_id 컬럼에 수신자 ID를 넣음)
         await env.DB.prepare(`
-          INSERT INTO user_notifications (id, user_id, type, sender_name, title, content)
-          VALUES (?, ?, 'private', ?, ?, ?)
+          INSERT INTO user_notifications (id, user_id, type, sender_name, title, content, is_read, created_at)
+          VALUES (?, ?, 'private', ?, ?, ?, 0, CURRENT_TIMESTAMP)
         `).bind(
           notifId,
           receiverId,
@@ -194,6 +199,8 @@ export const onRequest: any = async (context: any) => {
           title,
           notifContent
         ).run();
+        
+        console.log(`Notification created for ${receiverId}: ${title}`);
       } catch (e) {
         console.error("Secret chat notification failed", e);
       }

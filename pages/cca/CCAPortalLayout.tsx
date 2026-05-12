@@ -21,43 +21,34 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
    const [ccaImage, setCcaImage] = useState<string>('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200/200');
 
    const [isClockedIn, setIsClockedIn] = useState<boolean>(false);
-
-
+   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
 
    useEffect(() => {
-
       const fetchCcaData = async () => {
-
          if (user?.ccaId) {
-
             const ccaInfo = await apiService.getCCAById(user.ccaId);
-
             if (ccaInfo) {
-
                if (ccaInfo.image) setCcaImage(ccaInfo.image);
-
                setIsClockedIn((ccaInfo as any).attendanceStatus === 'checked_in');
-
             }
-
+            
+            // 알림 개수 가져오기
+            const notifs = await apiService.getNotifications(user.ccaId);
+            setUnreadNotifCount(notifs.filter((n: any) => !n.is_read).length);
          }
-
       };
-
-      
 
       fetchCcaData();
 
+      // 30초마다 알림 갱신 (Polling)
+      const interval = setInterval(async () => {
+         if (user?.ccaId) {
+            const notifs = await apiService.getNotifications(user.ccaId);
+            setUnreadNotifCount(notifs.filter((n: any) => !n.is_read).length);
+         }
+      }, 30000);
 
-
-      // Listen for real-time dispatch events from CCAPortalHome when the CCA checks in or out
-
-      const handleStatusUpdate = (e: any) => setIsClockedIn(e.detail);
-
-      window.addEventListener('ccaAttendanceUpdate', handleStatusUpdate);
-
-      return () => window.removeEventListener('ccaAttendanceUpdate', handleStatusUpdate);
-
+      return () => clearInterval(interval);
    }, [user?.ccaId]);
 
 
@@ -150,7 +141,19 @@ const CCAPortalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
 
 
-               <button className="hidden sm:flex material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors">notifications</button>
+               <div className="relative">
+                  <button 
+                     onClick={() => navigate('/cca-portal/messages')}
+                     className="flex material-symbols-outlined p-2 hover:bg-primary/10 rounded-full transition-colors"
+                  >
+                     notifications
+                  </button>
+                  {unreadNotifCount > 0 && (
+                     <span className="absolute top-1 right-1 size-4 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950">
+                        {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                     </span>
+                  )}
+               </div>
 
                <Link to="/cca-portal/settings" className="relative group">
 
