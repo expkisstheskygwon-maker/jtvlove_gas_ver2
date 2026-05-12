@@ -212,63 +212,63 @@ const FeedSecret: React.FC = () => {
   }
 
   return (
-    <div className="ft-secret-screen" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="ft-page-header" style={{ flexShrink: 0 }}>
-        <div className="ft-page-title">
-          <span>🔒 비밀대화</span>
+    <div className="ft-secret-container">
+      <div className="ft-secret-header">
+        <div className="ft-secret-header-top">
+          <h2 className="ft-secret-title">🔒 비밀대화</h2>
+          {role === 'user' && (
+            <div className="ft-secret-points">
+              내 포인트: <span>{user.points ?? 0}P</span>
+            </div>
+          )}
         </div>
-        {role === 'user' && (
-          <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
-            내 포인트: <b>{user.points ?? 0}</b>
-          </div>
-        )}
       </div>
 
       {/* Conversation List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 20px' }}>
+      <div className="ft-secret-body">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <div className="ft-spinner" style={{ margin: '0 auto' }}></div>
+          <div className="ft-secret-loading">
+            <div className="ft-spinner"></div>
           </div>
         ) : conversations.length === 0 ? (
-          <div className="ft-msg-empty-modern">
-            <div className="ft-msg-empty-icon-wrapper">
+          <div className="ft-secret-empty">
+            <div className="ft-secret-empty-icon">
               <span className="material-symbols-outlined">lock</span>
             </div>
             <h3>대화가 없습니다</h3>
             <p>탐색 탭에서 CCA의 “비밀스러운 대화”로 들어와 대화를 시작해보세요.</p>
-            <button className="ft-primary-btn" style={{ marginTop: 20, padding: '10px 24px', borderRadius: 12 }} onClick={() => navigate('/explore')}>
+            <button className="ft-secret-action-btn-primary" onClick={() => navigate('/explore')}>
               탐색으로 이동
             </button>
           </div>
         ) : (
-          <div className="ft-conversations-container">
+          <div className="ft-secret-conv-list">
             {conversations.map(conv => (
               <div
                 key={conv.conversationId}
-                className={`ft-msg-item-modern ${(conv.unreadCount || 0) > 0 ? 'unread' : ''}`}
+                className={`ft-secret-conv-item ${(conv.unreadCount || 0) > 0 ? 'unread' : ''} ${selected?.conversationId === conv.conversationId ? 'active' : ''}`}
                 onClick={() => openChat(conv)}
               >
-                <div className="ft-msg-avatar-modern">
+                <div className="ft-secret-conv-avatar">
                   <img src={displayImage(conv)} alt="" />
-                  {(conv.unreadCount || 0) > 0 && <div className="ft-unread-badge-modern" />}
+                  {(conv.unreadCount || 0) > 0 && <div className="ft-secret-unread-badge" />}
                 </div>
-                <div className="ft-msg-body-modern">
-                  <div className="ft-msg-top-modern">
-                    <span className="ft-msg-name-modern">
+                <div className="ft-secret-conv-info">
+                  <div className="ft-secret-conv-top">
+                    <span className="ft-secret-conv-name">
                       {displayName(conv)}
                       {role === 'user' && conv.isSubscribed === 0 && (
-                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 900, color: '#ff6b6b' }}>구독필요</span>
+                        <span className="ft-secret-tag-warning">구독필요</span>
                       )}
                       {!!conv.isBlocked && (
-                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 900, color: '#ff6b6b' }}>차단됨</span>
+                        <span className="ft-secret-tag-warning">차단됨</span>
                       )}
                     </span>
-                    <span className="ft-msg-time-modern">
+                    <span className="ft-secret-conv-time">
                       {conv.lastAt ? new Date(conv.lastAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
                   </div>
-                  <div className="ft-msg-preview-modern">{conv.lastMessage || '대화를 시작해보세요.'}</div>
+                  <div className="ft-secret-conv-preview">{conv.lastMessage || '대화를 시작해보세요.'}</div>
                 </div>
               </div>
             ))}
@@ -278,57 +278,60 @@ const FeedSecret: React.FC = () => {
 
       {/* Chat Room Overlay */}
       {selected && (
-        <div className="ft-chat-room-modern">
-          <div className="ft-chat-header-modern">
-            <button className="ft-chat-back-btn" onClick={() => setSelected(null)}>
+        <div className="ft-secret-chat-overlay">
+          <div className="ft-secret-chat-header">
+            <button className="ft-secret-back-btn" onClick={() => setSelected(null)}>
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
-            <div className="ft-chat-user-info-modern">
-              <div className="ft-chat-avatar-small">
+            <div className="ft-secret-chat-user">
+              <div className="ft-secret-chat-avatar">
                 <img src={displayImage(selected)} alt="" />
               </div>
-              <div className="ft-chat-name-modern">{displayName(selected)}</div>
+              <div className="ft-secret-chat-name">{displayName(selected)}</div>
             </div>
-            {role === 'cca' ? (
-              <button className="ft-chat-action-btn" onClick={handleBlockToggle} title="차단/해제">
-                <span className="material-symbols-outlined">{selected.isBlocked ? 'lock_open' : 'block'}</span>
-              </button>
-            ) : (
-              <button className="ft-chat-action-btn" onClick={() => navigate('/membership')} title="멤버십">
-                <span className="material-symbols-outlined">workspace_premium</span>
-              </button>
-            )}
+            <div className="ft-secret-chat-actions">
+              {role === 'cca' ? (
+                <button className="ft-secret-icon-btn" onClick={handleBlockToggle} title="차단/해제">
+                  <span className="material-symbols-outlined">{selected.isBlocked ? 'lock_open' : 'block'}</span>
+                </button>
+              ) : (
+                <button className="ft-secret-icon-btn" onClick={() => navigate('/membership')} title="멤버십">
+                  <span className="material-symbols-outlined">workspace_premium</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="ft-chat-body-modern">
+          <div className="ft-secret-chat-body">
             {chatLoading ? (
-              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="ft-secret-loading">
                 <div className="ft-spinner"></div>
               </div>
             ) : (
-              <div className="ft-messages-flow">
+              <div className="ft-secret-messages">
                 {messages.length === 0 && (
-                  <div className="ft-chat-start-hint">
+                  <div className="ft-secret-hint">
                     대화의 시작입니다. 매너 있는 대화를 나누어 주세요.
                   </div>
                 )}
                 {messages.map((msg, idx) => {
                   const isMe = msg.sender_id === user.id;
                   return (
-                    <div key={msg.id || idx} className={`ft-msg-bubble-wrapper ${isMe ? 'me' : 'other'}`}>
+                    <div key={msg.id || idx} className={`ft-secret-bubble-row ${isMe ? 'me' : 'other'}`}>
                       {!isMe && (
-                        <div className="ft-bubble-avatar">
+                        <div className="ft-secret-bubble-avatar">
                           <img src={displayImage(selected)} alt="" />
                         </div>
                       )}
-                      <div className="ft-msg-bubble-content">
+                      <div className="ft-secret-bubble-content">
                         {msg.is_paid === 1 && (
-                          <div style={{ fontSize: 10, fontWeight: 900, marginBottom: 6, color: 'var(--ft-primary)' }}>
+                          <div className="ft-secret-paid-label">
+                            <span className="material-symbols-outlined">monetization_on</span>
                             유료 메시지 · {msg.price_points}P
                           </div>
                         )}
-                        <div className="ft-bubble-text">{msg.content}</div>
-                        <div className="ft-bubble-time">
+                        <div className="ft-secret-bubble-text">{msg.content}</div>
+                        <div className="ft-secret-bubble-time">
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
@@ -340,31 +343,32 @@ const FeedSecret: React.FC = () => {
             )}
           </div>
 
-          <div className="ft-chat-footer-modern">
+          <div className="ft-secret-chat-footer">
             {role === 'user' && selected.isSubscribed === 0 && (
-              <div style={{ padding: '10px 16px', fontSize: 12, color: '#ff6b6b', fontWeight: 800 }}>
+              <div className="ft-secret-footer-notice">
                 구독자 전용 대화입니다. 멤버십에서 구독 후 이용할 수 있어요.
               </div>
             )}
             {selected.isBlocked ? (
-              <div style={{ padding: '10px 16px', fontSize: 12, color: '#ff6b6b', fontWeight: 800 }}>
+              <div className="ft-secret-footer-notice">
                 차단 상태라 메시지를 보낼 수 없습니다.
               </div>
             ) : (
-              <>
+              <div className="ft-secret-input-area">
                 {role === 'user' && (
-                  <div style={{ padding: '0 16px 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 800 }}>
+                  <div className="ft-secret-input-options">
+                    <label className="ft-secret-checkbox-label">
                       <input type="checkbox" checked={isPaid} onChange={e => setIsPaid(e.target.checked)} />
+                      <span className="ft-secret-checkbox-custom"></span>
                       유료로 보내기 ({paidCost}P)
                     </label>
                   </div>
                 )}
-                <div className="ft-chat-input-wrapper-modern">
-                  <form className="ft-chat-form-modern" onSubmit={handleSend}>
+                <div className="ft-secret-input-wrapper">
+                  <form className="ft-secret-form" onSubmit={handleSend}>
                     <input
                       type="text"
-                      className="ft-chat-input-modern"
+                      className="ft-secret-input"
                       placeholder="메시지를 입력하세요..."
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
@@ -372,15 +376,14 @@ const FeedSecret: React.FC = () => {
                     />
                     <button
                       type="submit"
-                      className={`ft-chat-send-btn ${newMessage.trim() ? 'active' : ''}`}
+                      className={`ft-secret-send-btn ${newMessage.trim() ? 'active' : ''}`}
                       disabled={!canSend || !newMessage.trim()}
-                      title={!canSend ? '구독/차단 상태를 확인하세요.' : '전송'}
                     >
                       <span className="material-symbols-outlined">send</span>
                     </button>
                   </form>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -390,3 +393,4 @@ const FeedSecret: React.FC = () => {
 };
 
 export default FeedSecret;
+
