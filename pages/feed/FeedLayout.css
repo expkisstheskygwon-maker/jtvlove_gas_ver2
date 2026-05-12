@@ -405,10 +405,6 @@
   align-items: center;
   padding: 12px 16px;
   gap: 12px;
-  border-top: 1px solid var(--ft-border-light);
-}
-.ft-dark .ft-post-header {
-  border-top-color: var(--ft-border);
 }
 
 .ft-post-avatar {
@@ -448,7 +444,7 @@
 }
 
 .ft-post-body {
-  padding: 16px 16px 12px;
+  padding: 0 16px 12px;
   font-size: 15px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -520,7 +516,7 @@
 .ft-post-actions {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 8px 16px;
   gap: 16px;
 }
 

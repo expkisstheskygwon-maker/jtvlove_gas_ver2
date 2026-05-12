@@ -324,24 +324,6 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
         <div>
           {feedItems.map((item) => (
             <article key={item.id} className="ft-post">
-              {item.caption && (
-                <div className="ft-post-body">
-                  <div
-                    className={`ft-post-caption-text ${expandedCaptions[item.id] ? 'expanded' : 'collapsed'}`}
-                  >
-                    {item.caption}
-                  </div>
-                  {shouldShowMoreCaption(item.caption) && (
-                    <button
-                      className="ft-post-caption-more"
-                      onClick={(e) => toggleCaption(e, item.id)}
-                    >
-                      {expandedCaptions[item.id] ? '접기' : '더 보기..'}
-                    </button>
-                  )}
-                </div>
-              )}
-
               <div className="ft-post-header">
                 <img
                   src={item.ccaImage || 'https://ui-avatars.com/api/?name=' + (item.ccaNickname || 'U')}
@@ -412,6 +394,24 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   <span className="material-symbols-outlined">more_horiz</span>
                 </button>
               </div>
+
+              {item.caption && (
+                <div className="ft-post-body">
+                  <div
+                    className={`ft-post-caption-text ${expandedCaptions[item.id] ? 'expanded' : 'collapsed'}`}
+                  >
+                    {item.caption}
+                  </div>
+                  {shouldShowMoreCaption(item.caption) && (
+                    <button
+                      className="ft-post-caption-more"
+                      onClick={(e) => toggleCaption(e, item.id)}
+                    >
+                      {expandedCaptions[item.id] ? '접기' : '더 보기..'}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {item.url && (
                 <div className="ft-post-media" style={{ position: 'relative' }}>
