@@ -945,6 +945,98 @@
   padding: 20px 0; border-bottom: 1px solid var(--ft-border-light); margin-bottom: 20px;
 }
 
+/* ═══ Secret Chat (Modern polish) ═══ */
+.ft-secret-screen .ft-chat-room-modern {
+  background:
+    radial-gradient(900px 400px at 10% 0%, rgba(232, 82, 122, 0.22), transparent 60%),
+    radial-gradient(900px 400px at 90% 0%, rgba(219, 160, 75, 0.18), transparent 60%),
+    var(--ft-bg);
+}
+
+.ft-secret-screen .ft-chat-header-modern {
+  background: rgba(15, 15, 16, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ft-secret-screen:not(.ft-dark) .ft-chat-header-modern {
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ft-secret-screen .ft-chat-name-modern {
+  letter-spacing: -0.3px;
+}
+
+.ft-secret-screen .ft-chat-body-modern {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0)),
+    var(--ft-bg-secondary);
+}
+
+.ft-secret-screen .ft-bubble-text {
+  border-radius: 18px;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.14),
+    0 2px 6px rgba(0,0,0,0.08);
+}
+
+.ft-secret-screen .ft-msg-bubble-wrapper.me .ft-bubble-text {
+  background: linear-gradient(135deg, #E8527A, #DBA04B);
+  border: none;
+}
+
+.ft-secret-screen .ft-msg-bubble-wrapper.other .ft-bubble-text {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ft-secret-screen:not(.ft-dark) .ft-msg-bubble-wrapper.other .ft-bubble-text {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ft-secret-screen .ft-chat-footer-modern {
+  background: rgba(15, 15, 16, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ft-secret-screen:not(.ft-dark) .ft-chat-footer-modern {
+  background: rgba(255, 255, 255, 0.72);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ft-secret-screen .ft-chat-input-wrapper-modern {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.ft-secret-screen:not(.ft-dark) .ft-chat-input-wrapper-modern {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ft-secret-screen .ft-chat-send-btn {
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.7);
+}
+.ft-secret-screen:not(.ft-dark) .ft-chat-send-btn {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ft-secret-screen .ft-chat-send-btn.active {
+  background: linear-gradient(135deg, #E8527A, #DBA04B);
+  color: #fff;
+  box-shadow: 0 12px 22px rgba(232, 82, 122, 0.28);
+}
+
+.ft-secret-screen .ft-chat-start-hint {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ft-secret-screen:not(.ft-dark) .ft-chat-start-hint {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 /* ═══ Login Modal Tabs & CCA Flow ═══ */
 .ft-login-tabs {
   display: flex;

@@ -212,7 +212,7 @@ const FeedSecret: React.FC = () => {
   }
 
   return (
-    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="ft-secret-screen" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="ft-page-header" style={{ flexShrink: 0 }}>
         <div className="ft-page-title">
           <span>🔒 비밀대화</span>
@@ -390,4 +390,3 @@ const FeedSecret: React.FC = () => {
 };
 
 export default FeedSecret;
-
