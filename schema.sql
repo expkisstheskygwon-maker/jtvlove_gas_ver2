@@ -485,7 +485,54 @@ CREATE TABLE IF NOT EXISTS user_follows (
   UNIQUE(follower_id, following_id)
 );
 
+-- 28. Secret Conversations (Subscriber-only / Paid messages MVP)
+CREATE TABLE IF NOT EXISTS secret_conversations (
+  id TEXT PRIMARY KEY,
+  fan_id TEXT NOT NULL,
+  cca_id TEXT NOT NULL,
+  status TEXT DEFAULT 'active', -- 'active' | 'blocked'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_message_at DATETIME,
+  UNIQUE(fan_id, cca_id)
+);
+
+CREATE TABLE IF NOT EXISTS secret_messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  sender_role TEXT NOT NULL, -- 'user' | 'cca'
+  sender_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_paid INTEGER DEFAULT 0,
+  price_points INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  read_at DATETIME,
+  FOREIGN KEY (conversation_id) REFERENCES secret_conversations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_secret_messages_conv_created ON secret_messages(conversation_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_secret_messages_conv_unread ON secret_messages(conversation_id, read_at);
+
+CREATE TABLE IF NOT EXISTS secret_blocks (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  fan_id TEXT NOT NULL,
+  status TEXT DEFAULT 'blocked',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(cca_id, fan_id)
+);
+
+-- Paid message earnings ledger (for settlement)
+CREATE TABLE IF NOT EXISTS cca_earning_logs (
+  id TEXT PRIMARY KEY,
+  cca_id TEXT NOT NULL,
+  amount_points INTEGER NOT NULL,
+  source_message_id TEXT NOT NULL,
+  status TEXT DEFAULT 'pending', -- 'pending' | 'confirmed' | 'refunded'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Note: Ensure these columns exist in existing tables:
 -- ALTER TABLE ccas ADD COLUMN login_id TEXT;
 -- ALTER TABLE ccas ADD COLUMN subscription_cost INTEGER DEFAULT 0;
 -- ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';
+-- ALTER TABLE ccas ADD COLUMN paid_message_cost INTEGER DEFAULT 0;

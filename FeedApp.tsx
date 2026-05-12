@@ -14,7 +14,7 @@ const ProfileOrFeed: React.FC = () => {
   const { username } = useParams();
   
   // 피드 앱 내부 라우트 목록 — 이 경로들은 CCA 프로필이 아님
-  const feedRoutes = ['feed', 'explore', 'search', 'messages', 'membership', 'settings', 'login', 'register', 'ranking'];
+  const feedRoutes = ['feed', 'explore', 'search', 'messages', 'membership', 'settings', 'secret', 'login', 'register', 'ranking'];
   
   if (feedRoutes.includes(username?.toLowerCase() || '')) {
     return <FeedLayout />;
@@ -36,6 +36,7 @@ const FeedApp: React.FC = () => {
       <Route path="/messages" element={<FeedLayout />} />
       <Route path="/membership" element={<FeedLayout />} />
       <Route path="/settings" element={<FeedLayout />} />
+      <Route path="/secret" element={<FeedLayout />} />
       
       {/* 루트 → 피드 홈 */}
       <Route path="/" element={<FeedLayout />} />

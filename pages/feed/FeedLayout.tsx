@@ -12,6 +12,7 @@ import FeedMembership from './FeedMembership';
 import FeedSettings from './FeedSettings';
 import FeedNotifications from './FeedNotifications';
 import FeedProfile from './FeedProfile';
+import FeedSecret from './FeedSecret';
 import './FeedLayout.css';
 
 const NAV_ITEMS = [
@@ -39,6 +40,7 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
     case '/search': return <FeedSearch />;
     case '/messages': return <FeedMessages />;
     case '/membership': return <FeedMembership />;
+    case '/secret': return <FeedSecret />;
     case '/settings': return <FeedSettings theme={theme} toggleTheme={toggleTheme} />;
     case '/notifications': return <FeedNotifications />;
     default:

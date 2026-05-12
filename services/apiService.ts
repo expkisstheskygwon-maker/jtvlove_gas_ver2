@@ -1444,6 +1444,89 @@ export const apiService = {
   },
 
   // ═══════════════════════════════════════════
+  // 비밀대화 (Secret DM) - MVP
+  // ═══════════════════════════════════════════
+  async getSecretConversations(userId: string, role?: 'user' | 'cca'): Promise<{ role: 'user' | 'cca'; conversations: any[] }> {
+    try {
+      const query = new URLSearchParams({ userId });
+      if (role) query.set('role', role);
+      const response = await fetch(`${API_BASE}/secret/conversations?${query.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch secret conversations');
+      return await response.json();
+    } catch (error: any) {
+      console.error('getSecretConversations error:', error);
+      return { role: role || 'user', conversations: [] };
+    }
+  },
+
+  async createSecretConversation(fanId: string, ccaId: string): Promise<{ success: boolean; conversationId?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/secret/conversations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fanId, ccaId }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('createSecretConversation error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getSecretMessages(conversationId: string, viewerRole: 'user' | 'cca', markRead: boolean = false): Promise<{ messages: any[] }> {
+    try {
+      const query = new URLSearchParams({
+        conversationId,
+        viewerRole,
+        markRead: markRead ? '1' : '0',
+      });
+      const response = await fetch(`${API_BASE}/secret/messages?${query.toString()}`);
+      if (!response.ok) return { messages: [] };
+      return await response.json();
+    } catch (error) {
+      console.error('getSecretMessages error:', error);
+      return { messages: [] };
+    }
+  },
+
+  async sendSecretMessage(data: {
+    conversationId?: string;
+    fanId: string;
+    ccaId: string;
+    senderRole: 'user' | 'cca';
+    senderId: string;
+    content: string;
+    isPaid?: boolean;
+    pricePoints?: number;
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/secret/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('sendSecretMessage error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async blockSecretFan(ccaId: string, fanId: string, action: 'block' | 'unblock' = 'block'): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/secret/block`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId, fanId, action }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('blockSecretFan error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // ═══════════════════════════════════════════
   // CCA 좋아요 (CCA Likes)
   // ═══════════════════════════════════════════
 
