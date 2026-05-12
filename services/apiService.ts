@@ -1743,9 +1743,11 @@ export const apiService = {
   },
 
   // Gallery Comments
-  async getGalleryComments(galleryId: string): Promise<any[]> {
+  async getGalleryComments(galleryId: string, options?: { limit?: number }): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE}/gallery-comments?galleryId=${encodeURIComponent(galleryId)}`);
+      let url = `${API_BASE}/gallery-comments?galleryId=${encodeURIComponent(galleryId)}`;
+      if (options?.limit && options.limit > 0) url += `&limit=${encodeURIComponent(String(options.limit))}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch gallery comments');
       return await response.json();
     } catch (error) {
@@ -2008,4 +2010,3 @@ export const apiService = {
     }
   }
 };
-

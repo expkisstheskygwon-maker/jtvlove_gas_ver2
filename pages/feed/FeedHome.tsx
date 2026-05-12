@@ -39,6 +39,8 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     loading: boolean;
   }>({ isOpen: false, galleryId: '', comments: [], loading: false });
   const [newComment, setNewComment] = useState('');
+  const [expandedCaptions, setExpandedCaptions] = useState<Record<string, boolean>>({});
+  const [commentPreviews, setCommentPreviews] = useState<Record<string, any[]>>({});
 
   // Subscription Modal State
   const [subModal, setSubModal] = useState<{
@@ -61,6 +63,21 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       const data = await apiService.getFeed(1, 100, user?.id);
       setAllFeedItems(data.items || []);
       setFeedItems(data.items || []);
+
+      // 최근 댓글 2개 프리뷰(최대 20개 포스트만 선로딩)
+      try {
+        const previewTargets = (data.items || []).slice(0, 20);
+        const pairs = await Promise.all(
+          previewTargets.map(async (it: any) => {
+            const list = await apiService.getGalleryComments(it.id, { limit: 2 });
+            // API는 최신순 DESC로 내려오므로, UI에서는 오래된→최신 순으로 보여주기 위해 reverse
+            return { id: it.id, comments: (list || []).slice().reverse() };
+          })
+        );
+        const map: Record<string, any[]> = {};
+        pairs.forEach(p => { map[p.id] = p.comments; });
+        setCommentPreviews(map);
+      } catch {}
       
       const ccas = await apiService.getCCAs();
       // Only show CCAs who are actually checked in (isWorking === true)
@@ -167,6 +184,16 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     handleNavigate(`/@${nickname}`);
   };
 
+  const shouldShowMoreCaption = (caption?: string) => {
+    if (!caption) return false;
+    return caption.length > 120 || caption.split('\n').length > 3;
+  };
+
+  const toggleCaption = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    setExpandedCaptions(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
+
   const handleLike = async (e: React.MouseEvent, itemId: string) => {
     e.stopPropagation();
     if (!user) {
@@ -233,6 +260,18 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
         setNewComment('');
         const updatedComments = await apiService.getGalleryComments(commentModal.galleryId);
         setCommentModal(prev => ({ ...prev, comments: updatedComments }));
+
+        const nextCount = (result as any).commentsCount ?? updatedComments.length;
+        setFeedItems(prev => prev.map(item =>
+          item.id === commentModal.galleryId ? { ...item, commentsCount: nextCount } : item
+        ));
+        setAllFeedItems(prev => prev.map(item =>
+          item.id === commentModal.galleryId ? { ...item, commentsCount: nextCount } : item
+        ));
+
+        // 프리뷰(최근 2개) 갱신
+        const preview = (updatedComments || []).slice(0, 2).slice().reverse();
+        setCommentPreviews(prev => ({ ...prev, [commentModal.galleryId]: preview }));
       } else {
         alert(result.error || '댓글 등록에 실패했습니다.');
       }
@@ -285,6 +324,24 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
         <div>
           {feedItems.map((item) => (
             <article key={item.id} className="ft-post">
+              {item.caption && (
+                <div className="ft-post-body">
+                  <div
+                    className={`ft-post-caption-text ${expandedCaptions[item.id] ? 'expanded' : 'collapsed'}`}
+                  >
+                    {item.caption}
+                  </div>
+                  {shouldShowMoreCaption(item.caption) && (
+                    <button
+                      className="ft-post-caption-more"
+                      onClick={(e) => toggleCaption(e, item.id)}
+                    >
+                      {expandedCaptions[item.id] ? '접기' : '더 보기..'}
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="ft-post-header">
                 <img
                   src={item.ccaImage || 'https://ui-avatars.com/api/?name=' + (item.ccaNickname || 'U')}
@@ -356,10 +413,6 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                 </button>
               </div>
 
-              {item.caption && (
-                <div className="ft-post-body">{item.caption}</div>
-              )}
-
               {item.url && (
                 <div className="ft-post-media" style={{ position: 'relative' }}>
                   {item.type === 'video' ? (
@@ -396,29 +449,48 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                 </div>
               )}
 
-              <div className="ft-post-actions">
-                <button 
-                  className={`ft-post-action ${likedIds.includes(item.id) ? 'liked' : ''}`} 
+              <div className="ft-post-actions ft-feed-actionbar">
+                <button
+                  className={`ft-post-action ft-feed-action ${likedIds.includes(item.id) ? 'liked' : ''}`}
                   onClick={(e) => handleLike(e, item.id)}
                 >
-                  <span className="material-symbols-outlined" style={{ color: likedIds.includes(item.id) ? '#ff3040' : 'inherit', fontVariationSettings: likedIds.includes(item.id) ? "'FILL' 1" : "''" }}>
-                    {likedIds.includes(item.id) ? 'favorite' : 'favorite'}
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ color: likedIds.includes(item.id) ? '#ff3040' : 'inherit', fontVariationSettings: likedIds.includes(item.id) ? "'FILL' 1" : "''" }}
+                  >
+                    favorite
+                  </span>
+                  <span className={`ft-feed-action-count ${likedIds.includes(item.id) ? 'liked' : ''}`}>
+                    {item.likes || 0}
                   </span>
                 </button>
-                <button className="ft-post-action" onClick={(e) => handleCommentClick(e, item.id)}>
+
+                <button className="ft-post-action ft-feed-action" onClick={(e) => handleCommentClick(e, item.id)}>
                   <span className="material-symbols-outlined">chat_bubble_outline</span>
+                  <span className="ft-feed-action-count">{item.commentsCount || 0}</span>
                 </button>
-                <button className="ft-post-action" onClick={(e) => handleShare(e, item)}>
+
+                <button className="ft-post-action ft-feed-action" onClick={(e) => handleShare(e, item)}>
                   <span className="material-symbols-outlined">share</span>
                 </button>
+
                 <div className="ft-post-action-spacer" />
-                <button className="ft-post-action">
-                  <span className="material-symbols-outlined">bookmark</span>
-                </button>
               </div>
 
-              {item.likes > 0 && (
-                <div className="ft-post-likes">좋아요 {item.likes}개</div>
+              {(item.commentsCount || 0) > 0 && (
+                <div className="ft-post-comments-preview">
+                  {(commentPreviews[item.id] || []).map((c: any) => (
+                    <div key={c.id} className="ft-post-comment-row" onClick={(e) => handleCommentClick(e, item.id)}>
+                      <span className="ft-post-comment-author">{c.authorName}</span>
+                      <span className="ft-post-comment-content">{c.content}</span>
+                    </div>
+                  ))}
+                  {(item.commentsCount || 0) > 2 && (
+                    <button className="ft-post-comments-more" onClick={(e) => handleCommentClick(e, item.id)}>
+                      댓글 {item.commentsCount}개 모두 보기
+                    </button>
+                  )}
+                </div>
               )}
             </article>
           ))}

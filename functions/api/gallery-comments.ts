@@ -17,13 +17,18 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   if (request.method === 'GET') {
     try {
       const galleryId = url.searchParams.get('galleryId');
+      const limitParam = url.searchParams.get('limit');
+      const limit = limitParam ? Math.max(0, Math.min(parseInt(limitParam, 10) || 0, 50)) : 0;
       if (!galleryId) {
         return new Response(JSON.stringify({ error: 'galleryId required' }), { status: 400, headers });
       }
 
-      const { results } = await env.DB.prepare(
-        'SELECT * FROM gallery_comments WHERE gallery_id = ? ORDER BY created_at DESC'
-      ).bind(galleryId).all();
+      const sql = limit > 0
+        ? 'SELECT * FROM gallery_comments WHERE gallery_id = ? ORDER BY created_at DESC LIMIT ?'
+        : 'SELECT * FROM gallery_comments WHERE gallery_id = ? ORDER BY created_at DESC';
+
+      const stmt = limit > 0 ? env.DB.prepare(sql).bind(galleryId, limit) : env.DB.prepare(sql).bind(galleryId);
+      const { results } = await stmt.all();
 
       return new Response(JSON.stringify(results.map((c: any) => ({
         id: c.id,
