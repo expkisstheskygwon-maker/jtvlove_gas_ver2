@@ -393,8 +393,7 @@ CREATE TABLE IF NOT EXISTS user_notifications (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   is_read INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 20. User Point Logs Table

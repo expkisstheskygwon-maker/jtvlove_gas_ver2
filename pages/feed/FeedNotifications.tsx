@@ -36,7 +36,7 @@ const FeedNotifications: React.FC = () => {
 
     // Logic for redirection based on type or content
     if (notif.type === 'private') {
-      navigate('/messages');
+      navigate('/secret');
     } else if (notif.type === 'follow') {
       // Assuming follow notification might contain the follower's nickname or ID
       // If we don't have it, we might just go to home or search
@@ -94,7 +94,7 @@ const FeedNotifications: React.FC = () => {
               >
                 <div className="ft-notif-page-icon">
                   <span className="material-symbols-outlined">
-                    {n.type === 'private' ? 'mail' : n.type === 'follow' ? 'person_add' : n.type === 'subscription' ? 'stars' : 'notifications'}
+                    {n.type === 'private' ? 'lock' : n.type === 'follow' ? 'person_add' : n.type === 'subscription' ? 'stars' : 'notifications'}
                   </span>
                 </div>
                 <div className="ft-notif-page-info">

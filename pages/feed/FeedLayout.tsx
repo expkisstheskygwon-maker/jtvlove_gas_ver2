@@ -18,6 +18,7 @@ import './FeedLayout.css';
 const NAV_ITEMS = [
   { path: '/feed', icon: 'home', label: '홈' },
   { path: '/explore', icon: 'explore', label: '탐색' },
+  { path: '/secret', icon: 'lock', label: '비밀대화' },
   { path: '/messages', icon: 'send', label: '메시지' },
   { path: '/search', icon: 'search', label: '검색' },
   { path: '/membership', icon: 'workspace_premium', label: '멤버십' },

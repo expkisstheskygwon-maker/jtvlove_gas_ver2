@@ -131,25 +131,49 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
             </div>
           </div>
 
-          {isOwner && (
-            <button
-              onClick={handleAttendanceToggle}
-              disabled={attendanceLoading}
-              style={{
-                marginTop: 20,
-                padding: '12px 24px',
-                borderRadius: 'var(--ft-radius-md)',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: 14,
-                background: isWorking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
-                color: isWorking ? '#ef4444' : '#22c55e',
-                border: `1px solid ${isWorking ? '#ef4444' : '#22c55e'}`
-              }}
-            >
-              {attendanceLoading ? '처리 중...' : (isWorking ? '퇴근하기' : '출근하기')}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
+            {!isOwner && (
+              <button
+                onClick={() => navigate(`/secret?ccaId=${cca.id}`)}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: 'var(--ft-radius-md)',
+                  cursor: 'pointer',
+                  fontWeight: 800,
+                  fontSize: 14,
+                  background: 'var(--ft-gradient)',
+                  color: '#fff',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 4px 15px rgba(232, 82, 122, 0.3)'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>
+                비밀대화
+              </button>
+            )}
+
+            {isOwner && (
+              <button
+                onClick={handleAttendanceToggle}
+                disabled={attendanceLoading}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: 'var(--ft-radius-md)',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  background: isWorking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                  color: isWorking ? '#ef4444' : '#22c55e',
+                  border: `1px solid ${isWorking ? '#ef4444' : '#22c55e'}`
+                }}
+              >
+                {attendanceLoading ? '처리 중...' : (isWorking ? '퇴근하기' : '출근하기')}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
