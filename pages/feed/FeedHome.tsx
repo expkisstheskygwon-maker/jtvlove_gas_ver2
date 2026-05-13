@@ -30,6 +30,9 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [subscribedIds, setSubscribedIds] = useState<string[]>([]);
   const [followingCCAIds, setFollowingCCAIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [commentModal, setCommentModal] = useState<{
@@ -57,55 +60,86 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     ccaName: string;
   }>({ isOpen: false, ccaId: '', ccaName: '' });
 
-  const loadFeed = useCallback(async () => {
-    setLoading(true);
+  const loadFeed = useCallback(async (pageNum = 1, isAppend = false) => {
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
     try {
-      const data = await apiService.getFeed(1, 100, user?.id);
-      setAllFeedItems(data.items || []);
-      setFeedItems(data.items || []);
-
-      // 최근 댓글 2개 프리뷰(최대 20개 포스트만 선로딩)
-      try {
-        const previewTargets = (data.items || []).slice(0, 20);
-        const pairs = await Promise.all(
-          previewTargets.map(async (it: any) => {
-            const list = await apiService.getGalleryComments(it.id, { limit: 2 });
-            // API는 최신순 DESC로 내려오므로, UI에서는 오래된→최신 순으로 보여주기 위해 reverse
-            return { id: it.id, comments: (list || []).slice().reverse() };
-          })
-        );
-        const map: Record<string, any[]> = {};
-        pairs.forEach(p => { map[p.id] = p.comments; });
-        setCommentPreviews(map);
-      } catch {}
+      const data = await apiService.getFeed(pageNum, 10, user?.id);
+      const newItems = data.items || [];
       
-      const ccas = await apiService.getCCAs();
-      // Only show CCAs who are actually checked in (isWorking === true)
-      const workingCCAs = ccas.filter((c: any) => c.isWorking === true);
-      setOnDutyCCAs(workingCCAs.slice(0, 10));
+      if (isAppend) {
+        setAllFeedItems(prev => [...prev, ...newItems]);
+        setFeedItems(prev => {
+          const combined = [...prev, ...newItems];
+          // 탭 필터링 적용
+          if (activeTab === 'subscribed') {
+            return combined.filter(item => subscribedIds.includes(item.ccaId));
+          } else if (activeTab === 'following') {
+            return combined.filter(item => followingCCAIds.includes(item.ccaId));
+          }
+          return combined;
+        });
+      } else {
+        setAllFeedItems(newItems);
+        setFeedItems(newItems);
+      }
+      
+      setHasMore(data.hasMore);
+      setPage(pageNum);
 
-      if (user?.id) {
-        const [subs, ccaFollows, feedData] = await Promise.all([
-          apiService.getSubscriptions(user.id),
-          apiService.checkCCAFollow(user.id, ''),
-          apiService.getFeed(1, 100, user.id)
-        ]);
-        setSubscribedIds(subs);
-        setFollowingCCAIds(ccaFollows.followedIds || []);
-        // Get already liked IDs from feed data if available
-        const liked = (feedData.items || [])
+      // API에서 내려온 recentComments를 프리뷰 맵에 저장
+      const map: Record<string, any[]> = {};
+      newItems.forEach((it: any) => {
+        if (it.recentComments) {
+          map[it.id] = it.recentComments.slice().reverse();
+        }
+      });
+      setCommentPreviews(prev => ({ ...prev, ...map }));
+      
+      // 초기 로딩 시에만 CCA 목록 및 사용자 정보 로드
+      if (pageNum === 1) {
+        const ccas = await apiService.getCCAs();
+        const workingCCAs = ccas.filter((c: any) => c.isWorking === true);
+        setOnDutyCCAs(workingCCAs.slice(0, 10));
+
+        if (user?.id) {
+          const [subs, ccaFollows] = await Promise.all([
+            apiService.getSubscriptions(user.id),
+            apiService.checkCCAFollow(user.id, '')
+          ]);
+          setSubscribedIds(subs);
+          setFollowingCCAIds(ccaFollows.followedIds || []);
+          
+          const liked = newItems
+            .filter((item: any) => item.isLiked)
+            .map((item: any) => item.id);
+          setLikedIds(prev => [...new Set([...prev, ...liked])]);
+        }
+      } else if (user?.id) {
+        // 추가 로딩 시 좋아요 상태만 업데이트
+        const liked = newItems
           .filter((item: any) => item.isLiked)
           .map((item: any) => item.id);
-        setLikedIds(liked);
+        setLikedIds(prev => [...new Set([...prev, ...liked])]);
       }
     } catch (err) {
       console.error('Feed load error:', err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [user?.id]);
+  }, [user?.id, activeTab, subscribedIds, followingCCAIds]);
 
-  useEffect(() => { loadFeed(); }, [loadFeed]);
+  useEffect(() => { 
+    loadFeed(1, false); 
+  }, [user?.id]); // 탭 변경 시에는 로컬 필터링만 수행하거나 필요시 다시 로드
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      loadFeed(page + 1, true);
+    }
+  };
 
   const onTabChange = (tab: 'all' | 'subscribed' | 'following') => {
     setActiveTab(tab);
@@ -319,7 +353,20 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
 
       {/* Feed Posts */}
       {loading ? (
-        <div className="ft-loading"><div className="ft-spinner"></div></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="ft-post" style={{ opacity: 0.5 }}>
+              <div className="ft-post-header">
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--ft-bg-tertiary)' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ width: 100, height: 14, background: 'var(--ft-bg-tertiary)', borderRadius: 4, marginBottom: 6 }} />
+                  <div style={{ width: 60, height: 10, background: 'var(--ft-bg-tertiary)', borderRadius: 4 }} />
+                </div>
+              </div>
+              <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--ft-bg-tertiary)' }} />
+            </div>
+          ))}
+        </div>
       ) : feedItems.length > 0 ? (
         <div>
           {feedItems.map((item) => (
@@ -494,6 +541,24 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
               )}
             </article>
           ))}
+
+          {hasMore && (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <button 
+                className="ft-secondary-btn" 
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                style={{ width: '100%', maxWidth: '200px', margin: '0 auto' }}
+              >
+                {loadingMore ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <div className="ft-spinner-sm"></div>
+                    <span>로딩 중...</span>
+                  </div>
+                ) : '더 보기'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="ft-empty">

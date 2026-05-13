@@ -48,7 +48,21 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
               v.region as venue_region,
               (CASE WHEN (SELECT 1 FROM user_follows uf WHERE uf.follower_id = ? AND uf.following_id = c.id LIMIT 1) IS NOT NULL THEN 1 ELSE 0 END) as is_followed,
               (SELECT COUNT(*) FROM user_follows uf WHERE uf.following_id = c.id) as followers_count,
-              ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
+              ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank,
+              (
+                SELECT json_group_array(json_object(
+                  'id', gc.id,
+                  'authorName', gc.author_name,
+                  'content', gc.content,
+                  'createdAt', gc.created_at
+                ))
+                FROM (
+                  SELECT * FROM gallery_comments 
+                  WHERE gallery_id = g.id 
+                  ORDER BY created_at DESC 
+                  LIMIT 2
+                ) gc
+              ) as recent_comments
             FROM gallery g
             JOIN ccas c ON g.cca_id = c.id
             LEFT JOIN venues v ON c.venue_id = v.id
@@ -111,7 +125,21 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
                 v.region as venue_region,
                 0 as is_followed,
                 (SELECT COUNT(*) FROM user_follows uf WHERE uf.following_id = c.id) as followers_count,
-                ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank
+                ROW_NUMBER() OVER(PARTITION BY g.cca_id ORDER BY g.created_at DESC) as cca_post_rank,
+                (
+                  SELECT json_group_array(json_object(
+                    'id', gc.id,
+                    'authorName', gc.author_name,
+                    'content', gc.content,
+                    'createdAt', gc.created_at
+                  ))
+                  FROM (
+                    SELECT * FROM gallery_comments 
+                    WHERE gallery_id = g.id 
+                    ORDER BY created_at DESC 
+                    LIMIT 2
+                  ) gc
+                ) as recent_comments
               FROM gallery g
               JOIN ccas c ON g.cca_id = c.id
               LEFT JOIN venues v ON c.venue_id = v.id
@@ -166,7 +194,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             subscriptionCost: item.cca_subscription_cost || 0,
             venueName: item.venue_name,
             venueRegion: item.venue_region,
-            followersCount: item.followers_count || 0
+            followersCount: item.followers_count || 0,
+            recentComments: JSON.parse(item.recent_comments || '[]')
           })),
           page,
           limit,
