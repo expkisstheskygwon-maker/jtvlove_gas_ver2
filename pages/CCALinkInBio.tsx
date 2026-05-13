@@ -356,7 +356,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
     try {
       let url = '';
       if (uploadType === 'photo' && selectedFile) {
-        url = await apiService.uploadImage(selectedFile) || '';
+        url = await apiService.uploadImage(selectedFile, 'gallery') || '';
       } else {
         url = videoUrl;
       }

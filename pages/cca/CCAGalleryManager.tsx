@@ -67,7 +67,7 @@ const CCAGalleryManager: React.FC = () => {
       let url = '';
       if (uploadType === 'photo' && selectedFile) {
         // Convert to Base64 (using uploadImage fallback or direct conversion)
-        url = await apiService.uploadImage(selectedFile) || '';
+        url = await apiService.uploadImage(selectedFile, 'gallery') || '';
       } else {
         url = videoUrl;
       }

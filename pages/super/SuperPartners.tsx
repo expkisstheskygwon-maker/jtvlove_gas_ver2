@@ -318,7 +318,7 @@ const SuperPartners: React.FC = () => {
 
             const result = isCreateMode
                ? await apiService.createCCA(ccaData)
-               : await apiService.updateCCA(ccaData);
+               : await apiService.updateCCA(ccaData.id, ccaData);
 
             if (result.success) {
                alert(`CCA profile ${isCreateMode ? 'created' : 'synchronized'} successfully`);
@@ -365,7 +365,7 @@ const SuperPartners: React.FC = () => {
       const file = e.target.files?.[0];
       if (file) {
          try {
-            const url = await apiService.uploadImage(file);
+            const url = await apiService.uploadImage(file, 'profile');
             if (url) {
                setEditForm({ ...editForm, image: url });
             } else {
@@ -870,7 +870,7 @@ const SuperPartners: React.FC = () => {
                                                 <input type="file" className="hidden" accept="image/*" onChange={async e => {
                                                    const file = e.target.files?.[0];
                                                    if (file) {
-                                                      const url = await apiService.uploadImage(file);
+                                                      const url = await apiService.uploadImage(file, 'profile');
                                                       if (url) setEditForm({ ...editForm, image: url });
                                                    }
                                                 }} />
@@ -891,7 +891,7 @@ const SuperPartners: React.FC = () => {
                                                 <input type="file" className="hidden" accept="image/*" onChange={async e => {
                                                    const file = e.target.files?.[0];
                                                    if (file) {
-                                                      const url = await apiService.uploadImage(file);
+                                                      const url = await apiService.uploadImage(file, 'banner');
                                                       if (url) setEditForm({ ...editForm, banner_image: url });
                                                    }
                                                 }} />
@@ -913,7 +913,7 @@ const SuperPartners: React.FC = () => {
                                           <input type="file" multiple className="hidden" accept="image/*" onChange={async e => {
                                              const files = Array.from(e.target.files || []);
                                              for (const f of files) {
-                                                const url = await apiService.uploadImage(f);
+                                                const url = await apiService.uploadImage(f, 'gallery');
                                                 if (url) {
                                                    setEditForm((prev: any) => ({
                                                       ...prev,
@@ -1298,7 +1298,7 @@ const SuperPartners: React.FC = () => {
                                  <input type="file" className="hidden" accept="image/*" onChange={async e => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                       const url = await apiService.uploadImage(file);
+                                       const url = await apiService.uploadImage(file, 'misc');
                                        if (url) setMenuEditForm({ ...menuEditForm, image: url });
                                     }
                                  }} />

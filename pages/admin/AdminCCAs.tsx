@@ -123,7 +123,7 @@ const AdminCCAs: React.FC = () => {
    };
 
    const handleHireApplicant = async (ccaId: string) => {
-      const result = await apiService.updateCCA({ id: ccaId, status: 'active' });
+      const result = await apiService.updateCCA(ccaId, { status: 'active' });
       if (result.success) {
          alert('Staff hired successfully!');
          fetchCCAs();
@@ -135,7 +135,7 @@ const AdminCCAs: React.FC = () => {
    const handleDeclineApplicant = async (ccaId: string) => {
       if (confirm('Are you sure you want to decline this applicant?')) {
          // For now we just mark as dismissed or delete, but status 'declined' is also fine
-         const result = await apiService.updateCCA({ id: ccaId, status: 'inactive' });
+         const result = await apiService.updateCCA(ccaId, { status: 'inactive' });
          if (result.success) {
             fetchCCAs();
          } else {

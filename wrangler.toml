@@ -5,3 +5,8 @@ pages_build_output_dir = "./dist"
 binding = "DB"
 database_name = "jtvlove_db"
 database_id = "73639f8b-e7e0-4d31-a866-74041e5ff599"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "jtvstar"
+preview = true

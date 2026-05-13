@@ -116,7 +116,8 @@ const SuperSiteSettings: React.FC = () => {
   };
 
   const handleImageUpload = async (field: keyof typeof settings | number, file: File, index?: number) => {
-    const url = await apiService.uploadImage(file);
+    const imageType = activeTab === 'hero' ? 'banner' : 'misc';
+    const url = await apiService.uploadImage(file, imageType);
     if (!url) {
       alert("이미지 업로드에 실패했습니다.");
       return;
