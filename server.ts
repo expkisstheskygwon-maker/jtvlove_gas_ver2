@@ -139,11 +139,26 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  app.post("/api/upload", (req, res) => {
-    // In this preview, we handle upload by returning the base64 if provided, 
-    // but the frontend already has a fallback. 
-    // This endpoint is just to prevent 404.
-    res.status(400).json({ error: "Use client-side upload fallback for preview" });
+  app.post("/api/upload", async (req, res) => {
+    // Development environment: R2 unavailable, mock with Base64 or simulate R2 URL
+    try {
+      let body = '';
+      req.setEncoding('utf-8');
+      
+      for await (const chunk of req) {
+        body += chunk;
+      }
+
+      // Parse multipart form-data manually or use the body
+      // For development, we'll simulate an R2 URL based on the file data
+      res.json({
+        success: true,
+        url: `https://r2.jtvstar.com/mock/${Date.now()}.jpg`,
+        message: 'Development mock: file would be uploaded to R2 in production'
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   // Mock other APIs if needed
