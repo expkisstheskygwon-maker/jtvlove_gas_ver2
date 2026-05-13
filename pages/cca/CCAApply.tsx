@@ -94,7 +94,7 @@ const CCAApply: React.FC = () => {
         try {
             let imageUrl = '';
             if (formData.photo) {
-                const uploadedUrl = await apiService.uploadImage(formData.photo);
+                const uploadedUrl = await apiService.uploadImage(formData.photo, 'profile');
                 if (uploadedUrl) imageUrl = uploadedUrl;
             }
 

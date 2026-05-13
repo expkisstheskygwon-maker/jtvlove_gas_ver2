@@ -1,48 +1,86 @@
 
+// Cloudflare Types
+type R2Bucket = any;
+type D1Database = any;
+
+interface Env {
+  R2: R2Bucket;
+  DB: D1Database;
+}
+
 // GET: Not supported
 export const onRequestGet = async () => {
   return new Response("Method not allowed", { status: 405 });
 };
 
-// POST: 이미지 업로드 처리
-export const onRequestPost = async (context: { request: Request }) => {
+// POST: 이미지 업로드 → R2 처리
+export const onRequestPost = async (context: { request: Request; env: Env }) => {
+  const { request, env } = context;
+  const headers = { "Content-Type": "application/json" };
+
   try {
-    const formData = await context.request.formData();
+    const formData = await request.formData();
     const file = formData.get('file') as File;
+    const type = (formData.get('type') as string) || 'misc'; // 'profile', 'gallery', 'banner', 'misc'
     
     if (!file) {
       return new Response(JSON.stringify({ error: "No file uploaded" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers,
       });
     }
 
-    // 파일 크기 제한 (예: 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      return new Response(JSON.stringify({ error: "File size too large (max 2MB)" }), {
+    // 파일 크기 제한 (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return new Response(JSON.stringify({ error: `File size too large (max ${MAX_SIZE / 1024 / 1024}MB)` }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers,
       });
     }
 
-    // Cloudflare Pages Functions는 로컬 파일 시스템이 없으므로,
-    // 여기서는 파일을 ArrayBuffer로 읽어 Base64로 변환하여 반환합니다.
-    // D1의 TEXT 컬럼에 저장하기에 적합합니다.
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    // 파일 타입 검증
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
+    if (!allowedTypes.includes(file.type)) {
+      return new Response(JSON.stringify({ error: "File type not allowed" }), {
+        status: 400,
+        headers,
+      });
+    }
 
-    return new Response(JSON.stringify({ url: dataUrl }), {
-      headers: { "Content-Type": "application/json" },
+    // 파일명 생성: {type}/YYYY-MM-DD/{uuid}.{ext}
+    const ext = file.name.split('.').pop() || 'bin';
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const uuid = crypto.randomUUID();
+    const key = `${type}/${dateStr}/${uuid}.${ext}`;
+
+    // R2에 업로드
+    const buffer = await file.arrayBuffer();
+    await env.R2.put(key, buffer, {
+      httpMetadata: {
+        contentType: file.type,
+        cacheControl: 'public, max-age=31536000', // 1년 캐시
+      },
     });
+
+    // 공개 URL 생성 (custom domain)
+    const publicUrl = `https://r2.jtvstar.com/${key}`;
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      url: publicUrl,
+      key: key
+    }), {
+      status: 200,
+      headers,
+    });
+
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Upload error:', error);
+    return new Response(JSON.stringify({ error: error.message || "Upload failed" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers,
     });
   }
 };

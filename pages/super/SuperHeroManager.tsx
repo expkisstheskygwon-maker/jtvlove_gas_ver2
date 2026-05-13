@@ -79,7 +79,7 @@ const SuperHeroManager: React.FC = () => {
 
 
   const handleImageUpload = async (index: number, file: File) => {
-    const url = await apiService.uploadImage(file);
+    const url = await apiService.uploadImage(file, 'banner');
     if (url) {
       handleChange(index, 'imageUrl', url);
     } else {

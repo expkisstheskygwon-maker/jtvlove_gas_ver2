@@ -34,51 +34,24 @@ export const apiService = {
     }
   },
 
-  async uploadImage(file: File): Promise<string | null> {
-    const compressImage = (file: File): Promise<string> => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-          const img = new Image();
-          img.src = event.target?.result as string;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 640;
-            const MAX_HEIGHT = 640;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
-
-            // PNG의 경우 투명도 유지를 위해 image/png 사용
-            // 그 외에는 용량 최적화를 위해 image/jpeg 사용
-            const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-            const dataUrl = canvas.toDataURL(outputType, outputType === 'image/jpeg' ? 0.3 : undefined);
-            resolve(dataUrl);
-          };
-        };
-      });
-    };
-
+  async uploadImage(file: File, imageType: string = 'misc'): Promise<string | null> {
     try {
-      const compressedDataUrl = await compressImage(file);
-      return compressedDataUrl; 
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', imageType);
+
+      const response = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        body: formData, // Content-Type 자동 설정됨
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      return data.url || null;
     } catch (error) {
       console.error('uploadImage error:', error);
       return null;

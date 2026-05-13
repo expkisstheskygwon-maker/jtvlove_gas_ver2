@@ -93,7 +93,7 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
 
     setIsUpdating(true);
     try {
-      const base64String = await apiService.uploadImage(file);
+      const base64String = await apiService.uploadImage(file, 'profile');
       if (!base64String) {
         alert('이미지 압축에 실패했습니다.');
         return;
