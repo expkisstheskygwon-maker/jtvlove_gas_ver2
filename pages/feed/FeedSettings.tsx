@@ -93,15 +93,15 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
 
     setIsUpdating(true);
     try {
-      const base64String = await apiService.uploadImage(file, 'profile');
-      if (!base64String) {
-        alert('이미지 압축에 실패했습니다.');
+      const imageUrl = await apiService.uploadImage(file, 'profile');
+      if (!imageUrl) {
+        alert('이미지 업로드에 실패했습니다.');
         return;
       }
 
-      const result = await apiService.updateUser({ id: user.id, profile_image: base64String });
+      const result = await apiService.updateUser({ id: user.id, profile_image: imageUrl });
       if (result.success) {
-        updateUser({ profileImage: base64String });
+        updateUser({ profileImage: imageUrl });
         setMessage({ text: '프로필 이미지가 변경되었습니다.', type: 'success' });
       } else {
         alert('이미지 업로드에 실패했습니다.');
