@@ -19,6 +19,15 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
   const headers = { "Content-Type": "application/json" };
 
   try {
+    // ADDED: Explicitly check for multipart/form-data content type
+    const contentType = request.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('multipart/form-data')) {
+      return new Response(JSON.stringify({ error: "Invalid Content-Type. Expected multipart/form-data." }), {
+        status: 400,
+        headers,
+      });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const type = (formData.get('type') as string) || 'misc'; // 'profile', 'gallery', 'banner', 'misc'
