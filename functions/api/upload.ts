@@ -73,8 +73,8 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       },
     });
 
-    // 공개 URL 생성 (custom domain)
-    const publicUrl = `https://r2.jtvstar.com/${key}`;
+    // 공개 URL 생성: 내부 프록시를 통해 R2에 접근합니다
+    const publicUrl = `/api/r2?key=${encodeURIComponent(key)}`;
 
     return new Response(JSON.stringify({ 
       success: true,
