@@ -13,13 +13,37 @@ export const onRequestGet = async () => {
   return new Response("Method not allowed", { status: 405 });
 };
 
+// MIME 타입 유추 헬퍼
+function inferMimeType(fileName: string, rawType: string): string {
+  const mimeMap: Record<string, string> = {
+    'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+    'gif': 'image/gif', 'webp': 'image/webp', 'svg': 'image/svg+xml',
+    'bmp': 'image/bmp', 'ico': 'image/x-icon', 'tiff': 'image/tiff',
+    'mp4': 'video/mp4', 'webm': 'video/webm', 'mov': 'video/quicktime',
+  };
+
+  // rawType이 유효한 image/video이면 그대로 사용
+  if (rawType && (rawType.startsWith('image/') || rawType.startsWith('video/'))) {
+    return rawType;
+  }
+
+  // 파일 이름에서 확장자 추출하여 유추
+  const ext = fileName.includes('.') ? (fileName.split('.').pop() || '').toLowerCase() : '';
+  if (ext && mimeMap[ext]) {
+    return mimeMap[ext];
+  }
+
+  // 기본값: image/jpeg (이미지 업로드 전용 엔드포인트이므로)
+  return 'image/jpeg';
+}
+
 // POST: 이미지 업로드 → R2 처리
 export const onRequestPost = async (context: { request: Request; env: Env }) => {
   const { request, env } = context;
   const headers = { "Content-Type": "application/json" };
 
   try {
-    // ADDED: Explicitly check for multipart/form-data content type
+    // Content-Type 검증
     const contentType = request.headers.get('Content-Type');
     if (!contentType || !contentType.includes('multipart/form-data')) {
       return new Response(JSON.stringify({ error: "Invalid Content-Type. Expected multipart/form-data." }), {
@@ -29,9 +53,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     }
 
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const type = (formData.get('type') as string) || 'misc'; // 'profile', 'gallery', 'banner', 'misc'
-    
+    const file = formData.get('file');
+    const type = (formData.get('type') as string) || 'misc';
+
     if (!file) {
       return new Response(JSON.stringify({ error: "No file uploaded" }), {
         status: 400,
@@ -39,30 +63,36 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
     }
 
+    // 파일 바이너리 데이터를 먼저 한 번만 읽어두기 (stream 이중 소비 방지)
+    let fileBytes: ArrayBuffer;
+    if (typeof (file as any).arrayBuffer === 'function') {
+      fileBytes = await (file as any).arrayBuffer();
+    } else {
+      fileBytes = await new Response(file as any).arrayBuffer();
+    }
+
+    const fileSize = fileBytes.byteLength;
+    const fileName = typeof (file as any).name === 'string' ? (file as any).name : 'upload';
+    const rawType = typeof (file as any).type === 'string' ? (file as any).type : '';
+
     // 파일 크기 제한 (10MB)
     const MAX_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
+    if (fileSize > MAX_SIZE) {
       return new Response(JSON.stringify({ error: `File size too large (max ${MAX_SIZE / 1024 / 1024}MB)` }), {
         status: 400,
         headers,
       });
     }
 
-    // 파일 타입 검증 (위험한 파일만 차단하고 모두 허용하여 클립보드 업로드 등 지원)
-    let fileType = (file.type || '').toLowerCase();
-    const fileName = file.name || 'file';
-    const ext = fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() || 'bin' : 'bin';
-    
-    // 브라우저가 MIME Type을 보내지 않았을 경우 확장자로 유추 (Base64/R2에서 이미지가 깨지는 현상 방지)
-    if (!fileType || fileType === 'application/octet-stream') {
-      const mimeMap: Record<string, string> = {
-        'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 
-        'gif': 'image/gif', 'webp': 'image/webp', 'mp4': 'video/mp4', 'webm': 'video/webm'
-      };
-      // 확장자 매핑이 안되면 이미지 기본값(image/jpeg)으로 설정하여 무조건 렌더링되게 함
-      fileType = mimeMap[ext] || 'image/jpeg';
-    }
-    
+    // MIME 타입 유추
+    const fileType = inferMimeType(fileName, rawType.toLowerCase());
+
+    // 확장자 추출
+    const ext = fileName.includes('.')
+      ? (fileName.split('.').pop() || 'jpg').toLowerCase()
+      : fileType.split('/')[1] || 'jpg'; // MIME 기반 확장자
+
+    // 위험 파일 확장자 차단
     const dangerousExts = ['html', 'htm', 'exe', 'sh', 'bat', 'php', 'js'];
     if (dangerousExts.includes(ext)) {
       return new Response(JSON.stringify({ error: `Dangerous file extension not allowed: ${ext}` }), {
@@ -80,18 +110,16 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     // R2가 연결되어 있는 경우 R2에 업로드 시도
     if (env.R2) {
       try {
-        const buffer = file.arrayBuffer ? await file.arrayBuffer() : await new Response(file).arrayBuffer();
-        await env.R2.put(key, buffer, {
+        await env.R2.put(key, fileBytes, {
           httpMetadata: {
-            contentType: fileType || 'application/octet-stream',
-            cacheControl: 'public, max-age=31536000', // 1년 캐시
+            contentType: fileType,
+            cacheControl: 'public, max-age=31536000',
           },
         });
 
-        // R2 커스텀 도메인 대신 DNS 및 CORS 이슈가 없는 로컬 프록시 URL 사용
         const publicUrl = `/api/r2?key=${encodeURIComponent(key)}`;
 
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           success: true,
           url: publicUrl,
           key: key
@@ -101,21 +129,18 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
         });
       } catch (r2Error: any) {
         console.error('R2 put failed, falling back to Base64:', r2Error);
-        // R2 업로드 중 예외 발생 시, 서비스가 중단되는 대신 Base64 데이터 URL로 자동 전환되어 업로드 성공을 보장합니다.
       }
     }
 
-    // R2가 바인딩되지 않았거나 R2 업로드 도중 에러가 발생한 경우 (로컬 개발 환경 또는 Pages 대시보드 미연결/오류 시)
-    // ArrayBuffer를 읽어 Base64 데이터 URL로 저장하는 기존 방식으로 자동 대체
-    const arrayBuffer = file.arrayBuffer ? await file.arrayBuffer() : await new Response(file).arrayBuffer();
+    // Base64 데이터 URL 폴백
     const base64 = btoa(
-      new Uint8Array(arrayBuffer)
+      new Uint8Array(fileBytes)
         .reduce((data, byte) => data + String.fromCharCode(byte), '')
     );
-    
-    const dataUrl = `data:${fileType || 'application/octet-stream'};base64,${base64}`;
 
-    return new Response(JSON.stringify({ 
+    const dataUrl = `data:${fileType};base64,${base64}`;
+
+    return new Response(JSON.stringify({
       success: true,
       url: dataUrl
     }), {
