@@ -48,14 +48,14 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
     }
 
-    // 파일 타입 검증 (좀 더 유연하게 허용)
+    // 파일 타입 검증 (위험한 파일만 차단하고 모두 허용하여 클립보드 업로드 등 지원)
     const fileType = (file.type || '').toLowerCase();
-    const fileName = file.name || '';
-    const ext = fileName.split('.').pop()?.toLowerCase() || 'bin';
+    const fileName = file.name || 'file';
+    const ext = fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() || 'bin' : 'bin';
     
-    const isAllowed = fileType.startsWith('image/') || fileType.startsWith('video/') || fileType === 'application/octet-stream' || (fileType === '' && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4'].includes(ext));
-    if (!isAllowed) {
-      return new Response(JSON.stringify({ error: `File type not allowed: "${fileType}", ext: ${ext}` }), {
+    const dangerousExts = ['html', 'htm', 'exe', 'sh', 'bat', 'php', 'js'];
+    if (dangerousExts.includes(ext)) {
+      return new Response(JSON.stringify({ error: `Dangerous file extension not allowed: ${ext}` }), {
         status: 400,
         headers,
       });
