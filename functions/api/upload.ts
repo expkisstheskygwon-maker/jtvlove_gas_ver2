@@ -70,7 +70,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     // R2가 연결되어 있는 경우 R2에 업로드 시도
     if (env.R2) {
       try {
-        const buffer = await file.arrayBuffer();
+        const buffer = file.arrayBuffer ? await file.arrayBuffer() : await new Response(file).arrayBuffer();
         await env.R2.put(key, buffer, {
           httpMetadata: {
             contentType: fileType || 'application/octet-stream',
@@ -97,7 +97,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
 
     // R2가 바인딩되지 않았거나 R2 업로드 도중 에러가 발생한 경우 (로컬 개발 환경 또는 Pages 대시보드 미연결/오류 시)
     // ArrayBuffer를 읽어 Base64 데이터 URL로 저장하는 기존 방식으로 자동 대체
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = file.arrayBuffer ? await file.arrayBuffer() : await new Response(file).arrayBuffer();
     const base64 = btoa(
       new Uint8Array(arrayBuffer)
         .reduce((data, byte) => data + String.fromCharCode(byte), '')
