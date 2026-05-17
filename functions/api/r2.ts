@@ -54,13 +54,30 @@ export const onRequestGet = async (context: { request: Request; env: Env }) => {
       obj.metadata?.cacheControl ||
       'public, max-age=31536000';
 
-    return new Response(obj.body, {
-      status: 200,
-      headers: {
+    // 바디를 완전히 버퍼화해서 반환하도록 변경 (에지 스트리밍 전달 실패 방지)
+    try {
+      const bodyBuffer = await new Response(obj.body).arrayBuffer();
+
+      const responseHeaders: Record<string, string> = {
         'Content-Type': contentType,
         'Cache-Control': cacheControl,
-      }
-    });
+        'Content-Length': String(bodyBuffer.byteLength),
+        'X-Served-By': 'r2-proxy'
+      };
+
+      console.log('R2 proxy success', { key: decodedKey, size: bodyBuffer.byteLength, contentType });
+
+      return new Response(bodyBuffer, {
+        status: 200,
+        headers: responseHeaders
+      });
+    } catch (readError: any) {
+      console.error('R2 read body failed for key', decodedKey, readError);
+      return new Response(JSON.stringify({ error: 'Failed to read object body' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    }
   } catch (error: any) {
     console.error('R2 proxy error:', error);
     return new Response(JSON.stringify({ error: error.message || 'R2 proxy error' }), {
