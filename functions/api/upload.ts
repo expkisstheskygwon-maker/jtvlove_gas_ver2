@@ -49,11 +49,13 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     }
 
     // 파일 타입 검증 (좀 더 유연하게 허용)
-    const fileType = file.type.toLowerCase();
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const fileType = (file.type || '').toLowerCase();
+    const fileName = file.name || '';
+    const ext = fileName.split('.').pop()?.toLowerCase() || 'bin';
+    
     const isAllowed = fileType.startsWith('image/') || fileType.startsWith('video/') || fileType === 'application/octet-stream' || (fileType === '' && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4'].includes(ext));
     if (!isAllowed) {
-      return new Response(JSON.stringify({ error: `File type not allowed: "${file.type}", ext: ${ext}` }), {
+      return new Response(JSON.stringify({ error: `File type not allowed: "${fileType}", ext: ${ext}` }), {
         status: 400,
         headers,
       });
@@ -71,7 +73,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
         const buffer = await file.arrayBuffer();
         await env.R2.put(key, buffer, {
           httpMetadata: {
-            contentType: file.type,
+            contentType: fileType || 'application/octet-stream',
             cacheControl: 'public, max-age=31536000', // 1년 캐시
           },
         });
@@ -101,7 +103,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
         .reduce((data, byte) => data + String.fromCharCode(byte), '')
     );
     
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    const dataUrl = `data:${fileType || 'application/octet-stream'};base64,${base64}`;
 
     return new Response(JSON.stringify({ 
       success: true,
