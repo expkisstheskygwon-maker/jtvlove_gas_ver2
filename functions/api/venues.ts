@@ -17,6 +17,14 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   const url = new URL(request.url);
   const idParam = url.searchParams.get("id");
 
+  const normalizeUrl = (u: string) => {
+    if (u && u.startsWith('https://r2.jtvstar.com/')) {
+      const key = u.replace('https://r2.jtvstar.com/', '');
+      return `/api/r2?key=${encodeURIComponent(key)}`;
+    }
+    return u;
+  };
+
   // GET: 업소 목록 또는 특정 업소 조회
   if (request.method === "GET") {
     try {
@@ -33,6 +41,8 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       // JSON 필드 파싱
       const formattedResults = results.map((v: any) => ({
         ...v,
+        image: normalizeUrl(v.image),
+        banner_image: normalizeUrl(v.banner_image),
         tags: v.tags ? JSON.parse(v.tags) : [],
         features: v.features ? JSON.parse(v.features) : [],
         sns: v.sns ? JSON.parse(v.sns) : null,

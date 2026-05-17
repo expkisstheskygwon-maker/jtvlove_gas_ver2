@@ -64,26 +64,46 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     const uuid = crypto.randomUUID();
     const key = `${type}/${dateStr}/${uuid}.${ext}`;
 
-    // R2에 업로드
-    const buffer = await file.arrayBuffer();
-    await env.R2.put(key, buffer, {
-      httpMetadata: {
-        contentType: file.type,
-        cacheControl: 'public, max-age=31536000', // 1년 캐시
-      },
-    });
+    // R2가 연결되어 있는 경우 R2에 업로드 후 로컬 프록시 URL 반환
+    if (env.R2) {
+      const buffer = await file.arrayBuffer();
+      await env.R2.put(key, buffer, {
+        httpMetadata: {
+          contentType: file.type,
+          cacheControl: 'public, max-age=31536000', // 1년 캐시
+        },
+      });
 
-    // 공개 URL 생성 (custom domain)
-    const publicUrl = `https://r2.jtvstar.com/${key}`;
+      // R2 커스텀 도메인 대신 DNS 및 CORS 이슈가 없는 로컬 프록시 URL 사용
+      const publicUrl = `/api/r2?key=${encodeURIComponent(key)}`;
 
-    return new Response(JSON.stringify({ 
-      success: true,
-      url: publicUrl,
-      key: key
-    }), {
-      status: 200,
-      headers,
-    });
+      return new Response(JSON.stringify({ 
+        success: true,
+        url: publicUrl,
+        key: key
+      }), {
+        status: 200,
+        headers,
+      });
+    } else {
+      // R2가 바인딩되지 않은 경우 (로컬 개발 환경 또는 Pages 대시보드 미연결 시)
+      // ArrayBuffer를 읽어 Base64 데이터 URL로 저장하는 기존 방식으로 자동 대체
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer)
+          .reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      
+      const dataUrl = `data:${file.type};base64,${base64}`;
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        url: dataUrl
+      }), {
+        status: 200,
+        headers,
+      });
+    }
 
   } catch (error: any) {
     console.error('Upload error:', error);

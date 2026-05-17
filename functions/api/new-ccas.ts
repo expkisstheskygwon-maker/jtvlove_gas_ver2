@@ -13,6 +13,14 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
   const headers = { 'Content-Type': 'application/json' };
 
+  const normalizeUrl = (u: string) => {
+    if (u && u.startsWith('https://r2.jtvstar.com/')) {
+      const key = u.replace('https://r2.jtvstar.com/', '');
+      return `/api/r2?key=${encodeURIComponent(key)}`;
+    }
+    return u;
+  };
+
   if (request.method === 'GET') {
     try {
       const limit = parseInt(url.searchParams.get('limit') || '10');
@@ -45,7 +53,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         id: r.id,
         name: r.name,
         nickname: r.nickname,
-        image: r.image,
+        image: normalizeUrl(r.image),
         score: r.score || 0,
         createdAt: r.created_at,
         isWorking: r.is_working === 1,

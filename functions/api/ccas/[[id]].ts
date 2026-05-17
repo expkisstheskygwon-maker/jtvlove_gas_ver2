@@ -15,6 +15,14 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? String(rawId[0]) : (rawId ? String(rawId) : null);
 
+  const normalizeUrl = (u: string) => {
+    if (u && u.startsWith('https://r2.jtvstar.com/')) {
+      const key = u.replace('https://r2.jtvstar.com/', '');
+      return `/api/r2?key=${encodeURIComponent(key)}`;
+    }
+    return u;
+  };
+
   // GET: List all or single
   if (request.method === 'GET') {
     try {
@@ -69,6 +77,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
         return new Response(JSON.stringify({
           ...result,
+          image: normalizeUrl(result.image),
           isWorking,
           attendanceStatus: result.attendanceStatus,
           checkInAt: result.checkInAt,
@@ -123,6 +132,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
       return new Response(JSON.stringify(results.map((r: any) => ({
         ...r,
+        image: normalizeUrl(r.image),
         isWorking: r.attendanceStatus === 'checked_in' && r.attendance_date === currentBusinessDate,
         languages: r.languages ? JSON.parse(r.languages) : [],
         venueId: r.venue_id,

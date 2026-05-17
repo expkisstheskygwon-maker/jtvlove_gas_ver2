@@ -16,6 +16,14 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
 
   const headers = { 'Content-Type': 'application/json' };
 
+  const normalizeUrl = (u: string) => {
+    if (u && u.startsWith('https://r2.jtvstar.com/')) {
+      const key = u.replace('https://r2.jtvstar.com/', '');
+      return `/api/r2?key=${encodeURIComponent(key)}`;
+    }
+    return u;
+  };
+
   // GET: List all, by CCA, or FEED mode
   if (request.method === 'GET') {
     try {
@@ -179,7 +187,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           items: results.map((item: any) => ({
             id: item.id,
             type: item.type,
-            url: item.url,
+            url: normalizeUrl(item.url),
             caption: item.caption,
             likes: item.likes || 0,
             shares: item.shares || 0,
@@ -188,7 +196,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
             ccaId: item.cca_id,
             ccaName: item.cca_name,
             ccaNickname: item.cca_nickname,
-            ccaImage: item.cca_image,
+            ccaImage: normalizeUrl(item.cca_image),
             ccaGrade: item.cca_grade,
             ccaScore: item.cca_score,
             subscriptionCost: item.cca_subscription_cost || 0,
@@ -225,7 +233,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
         return new Response(JSON.stringify({
           id: item.id,
           type: item.type,
-          url: item.url,
+          url: normalizeUrl(item.url),
           caption: item.caption,
           likes: item.likes || 0,
           shares: item.shares || 0,
@@ -234,7 +242,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
           ccaId: item.cca_id,
           ccaName: item.cca_name,
           ccaNickname: item.cca_nickname,
-          ccaImage: item.cca_image,
+          ccaImage: normalizeUrl(item.cca_image),
           ccaGrade: item.cca_grade,
           venueName: item.venue_name
         }), { headers });
@@ -260,7 +268,7 @@ export const onRequest: PagesFunction<Env> = async (context: any) => {
       return new Response(JSON.stringify(results.map((item: any) => ({
         id: item.id,
         type: item.type,
-        url: item.url,
+        url: normalizeUrl(item.url),
         caption: item.caption,
         likes: item.likes,
         shares: item.shares,
