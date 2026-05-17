@@ -25,6 +25,7 @@ interface MigrationProgress {
   errors: string[];
 }
 
+const R2_PUBLIC_URL = 'https://r2.jtvstar.com';
 
 function isBase64DataUrl(str: string): boolean {
   return typeof str === 'string' && str.startsWith('data:');
@@ -78,7 +79,7 @@ async function uploadBase64ToR2(env: Env, base64DataUrl: string, type: string, i
       },
     });
 
-    return `/api/r2?key=${encodeURIComponent(key)}`;
+    return `${R2_PUBLIC_URL}/${key}`;
   } catch (error) {
     console.error('R2 upload failed:', error);
     return null;

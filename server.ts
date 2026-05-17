@@ -161,19 +161,19 @@ async function startServer() {
     }
   });
 
-  // Local dev helper: proxy /api/r2?key=... to the public R2 domain so images load when R2 is not available locally
-  app.get('/api/r2', (req, res) => {
-    const key = req.query.key as string | undefined;
-    if (!key) return res.status(400).json({ error: 'Missing key' });
-    // If key already looks like a URL, redirect directly
-    if (key.startsWith('http://') || key.startsWith('https://')) {
-      return res.redirect(key);
-    }
-    const publicUrl = `https://r2.jtvstar.com/${encodeURIComponent(key)}`;
-    return res.redirect(publicUrl);
+  // Mock other APIs if needed
+  app.get("/api/ccas", (req, res) => {
+    // Fallback to mock data is handled in frontend apiService
+    res.status(404).json({ error: "Use mock data" });
   });
 
-  // Note: removed fallback mock 404 routes so real/mock handlers above remain reachable
+  app.get("/api/venues", (req, res) => {
+    res.status(404).json({ error: "Use mock data" });
+  });
+
+  app.get("/api/posts", (req, res) => {
+    res.status(404).json({ error: "Use mock data" });
+  });
 
   // CCA Portal Home API (local dev)
   let mockAttendance: any = null;

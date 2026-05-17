@@ -3,27 +3,6 @@
 const API_BASE_URL = '/api';
 
 export const apiService = {
-  async getCCAs(): Promise<any[]> {
-    try {
-      const res = await fetch(`${API_BASE_URL}/ccas`);
-      if (!res.ok) return [];
-      return await res.json();
-    } catch (e) {
-      console.error('getCCAs error', e);
-      return [];
-    }
-  },
-
-  async getSiteSettings(): Promise<any | null> {
-    try {
-      const res = await fetch(`${API_BASE_URL}/settings`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      console.error('getSiteSettings error', e);
-      return null;
-    }
-  },
   // ... (other API methods)
 
   async uploadImage(file: File, type: string): Promise<string | null> {
