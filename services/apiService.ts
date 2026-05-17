@@ -34,30 +34,26 @@ export const apiService = {
     }
   },
 
-  async uploadImage(file: File, type: string = 'misc'): Promise<string | null> {
+  async uploadImage(file: File, imageType: string = 'misc'): Promise<string | null> {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('type', type);
+      formData.append('type', imageType);
 
       const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
-        // IMPORTANT: Do NOT explicitly set 'Content-Type' header for FormData.
-        // The browser will automatically set it to 'multipart/form-data'
-        // with the correct boundary.
-        body: formData,
+        body: formData, // Content-Type 자동 설정됨
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Upload failed:', errorData.error);
-        return null;
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
       }
 
-      const result = await response.json();
-      return result.url;
+      const data = await response.json();
+      return data.url || null;
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('uploadImage error:', error);
       return null;
     }
   },
@@ -153,7 +149,29 @@ export const apiService = {
       return await response.json();
     } catch (error) {
       console.error('getCCAById error:', error);
-      return CCAS.find(c => c.id === id) || null;
+      const cleanId = id.startsWith('@') ? id.substring(1) : id;
+      return CCAS.find(c => c.id === cleanId || (c.nickname && c.nickname.toLowerCase() === cleanId.toLowerCase())) || null;
+    }
+  },
+
+  async getCCAByNickname(nickname: string): Promise<CCA | null> {
+    const cleanNick = nickname.startsWith('@') ? nickname.substring(1) : nickname;
+    return this.getCCAById(cleanNick);
+  },
+
+  async updateCCA(id: string, data: Partial<CCA | any>): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/ccas/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok) return { success: true, id: result.id };
+      return { success: false, error: result.error || 'Failed to update CCA' };
+    } catch (error: any) {
+      console.error('updateCCA error:', error);
+      return { success: false, error: error.message };
     }
   },
 
@@ -177,22 +195,6 @@ export const apiService = {
     }
   },
 
-  async updateCCA(data: any): Promise<{ success: boolean; error?: string }> {
-    try {
-      const id = data.id || '';
-      const response = await fetch(`${API_BASE}/ccas/${id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (response.ok) return { success: true };
-      const errData = await response.json().catch(() => ({}));
-      return { success: false, error: errData.error || 'Update failed' };
-    } catch (error: any) {
-      console.error('updateCCA error:', error);
-      return { success: false, error: error.message };
-    }
-  },
 
   async createCCA(data: any): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
@@ -392,6 +394,20 @@ export const apiService = {
     }
   },
 
+  async recalculateCCAScore(ccaId: string): Promise<{ success: boolean; newScore?: number; newGrade?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-score/recalculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId })
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('recalculateCCAScore error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
   // Reservations
   async createReservation(data: any): Promise<boolean> {
     try {
@@ -442,7 +458,10 @@ export const apiService = {
   async getGallery(ccaId?: string): Promise<MediaItem[]> {
     try {
       let url = `${API_BASE}/gallery`;
-      if (ccaId) url += `?ccaId=${encodeURIComponent(ccaId)}`;
+      if (ccaId) {
+        const cleanId = ccaId.startsWith('@') ? ccaId.substring(1) : ccaId;
+        url += `?ccaId=${encodeURIComponent(cleanId)}`;
+      }
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch gallery');
       return await response.json();
@@ -542,30 +561,40 @@ export const apiService = {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Server error');
       }
-      return await response.json();
+      const data = await response.json();
+      return {
+        ...data,
+        ui_texts: data.ui_texts ? JSON.parse(data.ui_texts) : {}
+      };
     } catch (error) {
       console.error("apiService.getSiteSettings Error:", error);
       return {
-        site_name: 'Philippine JTV Association',
+        site_name: 'JTV STAR',
         admin_phone: '0917-000-0000',
-        admin_email: 'admin@ph-jtv.org',
-        admin_sns: '@phjtv_official',
+        admin_email: 'admin@jtvstar.com',
+        admin_sns: '@jtvstar_official',
         hq_address: 'Metro Manila, Philippines',
         logo_url: '',
         favicon_url: '',
+        emblem_url: '',
         venues_hero_image: '',
         venues_hero_title: '이달의 추천 JTV',
-        venues_hero_subtitle: '최고의 서비스와 품격을 보장합니다.'
+        venues_hero_subtitle: '최고의 서비스와 품격을 보장합니다.',
+        ui_texts: {}
       };
     }
   },
 
   async updateSiteSettings(data: any): Promise<boolean> {
     try {
+      const payload = { ...data };
+      if (payload.ui_texts && typeof payload.ui_texts === 'object') {
+        payload.ui_texts = JSON.stringify(payload.ui_texts);
+      }
       const response = await fetch(`${API_BASE}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -829,6 +858,20 @@ export const apiService = {
     }
   },
 
+  async updateVenueAdminAccount(venueId: string, newEmail: string, newPassword?: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/super-partners`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateVenueAdminAccount', venueId, newEmail, newPassword })
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('updateVenueAdminAccount error:', error);
+      return { error: error.message };
+    }
+  },
+
   async getVenueHistory(id: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/super-partners?action=venueHistory&id=${id}`);
@@ -957,6 +1000,18 @@ export const apiService = {
     } catch (error: any) {
       console.error('changeSuperAdminPassword error:', error);
       return { success: false, error: 'Network error occurred' };
+    }
+  },
+
+  async getUsersByIds(ids: string[]): Promise<any[]> {
+    if (!ids || ids.length === 0) return [];
+    try {
+      const response = await fetch(`${API_BASE}/users?ids=${encodeURIComponent(ids.join(','))}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getUsersByIds error:', error);
+      return [];
     }
   },
 
@@ -1208,7 +1263,723 @@ export const apiService = {
       console.error('deleteVenueNotice error:', error);
       return false;
     }
+  },
+
+  // CCA 지명 요청 (CCA Nomination Requests)
+  async getCCARequests(params: { ccaId?: string; venueId?: string }): Promise<any[]> {
+    try {
+      const query = params.ccaId
+        ? `ccaId=${encodeURIComponent(params.ccaId)}`
+        : `venueId=${encodeURIComponent(params.venueId || '')}`;
+      const response = await fetch(`${API_BASE}/cca-requests?${query}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getCCARequests error:', error);
+      return [];
+    }
+  },
+
+  async createCCARequest(data: {
+    cca_id: string;
+    venue_id: string;
+    cca_name?: string;
+    venue_name?: string;
+    customer_name: string;
+    customer_contact?: string;
+    customer_note?: string;
+    preferred_date?: string;
+    preferred_time?: string;
+    group_size?: number;
+    user_id?: string;
+  }): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('createCCARequest error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async updateCCARequestStatus(id: string, status: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-requests`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('updateCCARequestStatus error:', error);
+      return false;
+    }
+  },
+
+  // ═══════════════════════════════════════════
+  // 통합 메시지 (Messages)
+  // ═══════════════════════════════════════════
+
+  async getMessages(params: { receiverId?: string; receiverType?: string; senderId?: string; senderType?: string; limit?: number }): Promise<any[]> {
+    try {
+      const query = new URLSearchParams();
+      if (params.receiverId) query.set('receiverId', params.receiverId);
+      if (params.receiverType) query.set('receiverType', params.receiverType);
+      if (params.senderId) query.set('senderId', params.senderId);
+      if (params.senderType) query.set('senderType', params.senderType);
+      if (params.limit) query.set('limit', params.limit.toString());
+      const response = await fetch(`${API_BASE}/messages?${query.toString()}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getMessages error:', error);
+      return [];
+    }
+  },
+
+  async sendMessage(data: {
+    sender_id: string;
+    sender_type: string;
+    sender_name?: string;
+    receiver_id: string;
+    receiver_type: string;
+    receiver_name?: string;
+    subject?: string;
+    content: string;
+    parent_id?: string;
+  }): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('sendMessage error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async replyMessage(id: string, replyText: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/messages`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, reply_text: replyText }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('replyMessage error:', error);
+      return false;
+    }
+  },
+
+  async markMessageRead(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/messages`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, is_read: true }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markMessageRead error:', error);
+      return false;
+    }
+  },
+
+  async deleteMessage(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/messages?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteMessage error:', error);
+      return false;
+    }
+  },
+
+  async searchMessageRecipients(query: string, type: string = 'all'): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/message-search?q=${encodeURIComponent(query)}&type=${type}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('searchMessageRecipients error:', error);
+      return [];
+    }
+  },
+
+  // ═══════════════════════════════════════════
+  // 비밀대화 (Secret DM) - MVP
+  // ═══════════════════════════════════════════
+  async getSecretConversations(userId: string, role?: 'user' | 'cca'): Promise<{ role: 'user' | 'cca'; conversations: any[] }> {
+    try {
+      const query = new URLSearchParams({ userId });
+      if (role) query.set('role', role);
+      const response = await fetch(`${API_BASE}/secret/conversations?${query.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch secret conversations');
+      return await response.json();
+    } catch (error: any) {
+      console.error('getSecretConversations error:', error);
+      return { role: role || 'user', conversations: [] };
+    }
+  },
+
+  async createSecretConversation(fanId: string, ccaId: string): Promise<{ success: boolean; conversationId?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/secret/conversations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fanId, ccaId }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('createSecretConversation error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getSecretMessages(conversationId: string, viewerRole: 'user' | 'cca', markRead: boolean = false): Promise<{ messages: any[] }> {
+    try {
+      const query = new URLSearchParams({
+        conversationId,
+        viewerRole,
+        markRead: markRead ? '1' : '0',
+      });
+      const response = await fetch(`${API_BASE}/secret/messages?${query.toString()}`);
+      if (!response.ok) return { messages: [] };
+      return await response.json();
+    } catch (error) {
+      console.error('getSecretMessages error:', error);
+      return { messages: [] };
+    }
+  },
+
+  async sendSecretMessage(data: {
+    conversationId?: string;
+    fanId: string;
+    ccaId: string;
+    senderRole: 'user' | 'cca';
+    senderId: string;
+    content: string;
+    isPaid?: boolean;
+    pricePoints?: number;
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/secret/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('sendSecretMessage error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async blockSecretFan(ccaId: string, fanId: string, action: 'block' | 'unblock' = 'block'): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/secret/block`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ccaId, fanId, action }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('blockSecretFan error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // ═══════════════════════════════════════════
+  // CCA 좋아요 (CCA Likes)
+  // ═══════════════════════════════════════════
+
+  async getCCALikes(ccaId: string, userId?: string): Promise<{ count: number; liked: boolean }> {
+    try {
+      let url = `${API_BASE}/cca-likes?ccaId=${encodeURIComponent(ccaId)}`;
+      if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+      const response = await fetch(url);
+      if (!response.ok) return { count: 0, liked: false };
+      return await response.json();
+    } catch (error) {
+      console.error('getCCALikes error:', error);
+      return { count: 0, liked: false };
+    }
+  },
+
+  async toggleCCALike(ccaId: string, userId: string): Promise<{ liked: boolean; count: number }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-likes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cca_id: ccaId, user_id: userId }),
+      });
+      if (!response.ok) return { liked: false, count: 0 };
+      return await response.json();
+    } catch (error) {
+      console.error('toggleCCALike error:', error);
+      return { liked: false, count: 0 };
+    }
+  },
+
+  // ═══════════════════════════════════════════
+  // Super Admin Dashboard
+  // ═══════════════════════════════════════════
+  async getSuperDashboardStats(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/super/dashboard`);
+      if (!response.ok) throw new Error('Failed to fetch dashboard stats');
+      return await response.json();
+    } catch (error) {
+      console.error('getSuperDashboardStats error:', error);
+      return {
+        venuesCount: 0, venuesToday: 0,
+        ccasCount: 0, ccasToday: 0,
+        usersCount: 0, usersToday: 0,
+        reservationsCount: 0, reservationsToday: 0,
+        recentPosts: [], recentUsers: []
+      };
+    }
+  },
+
+  // ═══════════════════════════════════════════
+  // CCA Applications & Job Pool System
+  // ═══════════════════════════════════════════
+
+  async submitCCAApplication(data: any): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?action=apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('submitCCAApplication error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async getCCAApplications(status?: string): Promise<any[]> {
+    try {
+      let url = `${API_BASE}/cca-applications?action=listAll`;
+      if (status) url += `&status=${encodeURIComponent(status)}`;
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getCCAApplications error:', error);
+      return [];
+    }
+  },
+
+  async sendJobOffer(data: { applicationId: string; venueId: string; venueName?: string; message?: string }): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?action=sendOffer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('sendJobOffer error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async checkApplicantStatus(name: string, pin: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?action=applicantStatus&name=${encodeURIComponent(name)}&pin=${encodeURIComponent(pin)}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('checkApplicantStatus error:', error);
+      return { error: error.message };
+    }
+  },
+
+  async acceptJobOffer(offerId: string, name?: string, pin?: string): Promise<{ success: boolean; ccaId?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?action=acceptOffer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerId, name, pin }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('acceptJobOffer error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async rejectJobOffer(offerId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?action=rejectOffer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerId }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('rejectJobOffer error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async directAssignApplicant(applicationId: string, venueId: string): Promise<{ success: boolean; ccaId?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?action=directAssign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId, venueId }),
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('directAssignApplicant error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async deleteCCAApplication(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/cca-applications?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('deleteCCAApplication error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // ─── SNS Feed APIs ──────────────────────────────────────
+
+  async getFeed(page: number = 1, limit: number = 20, userId?: string): Promise<any> {
+    try {
+      let url = `${API_BASE}/gallery?feed=true&page=${page}&limit=${limit}`;
+      if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch feed');
+      return await response.json();
+    } catch (error) {
+      console.error('getFeed error:', error);
+      return { items: [], page: 1, limit: 20, total: 0, hasMore: false };
+    }
+  },
+
+  async getGalleryItem(id: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch gallery item');
+      return await response.json();
+    } catch (error) {
+      console.error('getGalleryItem error:', error);
+      return null;
+    }
+  },
+
+  // Gallery Item Likes
+  async getGalleryLikes(galleryId: string, visitorId?: string): Promise<{ count: number; liked: boolean }> {
+    try {
+      let url = `${API_BASE}/gallery-likes?galleryId=${encodeURIComponent(galleryId)}`;
+      if (visitorId) url += `&visitorId=${encodeURIComponent(visitorId)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch gallery likes');
+      return await response.json();
+    } catch (error) {
+      console.error('getGalleryLikes error:', error);
+      return { count: 0, liked: false };
+    }
+  },
+
+  async toggleGalleryLike(galleryId: string, visitorId: string): Promise<{ count: number; liked: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-likes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ galleryId, visitorId }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle gallery like');
+      return await response.json();
+    } catch (error) {
+      console.error('toggleGalleryLike error:', error);
+      return { count: 0, liked: false };
+    }
+  },
+
+  // Gallery Comments
+  async getGalleryComments(galleryId: string, options?: { limit?: number }): Promise<any[]> {
+    try {
+      let url = `${API_BASE}/gallery-comments?galleryId=${encodeURIComponent(galleryId)}`;
+      if (options?.limit && options.limit > 0) url += `&limit=${encodeURIComponent(String(options.limit))}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch gallery comments');
+      return await response.json();
+    } catch (error) {
+      console.error('getGalleryComments error:', error);
+      return [];
+    }
+  },
+
+  async createGalleryComment(data: { galleryId: string; authorName: string; authorId?: string; authorImage?: string; content: string }): Promise<{ success: boolean; id?: string; commentsCount?: number; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!response.ok) return { success: false, error: result.error || 'Failed to create gallery comment' };
+      return result;
+    } catch (error: any) {
+      console.error('createGalleryComment error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async deleteGalleryComment(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-comments?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('deleteGalleryComment error:', error);
+      return false;
+    }
+  },
+
+  // Gallery Comment Votes
+  async getGalleryCommentVotes(galleryId: string, userId: string): Promise<any[]> {
+    try {
+      const url = `${API_BASE}/gallery-comment-votes?galleryId=${encodeURIComponent(galleryId)}&userId=${encodeURIComponent(userId)}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch comment votes');
+      return await response.json();
+    } catch (error) {
+      console.error('getGalleryCommentVotes error:', error);
+      return [];
+    }
+  },
+
+  async toggleGalleryCommentVote(commentId: string, userId: string, voteType: 'like' | 'dislike'): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-comment-votes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId, userId, voteType }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle comment vote');
+      return await response.json();
+    } catch (error) {
+      console.error('toggleGalleryCommentVote error:', error);
+      return { success: false };
+    }
+  },
+
+
+  // ═══════════════════════════════════════════
+  // User Subscriptions
+  // ═══════════════════════════════════════════
+  async getSubscriptions(subscriberId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?subscriberId=${encodeURIComponent(subscriberId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.subscribedIds || [];
+    } catch (error) {
+      console.error('getSubscriptions error:', error);
+      return [];
+    }
+  },
+
+  async getUserSubscribers(targetId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?targetId=${encodeURIComponent(targetId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.subscriberIds || [];
+    } catch (error) {
+      console.error('getUserSubscribers error:', error);
+      return [];
+    }
+  },
+
+  async checkSubscription(subscriberId: string, targetId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions?subscriberId=${encodeURIComponent(subscriberId)}&targetId=${encodeURIComponent(targetId)}`);
+      if (!response.ok) return false;
+      const data = await response.json();
+      return data.isSubscribed;
+    } catch (error) {
+      console.error('checkSubscription error:', error);
+      return false;
+    }
+  },
+
+  async toggleSubscription(subscriberId: string, targetId: string): Promise<{ success: boolean; isSubscribed: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/subscriptions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriberId, targetId }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle subscription');
+      return await response.json();
+    } catch (error) {
+      console.error('toggleSubscription error:', error);
+      return { success: false, isSubscribed: false };
+    }
+  },
+
+  // ═══════════════════════════════════════════
+  // User Follows (유저 간 팔로우)
+  // ═══════════════════════════════════════════
+  async getUserFollowing(followerId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows?followerId=${encodeURIComponent(followerId)}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.followingIds || [];
+    } catch (error) {
+      console.error('getUserFollowing error:', error);
+      return [];
+    }
+  },
+
+  async checkUserFollow(followerId: string, followingId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows?followerId=${encodeURIComponent(followerId)}&followingId=${encodeURIComponent(followingId)}`);
+      if (!response.ok) return false;
+      const data = await response.json();
+      return data.isFollowing;
+    } catch (error) {
+      console.error('checkUserFollow error:', error);
+      return false;
+    }
+  },
+
+  async toggleUserFollow(followerId: string, followingId: string): Promise<{ success: boolean; isFollowing: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followerId, followingId }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle user follow');
+      return await response.json();
+    } catch (error) {
+      console.error('toggleUserFollow error:', error);
+      return { success: false, isFollowing: false };
+    }
+  },
+
+  async getUserFollowers(followingId: string): Promise<{ followerIds: string[]; count: number }> {
+    try {
+      const response = await fetch(`${API_BASE}/user-follows?followingId=${encodeURIComponent(followingId)}&mode=followers`);
+      if (!response.ok) return { followerIds: [], count: 0 };
+      return await response.json();
+    } catch (error) {
+      console.error('getUserFollowers error:', error);
+      return { followerIds: [], count: 0 };
+    }
+  },
+
+  async checkCCAFollow(userId: string, ccaId: string): Promise<{ isFollowing: boolean; followedIds: string[] }> {
+    const followingIds = await this.getUserFollowing(userId);
+    return { 
+      isFollowing: ccaId ? followingIds.includes(ccaId) : false,
+      followedIds: followingIds
+    };
+  },
+
+  async toggleCCAFollow(userId: string, ccaId: string): Promise<{ success: boolean; isFollowing: boolean }> {
+    return this.toggleUserFollow(userId, ccaId);
+  },
+
+  // ═══════════════════════════════════════════
+  // User Notifications
+  // ═══════════════════════════════════════════
+  async getNotifications(userId: string, type?: string): Promise<any[]> {
+    try {
+      let url = `${API_BASE}/user-notifications?userId=${encodeURIComponent(userId)}`;
+      if (type) url += `&type=${encodeURIComponent(type)}`;
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('getNotifications error:', error);
+      return [];
+    }
+  },
+
+  async markNotificationRead(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, is_read: 1 }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markNotificationRead error:', error);
+      return false;
+    }
+  },
+
+  async markAllNotificationsRead(userId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/user-notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, all: true, is_read: 1 }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('markAllNotificationsRead error:', error);
+      return false;
+    }
+  },
+
+  async getRankings(limit: number = 5): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/ranking?limit=${limit}`);
+      console.log('Rankings API response status:', response.status);
+      console.log('Rankings API response ok:', response.ok);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Rankings API error response:', text);
+        throw new Error('Failed to fetch rankings');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getRankings error:', error);
+      return { success: false, rankings: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+
+  async getNewCCAs(limit: number = 10, days: number = 30): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/new-ccas?limit=${limit}&days=${days}`);
+      console.log('New CCAs API response status:', response.status);
+      console.log('New CCAs API response ok:', response.ok);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('New CCAs API error response:', text);
+        throw new Error('Failed to fetch new CCAs');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('getNewCCAs error:', error);
+      return { success: false, ccas: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
   }
 };
-
-
