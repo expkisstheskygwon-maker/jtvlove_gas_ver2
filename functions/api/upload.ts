@@ -48,17 +48,18 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
     }
 
-    // 파일 타입 검증
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
-    if (!allowedTypes.includes(file.type)) {
-      return new Response(JSON.stringify({ error: "File type not allowed" }), {
+    // 파일 타입 검증 (좀 더 유연하게 허용)
+    const fileType = file.type.toLowerCase();
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const isAllowed = fileType.startsWith('image/') || fileType.startsWith('video/') || fileType === 'application/octet-stream' || (fileType === '' && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4'].includes(ext));
+    if (!isAllowed) {
+      return new Response(JSON.stringify({ error: `File type not allowed: "${file.type}", ext: ${ext}` }), {
         status: 400,
         headers,
       });
     }
 
     // 파일명 생성: {type}/YYYY-MM-DD/{uuid}.{ext}
-    const ext = file.name.split('.').pop() || 'bin';
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const uuid = crypto.randomUUID();
