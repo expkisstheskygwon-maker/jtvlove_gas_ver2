@@ -25,7 +25,7 @@ const FeedMembership: React.FC = () => {
           <div style={{
             position: 'absolute', top: -50, right: -50,
             width: 200, height: 200, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)', blur: '40px'
+            background: 'rgba(255,255,255,0.1)', filter: 'blur(40px)'
           }} />
 
           <div style={{ position: 'relative', zIndex: 1 }}>

@@ -43,7 +43,7 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
       ]);
       setCounts({
         following: following.length,
-        followers: followers.count || followers.length,
+        followers: followers.count || 0,
         subscribed: subscribed.length,
         subscribers: subscribers.length
       });
@@ -190,7 +190,7 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
     if (activeModal === 'creator' && user) {
       apiService.getCCAs().then(ccas => {
         const myCCA = ccas.find((c: any) => c.nickname === user.nickname);
-        if (myCCA) setSubscriptionCost(myCCA.subscriptionCost || 0);
+        if (myCCA) setSubscriptionCost((myCCA as any).subscriptionCost || 0);
       });
     }
   }, [activeModal, user]);
@@ -235,7 +235,7 @@ const FeedSettings: React.FC<FeedSettingsProps> = ({ theme = 'dark', toggleTheme
                 </div>
               )}
             </div>
-            <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--ft-primary)', color: '#fff', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', border: '3px solid var(--ft-bg)', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--ft-primary)', color: '#fff', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--ft-bg)', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>photo_camera</span>
             </div>
           </div>

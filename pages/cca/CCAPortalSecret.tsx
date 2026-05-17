@@ -33,8 +33,8 @@ const CCAPortalSecret: React.FC = () => {
   const fetchConversations = async () => {
     setLoading(true);
     try {
-      const data = await apiService.getSecretConversations('cca', ccaId);
-      setConversations(data || []);
+      const data = await apiService.getSecretConversations(ccaId, 'cca');
+      setConversations(data?.conversations || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -53,7 +53,7 @@ const CCAPortalSecret: React.FC = () => {
     setChatLoading(true);
     try {
       const data = await apiService.getSecretMessages(conv.conversationId, 'cca', true);
-      setMessages(data || []);
+      setMessages(data?.messages || []);
       // Mark as read in local list
       setConversations(prev => prev.map(c => 
         c.conversationId === conv.conversationId ? { ...c, unreadCount: 0 } : c
@@ -113,7 +113,7 @@ const CCAPortalSecret: React.FC = () => {
     if (!confirm(`Are you sure you want to ${selected.isBlocked ? 'unblock' : 'block'} this fan?`)) return;
 
     try {
-      const res = await apiService.toggleSecretBlock(selected.ccaId, selected.fanId, newStatus);
+      const res = await apiService.blockSecretFan(selected.ccaId, selected.fanId, newStatus as 'block' | 'unblock');
       if (res.success) {
         setSelected({ ...selected, isBlocked: selected.isBlocked ? 0 : 1 });
         setConversations(prev => prev.map(c => 

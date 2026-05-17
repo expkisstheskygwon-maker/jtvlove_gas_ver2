@@ -37,7 +37,7 @@ const SuperLogin: React.FC = () => {
 
             if (result.success && result.user) {
                 const userObj = typeof result.user === 'string' ? JSON.parse(result.user) : result.user;
-                login({ ...userObj, venueId: result.venueId || null });
+                login({ ...userObj, venueId: userObj.venueId || null });
                 navigate('/super-admin');
             } else {
                 setError(result.error || 'Authentication failed.');

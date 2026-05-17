@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/apiService';
-import { UserNotification } from '../../types';
 
+// Use 'any' for notification items since the API may return snake_case fields
+// and types beyond what the strict UserNotification interface defines.
 const FeedNotifications: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,23 +29,24 @@ const FeedNotifications: React.FC = () => {
     }
   };
 
-  const handleNotifClick = async (notif: UserNotification) => {
-    if (!notif.is_read) {
+  const isUnread = (notif: any): boolean => {
+    return notif.is_read === 0 || notif.is_read === false || notif.isRead === false;
+  };
+
+  const handleNotifClick = async (notif: any) => {
+    if (isUnread(notif)) {
       await apiService.markNotificationRead(notif.id);
-      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: 1 } : n));
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: 1, isRead: true } : n));
     }
 
     // Logic for redirection based on type or content
     if (notif.type === 'private') {
       navigate('/secret');
     } else if (notif.type === 'follow') {
-      // Assuming follow notification might contain the follower's nickname or ID
-      // If we don't have it, we might just go to home or search
       navigate('/feed'); 
     } else if (notif.type === 'subscription') {
       navigate('/membership');
     } else {
-      // Default fallback
       navigate('/feed');
     }
   };
@@ -53,7 +55,7 @@ const FeedNotifications: React.FC = () => {
     if (!user) return;
     const success = await apiService.markAllNotificationsRead(user.id);
     if (success) {
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1, isRead: true })));
     }
   };
 
@@ -89,7 +91,7 @@ const FeedNotifications: React.FC = () => {
             {notifications.map(n => (
               <div 
                 key={n.id} 
-                className={`ft-notification-page-item ${!n.is_read ? 'unread' : ''}`}
+                className={`ft-notification-page-item ${isUnread(n) ? 'unread' : ''}`}
                 onClick={() => handleNotifClick(n)}
               >
                 <div className="ft-notif-page-icon">
@@ -100,9 +102,9 @@ const FeedNotifications: React.FC = () => {
                 <div className="ft-notif-page-info">
                   <div className="ft-notif-page-title">{n.title}</div>
                   <div className="ft-notif-page-content">{n.content}</div>
-                  <div className="ft-notif-page-time">{new Date(n.created_at).toLocaleString()}</div>
+                  <div className="ft-notif-page-time">{new Date(n.created_at || n.createdAt).toLocaleString()}</div>
                 </div>
-                {!n.is_read && <div className="ft-unread-dot" />}
+                {isUnread(n) && <div className="ft-unread-dot" />}
               </div>
             ))}
           </div>

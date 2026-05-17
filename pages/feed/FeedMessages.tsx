@@ -154,7 +154,7 @@ const FeedMessages: React.FC = () => {
       if (result.success) {
         // Add to local history immediately for responsiveness
         const tempMsg: Message = {
-          id: result.id,
+          id: result.id || crypto.randomUUID(),
           sender_id: user.id,
           sender_type: 'user',
           sender_name: user.nickname || user.realName || '',
