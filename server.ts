@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import multer from "multer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,6 +10,8 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  const upload = multer({ storage: multer.memoryStorage() });
 
   app.use(express.json({ limit: '5mb' }));
 
@@ -139,22 +142,20 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  app.post("/api/upload", async (req, res) => {
-    // Development environment: R2 unavailable, mock with Base64 or simulate R2 URL
+  app.post("/api/upload", upload.single('file'), (req, res) => {
     try {
-      let body = '';
-      req.setEncoding('utf-8');
-      
-      for await (const chunk of req) {
-        body += chunk;
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Parse multipart form-data manually or use the body
-      // For development, we'll simulate an R2 URL based on the file data
+      const mimeType = req.file.mimetype;
+      const base64 = req.file.buffer.toString('base64');
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+
       res.json({
         success: true,
-        url: `https://r2.jtvstar.com/mock/${Date.now()}.jpg`,
-        message: 'Development mock: file would be uploaded to R2 in production'
+        url: dataUrl,
+        message: 'Development mock: using Base64 data URL'
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
