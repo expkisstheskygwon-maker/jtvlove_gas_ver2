@@ -64,46 +64,51 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     const uuid = crypto.randomUUID();
     const key = `${type}/${dateStr}/${uuid}.${ext}`;
 
-    // R2가 연결되어 있는 경우 R2에 업로드 후 로컬 프록시 URL 반환
+    // R2가 연결되어 있는 경우 R2에 업로드 시도
     if (env.R2) {
-      const buffer = await file.arrayBuffer();
-      await env.R2.put(key, buffer, {
-        httpMetadata: {
-          contentType: file.type,
-          cacheControl: 'public, max-age=31536000', // 1년 캐시
-        },
-      });
+      try {
+        const buffer = await file.arrayBuffer();
+        await env.R2.put(key, buffer, {
+          httpMetadata: {
+            contentType: file.type,
+            cacheControl: 'public, max-age=31536000', // 1년 캐시
+          },
+        });
 
-      // R2 커스텀 도메인 대신 DNS 및 CORS 이슈가 없는 로컬 프록시 URL 사용
-      const publicUrl = `/api/r2?key=${encodeURIComponent(key)}`;
+        // R2 커스텀 도메인 대신 DNS 및 CORS 이슈가 없는 로컬 프록시 URL 사용
+        const publicUrl = `/api/r2?key=${encodeURIComponent(key)}`;
 
-      return new Response(JSON.stringify({ 
-        success: true,
-        url: publicUrl,
-        key: key
-      }), {
-        status: 200,
-        headers,
-      });
-    } else {
-      // R2가 바인딩되지 않은 경우 (로컬 개발 환경 또는 Pages 대시보드 미연결 시)
-      // ArrayBuffer를 읽어 Base64 데이터 URL로 저장하는 기존 방식으로 자동 대체
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer)
-          .reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-      
-      const dataUrl = `data:${file.type};base64,${base64}`;
-
-      return new Response(JSON.stringify({ 
-        success: true,
-        url: dataUrl
-      }), {
-        status: 200,
-        headers,
-      });
+        return new Response(JSON.stringify({ 
+          success: true,
+          url: publicUrl,
+          key: key
+        }), {
+          status: 200,
+          headers,
+        });
+      } catch (r2Error: any) {
+        console.error('R2 put failed, falling back to Base64:', r2Error);
+        // R2 업로드 중 예외 발생 시, 서비스가 중단되는 대신 Base64 데이터 URL로 자동 전환되어 업로드 성공을 보장합니다.
+      }
     }
+
+    // R2가 바인딩되지 않았거나 R2 업로드 도중 에러가 발생한 경우 (로컬 개발 환경 또는 Pages 대시보드 미연결/오류 시)
+    // ArrayBuffer를 읽어 Base64 데이터 URL로 저장하는 기존 방식으로 자동 대체
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer)
+        .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+    
+    const dataUrl = `data:${file.type};base64,${base64}`;
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      url: dataUrl
+    }), {
+      status: 200,
+      headers,
+    });
 
   } catch (error: any) {
     console.error('Upload error:', error);

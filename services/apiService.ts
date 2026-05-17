@@ -47,14 +47,18 @@ export const apiService = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Upload failed');
+        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
       }
 
       const data = await response.json();
-      return data.url || null;
-    } catch (error) {
+      if (!data.url) {
+        throw new Error('Upload succeeded but returned no URL');
+      }
+      return data.url;
+    } catch (error: any) {
       console.error('uploadImage error:', error);
-      return null;
+      alert(`[Upload Debug] ${error.message || error}`);
+      throw error;
     }
   },
 

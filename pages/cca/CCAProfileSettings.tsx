@@ -154,9 +154,13 @@ const CCAProfileSettings: React.FC = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = await apiService.uploadImage(file, 'profile');
-    if (url) {
-      handleInputChange('image', url);
+    try {
+      const url = await apiService.uploadImage(file, 'profile');
+      if (url) {
+        handleInputChange('image', url);
+      }
+    } catch (err) {
+      console.error("Profile image upload failed:", err);
     }
   };
 
