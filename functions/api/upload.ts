@@ -49,9 +49,19 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     }
 
     // 파일 타입 검증 (위험한 파일만 차단하고 모두 허용하여 클립보드 업로드 등 지원)
-    const fileType = (file.type || '').toLowerCase();
+    let fileType = (file.type || '').toLowerCase();
     const fileName = file.name || 'file';
     const ext = fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() || 'bin' : 'bin';
+    
+    // 브라우저가 MIME Type을 보내지 않았을 경우 확장자로 유추 (Base64/R2에서 이미지가 깨지는 현상 방지)
+    if (!fileType || fileType === 'application/octet-stream') {
+      const mimeMap: Record<string, string> = {
+        'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 
+        'gif': 'image/gif', 'webp': 'image/webp', 'mp4': 'video/mp4', 'webm': 'video/webm'
+      };
+      // 확장자 매핑이 안되면 이미지 기본값(image/jpeg)으로 설정하여 무조건 렌더링되게 함
+      fileType = mimeMap[ext] || 'image/jpeg';
+    }
     
     const dangerousExts = ['html', 'htm', 'exe', 'sh', 'bat', 'php', 'js'];
     if (dangerousExts.includes(ext)) {
