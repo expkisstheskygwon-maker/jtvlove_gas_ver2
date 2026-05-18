@@ -98,3 +98,50 @@ export const onRequestGet = async (context: { request: Request; env: Env }) => {
     });
   }
 };
+
+// HEAD 요청 처리: 바디 없이 동일 메타데이터 헤더만 반환하여 캐시/프록시가 올바르게 인식하도록 함
+export const onRequestHead = async (context: { request: Request; env: Env }) => {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const key = url.searchParams.get('key');
+
+  if (!key) {
+    return new Response(null, { status: 400, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  if (!env.R2) {
+    return new Response(null, { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  try {
+    const decodedKey = decodeURIComponent(key);
+    const obj: any = await env.R2.get(decodedKey);
+    if (!obj) {
+      return new Response(null, { status: 404 });
+    }
+
+    const contentType =
+      obj.httpMetadata?.contentType || obj.metadata?.contentType || guessContentType(decodedKey);
+
+    const cacheControl =
+      obj.httpMetadata?.cacheControl || obj.metadata?.cacheControl || 'public, max-age=31536000';
+
+    const contentLength = obj.size ? String(obj.size) : (obj.httpMetadata?.contentLength ? String(obj.httpMetadata.contentLength) : undefined);
+
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'Cache-Control': cacheControl,
+      'X-Served-By': 'r2-proxy',
+      'X-Content-Type-Options': 'nosniff'
+    };
+
+    if (contentLength) headers['Content-Length'] = contentLength;
+
+    console.log('R2 proxy HEAD', { key: decodedKey, contentType, contentLength });
+
+    return new Response(null, { status: 200, headers });
+  } catch (err: any) {
+    console.error('R2 HEAD error', err);
+    return new Response(null, { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+};
