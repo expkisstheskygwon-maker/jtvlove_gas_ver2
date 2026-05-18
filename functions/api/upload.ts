@@ -37,6 +37,89 @@ function inferMimeType(fileName: string, rawType: string): string {
   return 'image/jpeg';
 }
 
+interface MultipartFile {
+  name: string;
+  filename: string;
+  type: string;
+  data: ArrayBuffer;
+}
+
+// 100% 무손실 바이너리 멀티파트 파서 (Cloudflare request.formData()의 UTF-8 문자 인코딩 파손 우회)
+function parseMultipart(body: ArrayBuffer, contentType: string): { file: MultipartFile | null, type: string } {
+  const boundaryMatch = contentType.match(/boundary=(.+)/);
+  if (!boundaryMatch) return { file: null, type: 'misc' };
+  
+  const boundaryStr = '--' + boundaryMatch[1];
+  const boundaryBytes = new TextEncoder().encode(boundaryStr);
+  const bodyBytes = new Uint8Array(body);
+  
+  function findPattern(data: Uint8Array, pattern: Uint8Array, start = 0): number {
+    if (pattern.length === 0) return -1;
+    for (let i = start; i <= data.length - pattern.length; i++) {
+      let found = true;
+      for (let j = 0; j < pattern.length; j++) {
+        if (data[i + j] !== pattern[j]) {
+          found = false;
+          break;
+        }
+      }
+      if (found) return i;
+    }
+    return -1;
+  }
+  
+  const separatorBytes = new Uint8Array([0x0D, 0x0A, 0x0D, 0x0A]); // \r\n\r\n
+  let file: MultipartFile | null = null;
+  let type = 'misc';
+  
+  let currentPos = 0;
+  while (true) {
+    const boundaryIdx = findPattern(bodyBytes, boundaryBytes, currentPos);
+    if (boundaryIdx === -1) break;
+    
+    const nextBoundaryIdx = findPattern(bodyBytes, boundaryBytes, boundaryIdx + boundaryBytes.length);
+    if (nextBoundaryIdx === -1) break;
+    
+    const partStart = boundaryIdx + boundaryBytes.length + 2; // skip boundary and \r\n
+    const partEnd = nextBoundaryIdx - 2; // exclude trailing \r\n
+    if (partEnd <= partStart) {
+      currentPos = nextBoundaryIdx;
+      continue;
+    }
+    
+    const partBytes = bodyBytes.subarray(partStart, partEnd);
+    const headerEndIdx = findPattern(partBytes, separatorBytes);
+    if (headerEndIdx === -1) {
+      currentPos = nextBoundaryIdx;
+      continue;
+    }
+    
+    const headerText = new TextDecoder('utf-8').decode(partBytes.subarray(0, headerEndIdx));
+    const partBody = partBytes.subarray(headerEndIdx + separatorBytes.length);
+    
+    const nameMatch = headerText.match(/name="([^"]+)"/);
+    const filenameMatch = headerText.match(/filename="([^"]+)"/);
+    const contentTypeMatch = headerText.match(/Content-Type:\s*([^\r\n]+)/i);
+    
+    const name = nameMatch ? nameMatch[1] : '';
+    
+    if (name === 'file' && filenameMatch) {
+      file = {
+        name,
+        filename: filenameMatch[1],
+        type: contentTypeMatch ? contentTypeMatch[1].trim() : 'application/octet-stream',
+        data: partBody.slice().buffer
+      };
+    } else if (name === 'type') {
+      type = new TextDecoder('utf-8').decode(partBody).trim();
+    }
+    
+    currentPos = nextBoundaryIdx;
+  }
+  
+  return { file, type };
+}
+
 // POST: 이미지 업로드 → R2 처리
 export const onRequestPost = async (context: { request: Request; env: Env }) => {
   const { request, env } = context;
@@ -52,47 +135,22 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file');
-    const type = (formData.get('type') as string) || 'misc';
+    // 100% 무손실 바이너리 데이터 직접 수신 (request.formData()를 생략하여 UTF-8 오염을 완벽 차단)
+    const bodyBuffer = await request.arrayBuffer();
+    const { file, type } = parseMultipart(bodyBuffer, contentType);
 
     if (!file) {
-      return new Response(JSON.stringify({ error: "No file uploaded" }), {
+      return new Response(JSON.stringify({ error: "No file uploaded or parsing failed" }), {
         status: 400,
         headers,
       });
     }
 
-    // 파일 바이너리 데이터를 안전하게 읽기 (문자열 타입인 경우 UTF-8 바이트 오염을 방지하기 위해 바이트 단위 디코딩 수행)
-    let fileBytes: ArrayBuffer;
-    if (typeof file === 'string') {
-      console.log('Received file as binary string, converting safely to ArrayBuffer to avoid UTF-8 corruption');
-      const len = file.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = file.charCodeAt(i) & 0xff;
-      }
-      fileBytes = bytes.buffer;
-    } else if (file && typeof (file as any).stream === 'function') {
-      // 1순위: ReadableStream을 통한 안전한 바이너리 스트림 추출 (UTF-8 문자 오염 원천 차단)
-      console.log('Using robust stream-based binary extraction');
-      const stream = (file as any).stream();
-      fileBytes = await new Response(stream).arrayBuffer();
-    } else if (file && typeof (file as any).arrayBuffer === 'function') {
-      // 2순위: 네이티브 arrayBuffer 호출
-      console.log('Using native arrayBuffer method');
-      fileBytes = await (file as any).arrayBuffer();
-    } else if (file) {
-      // 3순위: Response 폴백
-      console.log('Using Response fallback');
-      fileBytes = await new Response(file as any).arrayBuffer();
-    } else {
-      fileBytes = new ArrayBuffer(0);
-    }
+    const fileBytes = file.data;
 
     const fileSize = fileBytes.byteLength;
-    const fileName = typeof (file as any).name === 'string' ? (file as any).name : 'upload';
-    const rawType = typeof (file as any).type === 'string' ? (file as any).type : '';
+    const fileName = file.filename || 'upload';
+    const rawType = file.type || '';
 
     // 파일 크기 제한 (10MB)
     const MAX_SIZE = 10 * 1024 * 1024;
