@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/apiService';
@@ -13,10 +13,10 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
   const [username, setUsername] = useState('');
   const [cca, setCca] = useState<any>(null);
   const [gallery, setGallery] = useState<any[]>([]);
+  const [bookmarks, setBookmarks] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'posts' | 'bookmarks'>('posts');
   const [loading, setLoading] = useState(true);
   const [heartCount, setHeartCount] = useState(0);
-  const [isHearted, setIsHearted] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [todayViews, setTodayViews] = useState(0);
   const [isWorking, setIsWorking] = useState(false);
@@ -32,17 +32,39 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
       if (!username) return;
       setLoading(true);
       try {
-        const [ccaData, galleryData] = await Promise.all([
-          apiService.getCCAByNickname(username),
-          apiService.getGallery(username)
-        ]);
+        let ccaData = await apiService.getCCAByNickname(username) as any;
+        let galleryData: any[] = [];
+
+        if (ccaData) {
+          galleryData = await apiService.getGallery(username);
+        } else if (user && user.nickname === username) {
+          // Mock profile object for general user viewing their own profile
+          ccaData = {
+            id: user.id,
+            nickname: user.nickname,
+            name: user.realName || '일반 회원',
+            image: user.profileImage || `https://ui-avatars.com/api/?name=${user.nickname || 'U'}`,
+            likesCount: 0,
+            viewsCount: 0,
+            isWorking: false,
+            isGeneralUser: true
+          };
+        }
+
         setCca(ccaData);
         setGallery(Array.isArray(galleryData) ? galleryData : []);
+
         if (ccaData) {
           setHeartCount(ccaData.likesCount || 0);
           setTodayViews(ccaData.viewsCount || 0);
           setIsWorking(ccaData.isWorking || false);
-          setFollowersCount((ccaData as any).followersCount || 0);
+          setFollowersCount(ccaData.followersCount || 0);
+
+          if (ccaData.isGeneralUser) {
+            setActiveTab('bookmarks');
+          } else {
+            setActiveTab('posts');
+          }
         }
       } catch (err) {
         console.error("Fetch data error:", err);
@@ -51,7 +73,21 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
       }
     };
     fetchData();
-  }, [username]);
+  }, [username, user]);
+
+  // Load Bookmarks on Mount/User change
+  useEffect(() => {
+    if (user?.id) {
+      try {
+        const saved = localStorage.getItem(`ft_bookmarks_${user.id}`);
+        if (saved) {
+          setBookmarks(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error('Load bookmarks error:', e);
+      }
+    }
+  }, [user?.id, username]);
 
   const handleAttendanceToggle = async () => {
     if (!cca?.id || !user?.ccaId) return;
@@ -84,7 +120,7 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
     }
   };
 
-  const isOwner = user?.ccaId === cca?.id;
+  const isOwner = user && (user.ccaId === cca?.id || user.nickname === username);
 
   if (loading) {
     return (
@@ -117,22 +153,31 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
           </div>
 
           <div className="ft-profile-stats-bar">
-            <div className="ft-profile-stat">
-              <div className="ft-profile-stat-val">{gallery.length}</div>
-              <div className="ft-profile-stat-lab">Posts</div>
-            </div>
-            <div className="ft-profile-stat">
-              <div className="ft-profile-stat-val">{followersCount.toLocaleString()}</div>
-              <div className="ft-profile-stat-lab">Followers</div>
-            </div>
-            <div className="ft-profile-stat">
-              <div className="ft-profile-stat-val">{todayViews.toLocaleString()}</div>
-              <div className="ft-profile-stat-lab">Views</div>
-            </div>
+            {!cca.isGeneralUser ? (
+              <>
+                <div className="ft-profile-stat">
+                  <div className="ft-profile-stat-val">{gallery.length}</div>
+                  <div className="ft-profile-stat-lab">Posts</div>
+                </div>
+                <div className="ft-profile-stat">
+                  <div className="ft-profile-stat-val">{followersCount.toLocaleString()}</div>
+                  <div className="ft-profile-stat-lab">Followers</div>
+                </div>
+                <div className="ft-profile-stat">
+                  <div className="ft-profile-stat-val">{todayViews.toLocaleString()}</div>
+                  <div className="ft-profile-stat-lab">Views</div>
+                </div>
+              </>
+            ) : (
+              <div className="ft-profile-stat" style={{ width: '100%' }}>
+                <div className="ft-profile-stat-val">{bookmarks.length}</div>
+                <div className="ft-profile-stat-lab">즐겨찾기한 콘텐츠</div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
-            {!isOwner && (
+            {!isOwner && !cca.isGeneralUser && (
               <button
                 onClick={() => navigate(`/secret?ccaId=${cca.id}`)}
                 style={{
@@ -155,7 +200,7 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
               </button>
             )}
 
-            {isOwner && (
+            {isOwner && !cca.isGeneralUser && (
               <button
                 onClick={handleAttendanceToggle}
                 disabled={attendanceLoading}
@@ -177,26 +222,116 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
         </div>
       </div>
 
-      <div style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 16 }}>갤러리</h3>
-        {gallery.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>
-            게시물이 없습니다.
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {gallery.map((item) => (
-              <div key={item.id} style={{ aspectRatio: '1/1', background: '#f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
-                {item.type === 'video' ? (
-                  <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                )}
-              </div>
-            ))}
-          </div>
+      {/* Tabs Header */}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--ft-border)', marginTop: 24, marginBottom: 16 }}>
+        {!cca.isGeneralUser && (
+          <button 
+            onClick={() => setActiveTab('posts')}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'posts' ? 'var(--ft-primary)' : 'var(--ft-text-secondary)',
+              borderBottom: activeTab === 'posts' ? '2px solid var(--ft-primary)' : '2px solid transparent',
+              fontWeight: 800,
+              fontSize: 15,
+              cursor: 'pointer'
+            }}
+          >
+            갤러리
+          </button>
+        )}
+        {isOwner && (
+          <button 
+            onClick={() => setActiveTab('bookmarks')}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'bookmarks' ? 'var(--ft-primary)' : 'var(--ft-text-secondary)',
+              borderBottom: activeTab === 'bookmarks' ? '2px solid var(--ft-primary)' : '2px solid transparent',
+              fontWeight: 800,
+              fontSize: 15,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>bookmark</span>
+            즐겨찾기 보관함
+          </button>
         )}
       </div>
+
+      {/* Gallery Posts Tab */}
+      {activeTab === 'posts' && !cca.isGeneralUser && (
+        <div style={{ marginTop: 12 }}>
+          {gallery.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--ft-text-tertiary)' }}>
+              게시물이 없습니다.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {gallery.map((item) => (
+                <div key={item.id} style={{ aspectRatio: '1/1', background: '#f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
+                  {item.type === 'video' ? (
+                    <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bookmarks Tab */}
+      {activeTab === 'bookmarks' && isOwner && (
+        <div style={{ marginTop: 12 }}>
+          {bookmarks.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ft-text-tertiary)' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 48, opacity: 0.2, marginBottom: 16 }}>bookmark</span>
+              <p style={{ margin: 0, fontSize: 14 }}>즐겨찾기한 포스트가 없습니다.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {bookmarks.map((item) => (
+                <div 
+                  key={item.id} 
+                  onClick={() => navigate(`/@${item.ccaNickname}`)}
+                  style={{ aspectRatio: '1/1', background: 'var(--ft-bg-tertiary)', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+                >
+                  {item.type === 'video' ? (
+                    <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+                  {/* Creator name overlay on hover */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                    padding: '8px',
+                    color: '#fff',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textAlign: 'center'
+                  }}>
+                    @{item.ccaNickname}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

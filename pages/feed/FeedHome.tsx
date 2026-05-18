@@ -66,13 +66,30 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     post: any | null;
   }>({ isOpen: false, post: null });
 
+  // Report Modal State
+  const [reportModal, setReportModal] = useState<{
+    isOpen: boolean;
+    post: any | null;
+    reason: string;
+    submitting: boolean;
+  }>({ isOpen: false, post: null, reason: '', submitting: false });
+
+  // Bookmarked Post IDs State
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
+
   const loadFeed = useCallback(async (pageNum = 1, isAppend = false) => {
     if (pageNum === 1) setLoading(true);
     else setLoadingMore(true);
 
     try {
       const data = await apiService.getFeed(pageNum, 10, user?.id);
-      const newItems = data.items || [];
+      let hiddenIds: string[] = [];
+      try {
+        const storedHidden = localStorage.getItem('ft_hidden_post_ids');
+        if (storedHidden) hiddenIds = JSON.parse(storedHidden);
+      } catch (e) {}
+
+      const newItems = (data.items || []).filter((item: any) => !hiddenIds.includes(item.id));
       
       if (isAppend) {
         setAllFeedItems(prev => [...prev, ...newItems]);
@@ -139,7 +156,18 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
 
   useEffect(() => { 
     loadFeed(1, false); 
-  }, [user?.id]); // 탭 변경 시에는 로컬 필터링만 수행하거나 필요시 다시 로드
+    if (user?.id) {
+      try {
+        const saved = localStorage.getItem(`ft_bookmarks_${user.id}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setBookmarkedIds(parsed.map((p: any) => p.id));
+        }
+      } catch (e) {
+        console.error('Load bookmarks error:', e);
+      }
+    }
+  }, [user?.id]);
 
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
@@ -351,6 +379,93 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     } catch (err) {
       console.error('Delete post error:', err);
       alert('오류가 발생했습니다.');
+    }
+  };
+
+  const handleToggleBookmark = (item: any) => {
+    if (!user) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
+    try {
+      const key = `ft_bookmarks_${user.id}`;
+      const saved = localStorage.getItem(key);
+      let list: any[] = saved ? JSON.parse(saved) : [];
+      const isExist = list.some((p: any) => p.id === item.id);
+      
+      if (isExist) {
+        list = list.filter((p: any) => p.id !== item.id);
+        alert('즐겨찾기에서 해제되었습니다.');
+      } else {
+        list.push({
+          id: item.id,
+          url: item.url,
+          type: item.type,
+          caption: item.caption,
+          ccaNickname: item.ccaNickname || item.ccaName,
+          ccaImage: item.ccaImage,
+          date: item.date,
+          ccaId: item.ccaId
+        });
+        alert('즐겨찾기에 추가되었습니다.');
+      }
+      
+      localStorage.setItem(key, JSON.stringify(list));
+      setBookmarkedIds(list.map((p: any) => p.id));
+      setPostMenuModal({ isOpen: false, post: null });
+    } catch (e) {
+      console.error('Toggle bookmark error:', e);
+    }
+  };
+
+  const handleHidePost = (postId: string) => {
+    try {
+      const stored = localStorage.getItem('ft_hidden_post_ids');
+      let hiddenIds: string[] = stored ? JSON.parse(stored) : [];
+      if (!hiddenIds.includes(postId)) {
+        hiddenIds.push(postId);
+        localStorage.setItem('ft_hidden_post_ids', JSON.stringify(hiddenIds));
+      }
+      
+      // Filter out immediately from active states
+      setFeedItems(prev => prev.filter(item => item.id !== postId));
+      setAllFeedItems(prev => prev.filter(item => item.id !== postId));
+      
+      alert('포스트가 숨김 처리되었습니다.');
+      setPostMenuModal({ isOpen: false, post: null });
+    } catch (e) {
+      console.error('Hide post error:', e);
+    }
+  };
+
+  const handleReportSubmit = async () => {
+    if (!user) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
+    if (!reportModal.post || !reportModal.reason) {
+      alert('신고 사유를 선택해주세요.');
+      return;
+    }
+    
+    setReportModal(prev => ({ ...prev, submitting: true }));
+    try {
+      const result = await apiService.reportGalleryPost(
+        reportModal.post.id,
+        user.id,
+        reportModal.reason
+      );
+      if (result && result.success) {
+        alert('신고가 정상 접수되었습니다. 관리자 검토 후 신속히 조치하겠습니다.');
+        setReportModal({ isOpen: false, post: null, reason: '', submitting: false });
+      } else {
+        alert('신고 접수에 실패했습니다.');
+      }
+    } catch (e) {
+      console.error('Report post error:', e);
+      alert('오류가 발생했습니다.');
+    } finally {
+      setReportModal(prev => ({ ...prev, submitting: false }));
     }
   };
 
@@ -833,7 +948,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   <>
                     {/* Others actions */}
                     <button 
-                      onClick={() => { alert('신고되었습니다.'); setPostMenuModal({ isOpen: false, post: null }); }}
+                      onClick={() => { setReportModal({ isOpen: true, post: postMenuModal.post, reason: '', submitting: false }); setPostMenuModal({ isOpen: false, post: null }); }}
                       style={{
                         width: '100%',
                         padding: '16px',
@@ -858,7 +973,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                     </button>
 
                     <button 
-                      onClick={() => { alert('안보이기 처리되었습니다.'); setPostMenuModal({ isOpen: false, post: null }); }}
+                      onClick={() => handleHidePost(postMenuModal.post.id)}
                       style={{
                         width: '100%',
                         padding: '16px',
@@ -883,7 +998,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                     </button>
 
                     <button 
-                      onClick={() => { alert('즐겨찾기에 추가되었습니다.'); setPostMenuModal({ isOpen: false, post: null }); }}
+                      onClick={() => handleToggleBookmark(postMenuModal.post)}
                       style={{
                         width: '100%',
                         padding: '16px',
@@ -903,8 +1018,10 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                       onMouseEnter={(e) => e.currentTarget.style.background = 'var(--ft-bg-tertiary)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--ft-primary)' }}>star</span>
-                      즐겨찾기 추가
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px', color: bookmarkedIds.includes(postMenuModal.post.id) ? '#daa520' : 'var(--ft-text)' }}>
+                        {bookmarkedIds.includes(postMenuModal.post.id) ? 'bookmark_added' : 'bookmark'}
+                      </span>
+                      {bookmarkedIds.includes(postMenuModal.post.id) ? '즐겨찾기 해제' : '즐겨찾기 추가'}
                     </button>
 
                     <button 
@@ -955,6 +1072,112 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                 >
                   취소
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Post Bottom Sheet Modal */}
+      {reportModal.isOpen && reportModal.post && (
+        <div className="ft-login-overlay" onClick={() => setReportModal({ isOpen: false, post: null, reason: '', submitting: false })}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ 
+            padding: 0, 
+            width: '100%', 
+            maxWidth: '450px', 
+            borderRadius: '24px 24px 0 0',
+            position: 'absolute',
+            bottom: 0,
+            animation: 'slide-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+          }}>
+            {/* Header/Grabber */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+              <div style={{ width: '40px', height: '4px', background: 'var(--ft-border-light)', borderRadius: '2px' }} />
+            </div>
+
+            <div style={{ padding: '12px 20px 24px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '900', marginBottom: '16px', textAlign: 'center' }}>신고 사유 선택</h3>
+              <p style={{ fontSize: '13px', color: 'var(--ft-text-secondary)', marginBottom: '20px', textAlign: 'center' }}>
+                이 포스트를 신고하는 구체적인 이유를 선택해 주세요.
+              </p>
+
+              {/* Reason choices */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '20px' }}>
+                {[
+                  '부적절한 이미지 또는 동영상',
+                  '스팸, 홍보 또는 광고',
+                  '권리 침해 (저작권/초상권)',
+                  '괴롭힘, 명예훼손 또는 혐오 발언',
+                  '기타 사유'
+                ].map((r) => (
+                  <button 
+                    key={r}
+                    onClick={() => setReportModal(prev => ({ ...prev, reason: r }))}
+                    style={{
+                      width: '100%',
+                      padding: '14px 18px',
+                      background: reportModal.reason === r ? 'rgba(238, 189, 43, 0.1)' : 'var(--ft-bg-tertiary)',
+                      border: reportModal.reason === r ? '1px solid var(--ft-primary)' : '1px solid transparent',
+                      color: reportModal.reason === r ? 'var(--ft-primary)' : 'var(--ft-text)',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: '12px',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <span>{r}</span>
+                    {reportModal.reason === r && (
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => setReportModal({ isOpen: false, post: null, reason: '', submitting: false })}
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    background: 'var(--ft-bg-tertiary)',
+                    border: 'none',
+                    color: 'var(--ft-text-secondary)',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={handleReportSubmit}
+                  disabled={reportModal.submitting || !reportModal.reason}
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    background: 'var(--ft-gradient)',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    transition: 'opacity 0.2s',
+                    opacity: (!reportModal.reason || reportModal.submitting) ? 0.5 : 1
+                  }}
+                >
+                  {reportModal.submitting ? '제출 중...' : '신고 완료'}
                 </button>
               </div>
             </div>

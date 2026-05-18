@@ -327,9 +327,9 @@ const FeedLayout: React.FC = () => {
                 </div>
               )}
             </div>
-            {user?.ccaId && (
+            {user && (
               <button
-                className="ft-side-item"
+                className={`ft-side-item ${location.pathname === `/@${user.nickname}` ? 'active' : ''}`}
                 onClick={() => handleNavigate(`/@${user.nickname}`)}
               >
                 <span className="material-symbols-outlined">account_circle</span>

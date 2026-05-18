@@ -1703,6 +1703,45 @@ export const apiService = {
     }
   },
 
+  async reportGalleryPost(galleryId: string, reporterId: string, reason: string): Promise<{ success: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ galleryId, reporterId, reason }),
+      });
+      if (!response.ok) throw new Error('Failed to submit gallery report');
+      return await response.json();
+    } catch (error) {
+      console.error('reportGalleryPost error:', error);
+      return { success: false };
+    }
+  },
+
+  async getGalleryReports(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-reports`);
+      if (!response.ok) throw new Error('Failed to fetch gallery reports');
+      return await response.json();
+    } catch (error) {
+      console.error('getGalleryReports error:', error);
+      return [];
+    }
+  },
+
+  async dismissGalleryReport(id: string): Promise<{ success: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-reports?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to dismiss gallery report');
+      return await response.json();
+    } catch (error) {
+      console.error('dismissGalleryReport error:', error);
+      return { success: false };
+    }
+  },
+
   // Gallery Item Likes
   async getGalleryLikes(galleryId: string, visitorId?: string): Promise<{ count: number; liked: boolean }> {
     try {
