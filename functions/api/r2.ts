@@ -56,13 +56,25 @@ export const onRequestGet = async (context: { request: Request; env: Env }) => {
 
     // 바디를 완전히 버퍼화해서 반환하도록 변경 (에지 스트리밍 전달 실패 방지)
     try {
-      const bodyBuffer = await new Response(obj.body).arrayBuffer();
+      // 가능한 경우 R2 객체의 arrayBuffer()를 직접 사용하여 바이너리를 안전하게 읽음
+      let bodyBuffer: ArrayBuffer;
+      if (typeof obj.arrayBuffer === 'function') {
+        bodyBuffer = await obj.arrayBuffer();
+      } else if (obj && obj.body) {
+        // ReadableStream 또는 기타 바디 타입이 올 수 있으므로 안전하게 버퍼화
+        bodyBuffer = await new Response(obj.body).arrayBuffer();
+      } else {
+        // 최후의 수단: 빈 버퍼
+        bodyBuffer = new ArrayBuffer(0);
+      }
 
       const responseHeaders: Record<string, string> = {
         'Content-Type': contentType,
         'Cache-Control': cacheControl,
         'Content-Length': String(bodyBuffer.byteLength),
-        'X-Served-By': 'r2-proxy'
+        'X-Served-By': 'r2-proxy',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Encoding': 'identity'
       };
 
       console.log('R2 proxy success', { key: decodedKey, size: bodyBuffer.byteLength, contentType });
