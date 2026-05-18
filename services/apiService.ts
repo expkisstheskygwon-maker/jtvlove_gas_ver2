@@ -1690,6 +1690,19 @@ export const apiService = {
     }
   },
 
+  async deleteGalleryPost(id: string): Promise<{ success: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete gallery post');
+      return await response.json();
+    } catch (error) {
+      console.error('deleteGalleryPost error:', error);
+      return { success: false };
+    }
+  },
+
   // Gallery Item Likes
   async getGalleryLikes(galleryId: string, visitorId?: string): Promise<{ count: number; liked: boolean }> {
     try {

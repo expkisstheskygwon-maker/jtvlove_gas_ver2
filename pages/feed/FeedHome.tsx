@@ -60,6 +60,12 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     ccaName: string;
   }>({ isOpen: false, ccaId: '', ccaName: '' });
 
+  // Post Option Menu Modal State
+  const [postMenuModal, setPostMenuModal] = useState<{
+    isOpen: boolean;
+    post: any | null;
+  }>({ isOpen: false, post: null });
+
   const loadFeed = useCallback(async (pageNum = 1, isAppend = false) => {
     if (pageNum === 1) setLoading(true);
     else setLoadingMore(true);
@@ -330,6 +336,24 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('정말 이 포스트를 삭제하시겠습니까?')) return;
+    try {
+      const result = await apiService.deleteGalleryPost(postId);
+      if (result && result.success) {
+        alert('포스트가 삭제되었습니다.');
+        setFeedItems(prev => prev.filter(item => item.id !== postId));
+        setAllFeedItems(prev => prev.filter(item => item.id !== postId));
+        setPostMenuModal({ isOpen: false, post: null });
+      } else {
+        alert('포스트 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Delete post error:', err);
+      alert('오류가 발생했습니다.');
+    }
+  };
+
   return (
     <>
       {/* ═══ On-Duty Stories ═══ */}
@@ -437,7 +461,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   </div>
                   <div className="ft-post-time">{timeAgo(item.date)}</div>
                 </div>
-                <button className="ft-post-more">
+                <button className="ft-post-more" onClick={() => setPostMenuModal({ isOpen: true, post: item })}>
                   <span className="material-symbols-outlined">more_horiz</span>
                 </button>
               </div>
@@ -750,6 +774,187 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   }}
                 >
                   게시
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Post Option Menu Bottom Sheet Modal */}
+      {postMenuModal.isOpen && postMenuModal.post && (
+        <div className="ft-login-overlay" onClick={() => setPostMenuModal({ isOpen: false, post: null })}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ 
+            padding: 0, 
+            width: '100%', 
+            maxWidth: '450px', 
+            borderRadius: '24px 24px 0 0',
+            position: 'absolute',
+            bottom: 0,
+            animation: 'slide-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+          }}>
+            {/* Header/Grabber */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+              <div style={{ width: '40px', height: '4px', background: 'var(--ft-border-light)', borderRadius: '2px' }} />
+            </div>
+
+            <div style={{ padding: '12px 20px 24px' }}>
+              {/* Menu items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {user && (user.id === postMenuModal.post.ccaId || user.role === 'super_admin') ? (
+                  <>
+                    {/* Delete action */}
+                    <button 
+                      onClick={() => handleDeletePost(postMenuModal.post.id)}
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        color: '#ff6b6b',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderRadius: '12px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,107,107,0.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
+                      포스트 삭제하기
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Others actions */}
+                    <button 
+                      onClick={() => { alert('신고되었습니다.'); setPostMenuModal({ isOpen: false, post: null }); }}
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--ft-text)',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderRadius: '12px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--ft-bg-tertiary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#ff6b6b' }}>report</span>
+                      신고하기
+                    </button>
+
+                    <button 
+                      onClick={() => { alert('안보이기 처리되었습니다.'); setPostMenuModal({ isOpen: false, post: null }); }}
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--ft-text)',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderRadius: '12px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--ft-bg-tertiary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>visibility_off</span>
+                      안보이기
+                    </button>
+
+                    <button 
+                      onClick={() => { alert('즐겨찾기에 추가되었습니다.'); setPostMenuModal({ isOpen: false, post: null }); }}
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--ft-text)',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderRadius: '12px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--ft-bg-tertiary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--ft-primary)' }}>star</span>
+                      즐겨찾기 추가
+                    </button>
+
+                    <button 
+                      onClick={() => { setPostMenuModal({ isOpen: false, post: null }); goToProfile(postMenuModal.post.ccaNickname || postMenuModal.post.ccaName); }}
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--ft-text)',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderRadius: '12px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--ft-bg-tertiary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>account_circle</span>
+                      프로필 보기
+                    </button>
+                  </>
+                )}
+
+                {/* Cancel button */}
+                <button 
+                  onClick={() => setPostMenuModal({ isOpen: false, post: null })}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    background: 'var(--ft-bg-tertiary)',
+                    border: 'none',
+                    color: 'var(--ft-text-secondary)',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    marginTop: '12px',
+                    transition: 'opacity 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  취소
                 </button>
               </div>
             </div>
