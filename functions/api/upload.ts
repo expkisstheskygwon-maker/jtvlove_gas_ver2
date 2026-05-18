@@ -73,9 +73,18 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
         bytes[i] = file.charCodeAt(i) & 0xff;
       }
       fileBytes = bytes.buffer;
+    } else if (file && typeof (file as any).stream === 'function') {
+      // 1순위: ReadableStream을 통한 안전한 바이너리 스트림 추출 (UTF-8 문자 오염 원천 차단)
+      console.log('Using robust stream-based binary extraction');
+      const stream = (file as any).stream();
+      fileBytes = await new Response(stream).arrayBuffer();
     } else if (file && typeof (file as any).arrayBuffer === 'function') {
+      // 2순위: 네이티브 arrayBuffer 호출
+      console.log('Using native arrayBuffer method');
       fileBytes = await (file as any).arrayBuffer();
     } else if (file) {
+      // 3순위: Response 폴백
+      console.log('Using Response fallback');
       fileBytes = await new Response(file as any).arrayBuffer();
     } else {
       fileBytes = new ArrayBuffer(0);
