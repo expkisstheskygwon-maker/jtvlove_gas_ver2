@@ -1564,3 +1564,98 @@
 @keyframes ft-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ═══ Modern Chat Room Inputs ═══ */
+.ft-chat-footer-modern {
+  padding: 16px 20px 32px;
+  background: var(--ft-bg);
+  border-top: 1px solid var(--ft-border-light);
+  flex-shrink: 0;
+}
+
+.ft-chat-input-wrapper-modern {
+  display: flex;
+  align-items: center;
+  background: var(--ft-bg-tertiary);
+  padding: 8px 8px 8px 20px;
+  border-radius: 28px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.ft-chat-input-wrapper-modern:focus-within {
+  background: var(--ft-bg);
+  border-color: var(--ft-primary);
+  box-shadow: 0 0 0 4px var(--ft-primary-light);
+}
+
+.ft-dark .ft-chat-input-wrapper-modern:focus-within {
+  box-shadow: 0 0 0 4px rgba(232, 82, 122, 0.15);
+}
+
+.ft-chat-form-modern {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ft-chat-input-modern {
+  flex: 1 !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--ft-text) !important;
+  height: 40px !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.ft-chat-input-modern::placeholder {
+  color: var(--ft-text-tertiary);
+  opacity: 0.8;
+}
+
+.ft-chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ft-border-light);
+  color: var(--ft-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ft-chat-send-btn.active {
+  background: var(--ft-primary);
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(232, 82, 122, 0.3);
+}
+
+.ft-chat-send-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ft-chat-util-btn {
+  background: none;
+  border: none;
+  color: var(--ft-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.ft-chat-util-btn:hover {
+  color: var(--ft-primary);
+}
