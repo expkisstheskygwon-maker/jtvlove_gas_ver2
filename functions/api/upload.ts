@@ -63,12 +63,22 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
     }
 
-    // 파일 바이너리 데이터를 먼저 한 번만 읽어두기 (stream 이중 소비 방지)
+    // 파일 바이너리 데이터를 안전하게 읽기 (문자열 타입인 경우 UTF-8 바이트 오염을 방지하기 위해 바이트 단위 디코딩 수행)
     let fileBytes: ArrayBuffer;
-    if (typeof (file as any).arrayBuffer === 'function') {
+    if (typeof file === 'string') {
+      console.log('Received file as binary string, converting safely to ArrayBuffer to avoid UTF-8 corruption');
+      const len = file.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = file.charCodeAt(i) & 0xff;
+      }
+      fileBytes = bytes.buffer;
+    } else if (file && typeof (file as any).arrayBuffer === 'function') {
       fileBytes = await (file as any).arrayBuffer();
-    } else {
+    } else if (file) {
       fileBytes = await new Response(file as any).arrayBuffer();
+    } else {
+      fileBytes = new ArrayBuffer(0);
     }
 
     const fileSize = fileBytes.byteLength;
