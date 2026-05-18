@@ -18,6 +18,7 @@ interface Message {
 interface Conversation {
   participantId: string;
   participantName: string;
+  participantType: string;
   lastMessage: Message;
   unreadCount: number;
 }
@@ -26,7 +27,7 @@ const FeedMessages: React.FC = () => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
-  const [selectedUser, setSelectedUser] = useState<{ id: string, name: string } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{ id: string, name: string, type: string } | null>(null);
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
@@ -73,11 +74,13 @@ const FeedMessages: React.FC = () => {
         const isMeSender = msg.sender_id === user.id;
         const otherId = isMeSender ? msg.receiver_id : msg.sender_id;
         const otherName = isMeSender ? msg.receiver_name : msg.sender_name;
+        const otherType = isMeSender ? msg.receiver_type : msg.sender_type;
 
         if (!groups[otherId]) {
           groups[otherId] = {
             participantId: otherId,
             participantName: otherName || '알 수 없는 사용자',
+            participantType: otherType || 'user',
             lastMessage: msg,
             unreadCount: (!isMeSender && msg.is_read === 0) ? 1 : 0
           };
@@ -106,13 +109,23 @@ const FeedMessages: React.FC = () => {
     }
   }, [activeTab, conversations, subscribedIds, followingIds]);
 
-  const openChat = async (participantId: string, participantName: string) => {
+  const openChat = async (participantId: string, participantName: string, participantType: string = 'user') => {
     if (!user) return;
-    setSelectedUser({ id: participantId, name: participantName });
+    setSelectedUser({ id: participantId, name: participantName, type: participantType });
     setChatLoading(true);
     try {
-      const received = await apiService.getMessages({ receiverId: user.id, receiverType: 'user', senderId: participantId, senderType: 'user' });
-      const sent = await apiService.getMessages({ senderId: user.id, senderType: 'user', receiverId: participantId, receiverType: 'user' });
+      const received = await apiService.getMessages({ 
+        receiverId: user.id, 
+        receiverType: 'user', 
+        senderId: participantId, 
+        senderType: participantType 
+      });
+      const sent = await apiService.getMessages({ 
+        senderId: user.id, 
+        senderType: 'user', 
+        receiverId: participantId, 
+        receiverType: participantType 
+      });
       
       const history = [...received, ...sent].sort((a, b) => 
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -146,7 +159,7 @@ const FeedMessages: React.FC = () => {
         sender_type: 'user',
         sender_name: user.nickname || user.realName,
         receiver_id: selectedUser.id,
-        receiver_type: 'user',
+        receiver_type: selectedUser.type,
         receiver_name: selectedUser.name,
         content: content
       });
@@ -159,7 +172,7 @@ const FeedMessages: React.FC = () => {
           sender_type: 'user',
           sender_name: user.nickname || user.realName || '',
           receiver_id: selectedUser.id,
-          receiver_type: 'user',
+          receiver_type: selectedUser.type,
           receiver_name: selectedUser.name,
           content: content,
           is_read: 0,
@@ -180,7 +193,7 @@ const FeedMessages: React.FC = () => {
       return;
     }
     try {
-      const results = await apiService.searchMessageRecipients(query, 'user');
+      const results = await apiService.searchMessageRecipients(query, 'all');
       setSearchResults(results.filter(r => r.id !== user?.id));
     } catch (err) {
       console.error('Search failed', err);
@@ -238,13 +251,13 @@ const FeedMessages: React.FC = () => {
               <div 
                 key={res.id} 
                 className="ft-msg-item-modern" 
-                onClick={() => { setSearchQuery(''); openChat(res.id, res.nickname || res.realName); }}
+                onClick={() => { setSearchQuery(''); openChat(res.id, res.name, res.type); }}
               >
                 <div className="ft-msg-avatar-modern">
-                  <img src={res.profileImage || `https://ui-avatars.com/api/?name=${res.nickname || res.realName}&background=random`} alt="" />
+                  <img src={res.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(res.name)}&background=random`} alt="" />
                 </div>
                 <div className="ft-msg-body-modern">
-                  <div className="ft-msg-name-modern">{res.nickname || res.realName}</div>
+                  <div className="ft-msg-name-modern">{res.label || res.name}</div>
                   <div className="ft-msg-sub-modern">새로운 대화를 시작해보세요</div>
                 </div>
               </div>
@@ -271,9 +284,9 @@ const FeedMessages: React.FC = () => {
         ) : (
           <div className="ft-conversations-container">
             {filteredConversations.map(conv => (
-              <div key={conv.participantId} className={`ft-msg-item-modern ${conv.unreadCount > 0 ? 'unread' : ''}`} onClick={() => openChat(conv.participantId, conv.participantName)}>
+              <div key={conv.participantId} className={`ft-msg-item-modern ${conv.unreadCount > 0 ? 'unread' : ''}`} onClick={() => openChat(conv.participantId, conv.participantName, conv.participantType)}>
                 <div className="ft-msg-avatar-modern">
-                  <img src={`https://ui-avatars.com/api/?name=${conv.participantName}&background=random`} alt="" />
+                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(conv.participantName)}&background=random`} alt="" />
                   {conv.unreadCount > 0 && <div className="ft-unread-badge-modern" />}
                 </div>
                 <div className="ft-msg-body-modern">

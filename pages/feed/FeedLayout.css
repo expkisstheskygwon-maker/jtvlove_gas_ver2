@@ -906,9 +906,16 @@
 }
 .ft-search-icon { color: var(--ft-text-tertiary); margin-right: 12px; font-size: 20px; }
 .ft-search-input-modern {
-  flex: 1; border: none; background: none; outline: none;
-  font-size: 15px; font-weight: 600; color: var(--ft-text);
-  width: 100%;
+  flex: 1 !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--ft-text) !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 .ft-search-clear {
   background: none; border: none; color: var(--ft-text-muted);
