@@ -145,7 +145,7 @@
 .ft-tabbar, .ft-topbar { display: none !important; }
 
 @media (max-width: 640px) {
-  .ft-sidebar-pc { display: none; }
+  .ft-sidebar-pc, .ft-floating-msg { display: none; }
   .ft-main-container { margin-left: 0; padding: 10px; padding-bottom: 80px; }
   .ft-tabbar {
     position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
