@@ -363,7 +363,7 @@ const FeedLayout: React.FC = () => {
                 <div className="ft-right-username">{user?.nickname || "Guest"}</div>
                 <div className="ft-right-name">{user?.realName || "JTVLOVE Member"}</div>
               </div>
-              <button className="ft-switch-btn" onClick={() => navigate('/settings')}>전환</button>
+              <button className="ft-switch-btn" onClick={() => user ? handleNavigate(`/@${user.nickname}`) : openLoginModal()}>전환</button>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
