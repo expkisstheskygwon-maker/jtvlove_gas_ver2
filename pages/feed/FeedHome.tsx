@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../../services/apiService';
 import { useAuth } from '../../contexts/AuthContext';
 import { CCA } from '../../types';
@@ -33,6 +33,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [commentModal, setCommentModal] = useState<{
@@ -169,11 +170,35 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     }
   }, [user?.id]);
 
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
+  const handleLoadMore = useCallback(() => {
+    if (!loadingMore && hasMore && !loading) {
       loadFeed(page + 1, true);
     }
-  };
+  }, [loadingMore, hasMore, loading, page, loadFeed]);
+
+  useEffect(() => {
+    if (!hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '150px' }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loadingMore, loading, handleLoadMore]);
 
   const onTabChange = (tab: 'all' | 'subscribed' | 'following') => {
     setActiveTab(tab);
@@ -681,23 +706,18 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
             </article>
           ))}
 
-          {hasMore && (
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-              <button 
-                className="ft-secondary-btn" 
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                style={{ width: '100%', maxWidth: '200px', margin: '0 auto' }}
-              >
-                {loadingMore ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <div className="ft-spinner-sm"></div>
-                    <span>로딩 중...</span>
-                  </div>
-                ) : '더 보기'}
-              </button>
-            </div>
-          )}
+          {/* Infinite Scroll target and loader indicator */}
+          <div ref={observerTarget} style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
+            {loadingMore && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <div className="ft-spinner-sm"></div>
+                <span style={{ fontSize: '14px', color: '#888' }}>로딩 중...</span>
+              </div>
+            )}
+            {!hasMore && feedItems.length > 0 && (
+              <span style={{ fontSize: '13px', color: '#aaa', letterSpacing: '0.5px' }}>모든 게시물을 불러왔습니다.</span>
+            )}
+          </div>
         </div>
       ) : (
         <div className="ft-empty">
