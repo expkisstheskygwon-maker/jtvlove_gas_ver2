@@ -163,6 +163,16 @@ async function startServer() {
   });
 
   // Mock other APIs if needed
+  app.get("/api/r2", (req, res) => {
+    const key = req.query.key as string;
+    if (!key) {
+      return res.status(400).json({ error: "Missing key parameter" });
+    }
+    // Fallback placeholder to prevent broken images in local dev server
+    const placeholderUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600";
+    res.redirect(placeholderUrl);
+  });
+
   app.get("/api/ccas", (req, res) => {
     // Fallback to mock data is handled in frontend apiService
     res.status(404).json({ error: "Use mock data" });
