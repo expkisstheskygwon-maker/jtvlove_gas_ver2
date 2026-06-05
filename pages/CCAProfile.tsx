@@ -68,6 +68,11 @@ const CCAProfile: React.FC = () => {
     groupSize: 1
   });
   const [lightboxMedia, setLightboxMedia] = useState<MediaItem | null>(null);
+  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveMediaIdx(0);
+  }, [lightboxMedia]);
   // Like state
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -526,27 +531,46 @@ const CCAProfile: React.FC = () => {
 
               {gallery.length > 0 ? (
                 <div className="columns-2 md:columns-3 gap-4 space-y-4">
-                  {gallery.map((item) => (
-                    <div
-                      key={item.id}
-                      className="break-inside-avoid relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer"
-                      onClick={() => setLightboxMedia(item)}
-                    >
-                      {item.type === 'photo' ? (
-                        <img src={item.url} alt={item.caption || 'Gallery'} className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (
-                        <div className="aspect-video bg-zinc-900 flex items-center justify-center relative overflow-hidden">
-                          <video src={item.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-primary text-5xl drop-shadow-lg">play_circle</span>
+                  {gallery.map((item) => {
+                    const urls = item.url ? item.url.split(',') : [];
+                    const displayUrl = urls[0] || '';
+                    const isMultiImage = item.type === 'photo' && urls.length > 1;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="break-inside-avoid relative group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer"
+                        onClick={() => setLightboxMedia(item)}
+                      >
+                        {item.type === 'photo' ? (
+                          <img src={displayUrl} alt={item.caption || 'Gallery'} className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
+                        ) : (
+                          <div className="aspect-video bg-zinc-900 flex items-center justify-center relative overflow-hidden">
+                            <video src={displayUrl} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <span className="material-symbols-outlined text-primary text-5xl drop-shadow-lg">play_circle</span>
+                            </div>
                           </div>
+                        )}
+
+                        {/* Multi Image Badge */}
+                        {isMultiImage && (
+                          <div style={{
+                            position: 'absolute', top: 12, right: 12,
+                            backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '50%',
+                            width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', zIndex: 10
+                          }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>filter_none</span>
+                          </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                          <p className="text-white text-xs font-bold line-clamp-2">{item.caption}</p>
                         </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                        <p className="text-white text-xs font-bold line-clamp-2">{item.caption}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-20 bg-white dark:bg-zinc-900/50 rounded-[3rem] border border-dashed border-primary/20 flex flex-col items-center justify-center gap-4">
@@ -573,13 +597,49 @@ const CCAProfile: React.FC = () => {
       {/* Media Lightbox */}
       {lightboxMedia && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl" onClick={() => setLightboxMedia(null)}>
-          <button className="absolute top-6 right-6 size-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+          <button className="absolute top-6 right-6 size-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors z-[210] border-none">
             <span className="material-symbols-outlined text-2xl">close</span>
           </button>
           <div className="w-full h-full max-w-5xl max-h-[90vh] flex flex-col items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
-            {lightboxMedia.type === 'photo' ? (
-              <img src={lightboxMedia.url} alt={lightboxMedia.caption || ''} className="max-w-full max-h-full w-auto object-contain rounded-2xl shadow-2xl" />
-            ) : (
+            {lightboxMedia.type === 'photo' ? (() => {
+              const urls = lightboxMedia.url ? lightboxMedia.url.split(',') : [];
+              return (
+                <div className="w-full h-full flex items-center justify-center relative">
+                  <img src={urls[activeMediaIdx]} alt={lightboxMedia.caption || ''} className="max-w-full max-h-full w-auto object-contain rounded-2xl shadow-2xl" />
+                  
+                  {/* Navigation arrows */}
+                  {urls.length > 1 && (
+                    <>
+                      {activeMediaIdx > 0 && (
+                        <button 
+                          onClick={() => setActiveMediaIdx(prev => prev - 1)}
+                          className="absolute left-6 size-12 bg-white/10 hover:bg-white/20 rounded-full text-white flex items-center justify-center transition-colors z-[210] border-none cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined">chevron_left</span>
+                        </button>
+                      )}
+                      {activeMediaIdx < urls.length - 1 && (
+                        <button 
+                          onClick={() => setActiveMediaIdx(prev => prev + 1)}
+                          className="absolute right-6 size-12 bg-white/10 hover:bg-white/20 rounded-full text-white flex items-center justify-center transition-colors z-[210] border-none cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined">chevron_right</span>
+                        </button>
+                      )}
+                      {/* Dots */}
+                      <div className="absolute bottom-6 flex gap-2 bg-black/40 px-3 py-1.5 rounded-full z-[210]">
+                        {urls.map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`size-2 rounded-full transition-all ${idx === activeMediaIdx ? 'bg-primary scale-110' : 'bg-white/40'}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })() : (
               <video src={lightboxMedia.url} controls autoPlay className="max-w-full max-h-full w-auto object-contain rounded-2xl shadow-2xl" />
             )}
             {lightboxMedia.caption && (

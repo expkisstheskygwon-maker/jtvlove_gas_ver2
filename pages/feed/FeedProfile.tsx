@@ -21,7 +21,13 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
   const [todayViews, setTodayViews] = useState(0);
   const [isWorking, setIsWorking] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [lightboxMedia, setLightboxMedia] = useState<any | null>(null);
+  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
 
+  useEffect(() => {
+    setActiveMediaIdx(0);
+  }, [lightboxMedia]);
+ 
   // Story highlights states
   const [storyOpen, setStoryOpen] = useState(false);
   const [activeStoryIdx, setActiveStoryIdx] = useState(0);
@@ -363,15 +369,37 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {gallery.map((item) => (
-                <div key={item.id} style={{ aspectRatio: '1/1', background: '#f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
-                  {item.type === 'video' ? (
-                    <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  )}
-                </div>
-              ))}
+              {gallery.map((item) => {
+                const urls = item.url ? item.url.split(',') : [];
+                const displayUrl = urls[0] || '';
+                const isMultiImage = item.type === 'photo' && urls.length > 1;
+
+                return (
+                  <div 
+                    key={item.id} 
+                    onClick={() => setLightboxMedia(item)}
+                    style={{ aspectRatio: '1/1', background: '#f0f0f0', borderRadius: 8, overflow: 'hidden', position: 'relative', cursor: 'pointer' }}
+                  >
+                    {item.type === 'video' ? (
+                      <video src={displayUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <img src={displayUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    
+                    {/* Multi Image Badge */}
+                    {isMultiImage && (
+                      <div style={{
+                        position: 'absolute', top: 8, right: 8,
+                        backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '50%',
+                        width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', zIndex: 5
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>filter_none</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -387,34 +415,54 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {bookmarks.map((item) => (
-                <div 
-                  key={item.id} 
-                  onClick={() => navigate(`/@${item.ccaNickname}`)}
-                  style={{ aspectRatio: '1/1', background: 'var(--ft-bg-tertiary)', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
-                >
-                  {item.type === 'video' ? (
-                    <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  )}
-                  {/* Creator name overlay on hover */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                    padding: '8px',
-                    color: '#fff',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    textAlign: 'center'
-                  }}>
-                    @{item.ccaNickname}
+              {bookmarks.map((item) => {
+                const urls = item.url ? item.url.split(',') : [];
+                const displayUrl = urls[0] || '';
+                const isMultiImage = item.type === 'photo' && urls.length > 1;
+
+                return (
+                  <div 
+                    key={item.id} 
+                    onClick={() => setLightboxMedia(item)}
+                    style={{ aspectRatio: '1/1', background: 'var(--ft-bg-tertiary)', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+                  >
+                    {item.type === 'video' ? (
+                      <video src={displayUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <img src={displayUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    
+                    {/* Multi Image Badge */}
+                    {isMultiImage && (
+                      <div style={{
+                        position: 'absolute', top: 8, right: 8,
+                        backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '50%',
+                        width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', zIndex: 5
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>filter_none</span>
+                      </div>
+                    )}
+
+                    {/* Creator name overlay on hover */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                      padding: '8px',
+                      color: '#fff',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      zIndex: 4
+                    }}>
+                      @{item.ccaNickname}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -430,6 +478,97 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
             <span className="material-symbols-outlined">lock</span>
             비밀대화 시작하기
           </button>
+        </div>
+      )}
+
+      {/* Media Lightbox with Carousel */}
+      {lightboxMedia && (
+        <div 
+          className="ft-story-player-overlay" 
+          onClick={() => setLightboxMedia(null)}
+          style={{ zIndex: 99999 }}
+        >
+          <button 
+            className="ft-story-player-close" 
+            onClick={() => setLightboxMedia(null)}
+            style={{ position: 'absolute', top: 20, right: 20, zIndex: 100000, background: 'rgba(0,0,0,0.5)', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none' }}
+          >
+            <span className="material-symbols-outlined" style={{ color: '#fff' }}>close</span>
+          </button>
+          
+          <div 
+            className="ft-story-player-container" 
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#000', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', maxWidth: '600px' }}
+          >
+            <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+              {lightboxMedia.type === 'video' ? (
+                <video src={lightboxMedia.url} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              ) : (() => {
+                const urls = lightboxMedia.url ? lightboxMedia.url.split(',') : [];
+                return (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <img 
+                      src={urls[activeMediaIdx]} 
+                      alt="" 
+                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                    />
+                    
+                    {/* Navigation arrows */}
+                    {urls.length > 1 && (
+                      <>
+                        {activeMediaIdx > 0 && (
+                          <button 
+                            onClick={() => setActiveMediaIdx(prev => prev - 1)}
+                            style={{
+                              position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+                              background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%',
+                              width: 40, height: 40, display: 'flex', alignItems: 'center', justify_content: 'center', cursor: 'pointer', zIndex: 10
+                            }}
+                          >
+                            <span className="material-symbols-outlined">chevron_left</span>
+                          </button>
+                        )}
+                        {activeMediaIdx < urls.length - 1 && (
+                          <button 
+                            onClick={() => setActiveMediaIdx(prev => prev + 1)}
+                            style={{
+                              position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+                              background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%',
+                              width: 40, height: 40, display: 'flex', alignItems: 'center', justify_content: 'center', cursor: 'pointer', zIndex: 10
+                            }}
+                          >
+                            <span className="material-symbols-outlined">chevron_right</span>
+                          </button>
+                        )}
+                        {/* Dots */}
+                        <div style={{
+                          position: 'absolute', bottom: 20, display: 'flex', gap: 6,
+                          background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: 10, zIndex: 10
+                        }}>
+                          {urls.map((_, idx) => (
+                            <div 
+                              key={idx} 
+                              style={{
+                                width: 6, height: 6, borderRadius: '50%',
+                                background: idx === activeMediaIdx ? 'var(--ft-primary)' : 'rgba(255,255,255,0.4)'
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+            
+            {lightboxMedia.caption && (
+              <div style={{ width: '100%', padding: '16px 20px', background: 'rgba(0,0,0,0.8)', color: '#fff', fontSize: '13px', lineHeight: 1.4, textAlign: 'center', boxSizing: 'border-box' }}>
+                {lightboxMedia.caption}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

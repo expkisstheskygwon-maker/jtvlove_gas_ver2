@@ -18,8 +18,13 @@ const CCAGalleryManager: React.FC = () => {
   const [uploadType, setUploadType] = useState<'photo' | 'video'>('photo');
   const [caption, setCaption] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveMediaIdx(0);
+  }, [selectedItem]);
 
   useEffect(() => {
     if (!user || (user.role !== 'cca' && user.role !== 'super_admin') || !user.ccaId) {
@@ -43,18 +48,29 @@ const CCAGalleryManager: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileList = Array.from(files);
+      setSelectedFiles(prev => [...prev, ...fileList]);
+      
+      fileList.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrls(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleUpload = async () => {
-    if (uploadType === 'photo' && !selectedFile) {
-      alert("Please select a photo");
+    if (uploadType === 'photo' && selectedFiles.length === 0) {
+      alert("Please select at least one photo");
       return;
     }
     if (uploadType === 'video' && !videoUrl) {
@@ -65,9 +81,16 @@ const CCAGalleryManager: React.FC = () => {
     setIsUploading(true);
     try {
       let url = '';
-      if (uploadType === 'photo' && selectedFile) {
-        // Convert to Base64 (using uploadImage fallback or direct conversion)
-        url = await apiService.uploadImage(selectedFile, 'gallery') || '';
+      if (uploadType === 'photo' && selectedFiles.length > 0) {
+        // 병렬 업로드 실행
+        const uploadPromises = selectedFiles.map(file => apiService.uploadImage(file, 'gallery'));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        
+        // 유효한 URL들만 필터링하여 콤마로 결합
+        const validUrls = uploadedUrls.filter(u => !!u);
+        if (validUrls.length === 0) throw new Error("All image uploads failed");
+        
+        url = validUrls.join(',');
       } else {
         url = videoUrl;
       }
@@ -85,8 +108,8 @@ const CCAGalleryManager: React.FC = () => {
         setShowUploadModal(false);
         setCaption('');
         setVideoUrl('');
-        setSelectedFile(null);
-        setPreviewUrl(null);
+        setSelectedFiles([]);
+        setPreviewUrls([]);
         loadGallery();
       } else {
         alert("Upload failed: " + result.error);
@@ -167,33 +190,46 @@ const CCAGalleryManager: React.FC = () => {
         </div>
       ) : filteredMedia.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {filteredMedia.map(item => (
-            <div
-              key={item.id}
-              onClick={() => setSelectedItem(item)}
-              className="group relative aspect-square rounded-[2rem] overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl transition-all border border-primary/5"
-            >
-              <img src={item.url} className="size-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          {filteredMedia.map(item => {
+            const urls = item.url ? item.url.split(',') : [];
+            const displayUrl = urls[0] || '';
+            const isMultiImage = item.type === 'photo' && urls.length > 1;
 
-              {/* Overlay Info */}
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center text-white gap-4">
-                <div className="flex gap-6">
-                  <div className="flex items-center gap-1.5"><span className="material-symbols-outlined fill-1">favorite</span> {item.likes || 0}</div>
-                  <div className="flex items-center gap-1.5"><span className="material-symbols-outlined fill-1">chat_bubble</span> {item.commentsCount || 0}</div>
+            return (
+              <div
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                className="group relative aspect-square rounded-[2rem] overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl transition-all border border-primary/5"
+              >
+                <img src={displayUrl} className="size-full object-cover transition-transform duration-700 group-hover:scale-110" />
+
+                {/* Overlay Info */}
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center text-white gap-4">
+                  <div className="flex gap-6">
+                    <div className="flex items-center gap-1.5"><span className="material-symbols-outlined fill-1">favorite</span> {item.likes || 0}</div>
+                    <div className="flex items-center gap-1.5"><span className="material-symbols-outlined fill-1">chat_bubble</span> {item.commentsCount || 0}</div>
+                  </div>
+                  <span className="material-symbols-outlined text-4xl opacity-50">
+                    {item.type === 'video' ? 'play_circle' : 'zoom_in'}
+                  </span>
                 </div>
-                <span className="material-symbols-outlined text-4xl opacity-50">
-                  {item.type === 'video' ? 'play_circle' : 'zoom_in'}
-                </span>
-              </div>
 
-              {/* Type Icon Badge */}
-              <div className="absolute top-4 right-4 size-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white/70">
-                <span className="material-symbols-outlined text-[16px]">
-                  {item.type === 'video' ? 'movie' : 'image'}
-                </span>
+                {/* Type Icon Badge */}
+                <div className="absolute top-4 right-4 flex gap-1.5">
+                  {isMultiImage && (
+                    <div className="size-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>filter_none</span>
+                    </div>
+                  )}
+                  <div className="size-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white/70">
+                    <span className="material-symbols-outlined text-[16px]">
+                      {item.type === 'video' ? 'movie' : 'image'}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="py-20 text-center space-y-4 bg-gray-50 dark:bg-white/5 rounded-[3rem] border-2 border-dashed border-primary/10">
@@ -228,17 +264,38 @@ const CCAGalleryManager: React.FC = () => {
               {/* Media Input */}
               {uploadType === 'photo' ? (
                 <div className="space-y-4">
-                  <label className="block aspect-video bg-gray-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-primary/10 cursor-pointer overflow-hidden relative group">
-                    {previewUrl ? (
-                      <img src={previewUrl} className="size-full object-cover" />
-                    ) : (
+                  {previewUrls.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar">
+                        {previewUrls.map((url, idx) => (
+                          <div key={idx} className="relative size-24 rounded-2xl overflow-hidden shrink-0 snap-start border border-primary/15">
+                            <img src={url} className="size-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="absolute top-1 right-1 size-6 bg-black/60 rounded-full flex items-center justify-center text-white text-xs hover:bg-black"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                          </div>
+                        ))}
+                        <label className="size-24 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-primary/20 cursor-pointer flex flex-col items-center justify-center gap-1 shrink-0 text-gray-400 hover:text-primary transition-colors">
+                          <span className="material-symbols-outlined text-2xl">add</span>
+                          <span className="text-[8px] font-bold uppercase tracking-wider">Add More</span>
+                          <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
+                        </label>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide text-right">{selectedFiles.length} images selected</p>
+                    </div>
+                  ) : (
+                    <label className="block aspect-video bg-gray-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-primary/10 cursor-pointer overflow-hidden relative group">
                       <div className="size-full flex flex-col items-center justify-center gap-2 text-gray-400">
                         <span className="material-symbols-outlined text-4xl">add_photo_alternate</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Select Image</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Select Images</span>
                       </div>
-                    )}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                  </label>
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
+                    </label>
+                  )}
                   <p className="text-[10px] text-gray-400 font-bold text-center uppercase tracking-tighter">* Images will be saved as Base64 (max 700KB)</p>
                 </div>
               ) : (
@@ -289,7 +346,7 @@ const CCAGalleryManager: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
           <div className="bg-white dark:bg-zinc-900 w-full max-w-5xl rounded-[3rem] overflow-hidden flex flex-col lg:flex-row h-[80vh] shadow-2xl animate-fade-in">
             {/* Visual Part */}
-            <div className="flex-[1.5] bg-black relative">
+            <div className="flex-[1.5] bg-black relative flex items-center justify-center">
               {selectedItem.type === 'video' ? (
                 <div className="size-full flex items-center justify-center">
                   {/* Simple iframe for video links, or just a placeholder if it's not a direct link */}
@@ -303,12 +360,48 @@ const CCAGalleryManager: React.FC = () => {
                     <video src={selectedItem.url} controls className="max-h-full max-w-full" />
                   )}
                 </div>
-              ) : (
-                <img src={selectedItem.url} className="size-full object-contain" />
-              )}
+              ) : (() => {
+                const urls = selectedItem.url ? selectedItem.url.split(',') : [];
+                return (
+                  <div className="size-full flex items-center justify-center relative overflow-hidden">
+                    <img src={urls[activeMediaIdx]} className="max-h-full max-w-full object-contain" />
+                    
+                    {/* Navigation arrows */}
+                    {urls.length > 1 && (
+                      <>
+                        {activeMediaIdx > 0 && (
+                          <button 
+                            onClick={() => setActiveMediaIdx(prev => prev - 1)}
+                            className="absolute left-6 size-12 bg-black/40 hover:bg-black/60 rounded-full text-white flex items-center justify-center transition-colors z-10"
+                          >
+                            <span className="material-symbols-outlined">chevron_left</span>
+                          </button>
+                        )}
+                        {activeMediaIdx < urls.length - 1 && (
+                          <button 
+                            onClick={() => setActiveMediaIdx(prev => prev + 1)}
+                            className="absolute right-6 size-12 bg-black/40 hover:bg-black/60 rounded-full text-white flex items-center justify-center transition-colors z-10"
+                          >
+                            <span className="material-symbols-outlined">chevron_right</span>
+                          </button>
+                        )}
+                        {/* Dots */}
+                        <div className="absolute bottom-6 flex gap-2 bg-black/40 px-3 py-1.5 rounded-full z-10">
+                          {urls.map((_, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`size-2 rounded-full transition-all ${idx === activeMediaIdx ? 'bg-primary scale-110' : 'bg-white/40'}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-6 left-6 size-12 bg-white/10 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/20"
+                className="absolute top-6 left-6 size-12 bg-white/10 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/20 z-10"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
