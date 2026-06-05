@@ -61,6 +61,9 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     submitting: boolean;
     success: boolean;
   }>({ isOpen: false, post: null, amount: '100', submitting: false, success: false });
+  const [poppedLikedIds, setPoppedLikedIds] = useState<string[]>([]);
+  const [poppedTipIds, setPoppedTipIds] = useState<string[]>([]);
+
 
   // Subscription Modal State
   const [subModal, setSubModal] = useState<{
@@ -407,6 +410,12 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       handleNavigate('/feed');
       return;
     }
+
+    // Trigger pop micro-animation
+    setPoppedLikedIds(prev => [...prev, itemId]);
+    setTimeout(() => {
+      setPoppedLikedIds(prev => prev.filter(id => id !== itemId));
+    }, 300);
 
     const isCurrentlyLiked = likedIds.includes(itemId);
     
@@ -856,7 +865,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
               {/* Action Bar (sit below media, but above caption text) */}
               <div className="ft-post-actions ft-feed-actionbar" style={{ marginTop: '12px', marginBottom: '8px' }}>
                 <button
-                  className={`ft-post-action ft-feed-action ${likedIds.includes(item.id) ? 'liked' : ''}`}
+                  className={`ft-post-action ft-feed-action ${likedIds.includes(item.id) ? 'liked' : ''} ${poppedLikedIds.includes(item.id) ? 'ft-pop-active' : ''}`}
                   onClick={(e) => handleLike(e, item.id)}
                 >
                   <span
@@ -877,8 +886,15 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
 
                 {/* Send Tip Button */}
                 <button 
-                  className="ft-post-action ft-feed-action" 
-                  onClick={() => setTipModal({ isOpen: true, post: item, amount: '100', submitting: false, success: false })}
+                  className={`ft-post-action ft-feed-action ${poppedTipIds.includes(item.id) ? 'ft-pop-active' : ''}`}
+                  onClick={() => {
+                    // Trigger pop animation
+                    setPoppedTipIds(prev => [...prev, item.id]);
+                    setTimeout(() => {
+                      setPoppedTipIds(prev => prev.filter(id => id !== item.id));
+                    }, 300);
+                    setTipModal({ isOpen: true, post: item, amount: '100', submitting: false, success: false });
+                  }}
                 >
                   <span className="material-symbols-outlined" style={{ color: '#eebd2b' }}>paid</span>
                   <span className="ft-feed-action-count" style={{ color: '#eebd2b', fontWeight: 700 }}>팁 보내기</span>

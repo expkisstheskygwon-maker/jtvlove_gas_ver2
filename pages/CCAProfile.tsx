@@ -79,9 +79,70 @@ const CCAProfile: React.FC = () => {
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState(false);
 
+  // Story highlights and active pop state
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [activeStoryIdx, setActiveStoryIdx] = useState(0);
+  const [storyProgress, setStoryProgress] = useState(0);
+  const [storyPlaying, setStoryPlaying] = useState(false);
+  const [likePopped, setLikePopped] = useState(false);
+
+  useEffect(() => {
+    if (!storyOpen || !storyPlaying || gallery.length === 0) return;
+    
+    const interval = 30; // ms
+    const step = (interval / 3500) * 100; // 3.5 seconds total slide time
+    
+    const timer = setInterval(() => {
+      setStoryProgress(prev => {
+        if (prev >= 100) {
+          if (activeStoryIdx < gallery.length - 1) {
+            setActiveStoryIdx(curr => curr + 1);
+            return 0;
+          } else {
+            setStoryOpen(false);
+            setStoryPlaying(false);
+            return 0;
+          }
+        }
+        return prev + step;
+      });
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [storyOpen, storyPlaying, activeStoryIdx, gallery.length]);
+
+  const handlePrevStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStoryProgress(0);
+    if (activeStoryIdx > 0) {
+      setActiveStoryIdx(prev => prev - 1);
+    } else {
+      setActiveStoryIdx(0);
+    }
+  };
+
+  const handleNextStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStoryProgress(0);
+    if (activeStoryIdx < gallery.length - 1) {
+      setActiveStoryIdx(prev => prev + 1);
+    } else {
+      setStoryOpen(false);
+      setStoryPlaying(false);
+    }
+  };
+
+  const handleOpenStory = () => {
+    if (gallery.length === 0) return;
+    setActiveStoryIdx(0);
+    setStoryProgress(0);
+    setStoryOpen(true);
+    setStoryPlaying(true);
+  };
+
   // Prevent background scrolling when modals are open
   useEffect(() => {
-    if (lightboxMedia || showRequestModal || showMsgModal) {
+    if (lightboxMedia || showRequestModal || showMsgModal || storyOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -89,7 +150,7 @@ const CCAProfile: React.FC = () => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [lightboxMedia, showRequestModal, showMsgModal]);
+  }, [lightboxMedia, showRequestModal, showMsgModal, storyOpen]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -127,6 +188,8 @@ const CCAProfile: React.FC = () => {
       return;
     }
     if (!id || likeLoading) return;
+    setLikePopped(true);
+    setTimeout(() => setLikePopped(false), 300);
     setLikeLoading(true);
     const result = await apiService.toggleCCALike(id, user.id);
     setIsLiked(result.liked);
@@ -260,17 +323,34 @@ const CCAProfile: React.FC = () => {
 
           {/* Left Side: Profile Photo */}
           <div className="lg:col-span-5 md:sticky md:top-24 space-y-6">
-            <div className="relative aspect-[4/5] md:aspect-[3/4] lg:aspect-[4/5] md:rounded-3xl overflow-hidden shadow-2xl group">
-              <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden"></div>
+            <div 
+              onClick={() => gallery.length > 0 && handleOpenStory()}
+              className={`relative aspect-[4/5] md:aspect-[3/4] lg:aspect-[4/5] md:rounded-3xl shadow-2xl group transition-all duration-300 ${
+                gallery.length > 0 ? 'ring-4 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950 ring-pink-500 cursor-pointer hover:scale-[1.01]' : ''
+              }`}
+              style={gallery.length > 0 ? {
+                background: 'linear-gradient(135deg, #f97316, #ec4899, #8b5cf6)',
+                padding: '4px'
+              } : {}}
+            >
+              <div className="w-full h-full bg-zinc-950 md:rounded-[20px] overflow-hidden relative">
+                <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:hidden"></div>
 
-              {/* Mobile Floating Overlay Info */}
-              <div className="absolute bottom-6 left-6 right-6 md:hidden text-white space-y-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-4xl font-extrabold tracking-tighter">{cca.nickname || cca.name}</h2>
-                  <span className="material-symbols-outlined text-primary fill-1">verified</span>
+                {/* Online Status Badge */}
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+                  <span className="size-2 rounded-full bg-green-500 animate-pulse"></span>
+                  <span className="text-[9px] font-bold text-white tracking-widest uppercase">Online</span>
                 </div>
-                <p className="text-sm font-bold opacity-80">{cca.venueName}</p>
+
+                {/* Mobile Floating Overlay Info */}
+                <div className="absolute bottom-6 left-6 right-6 md:hidden text-white space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-4xl font-extrabold tracking-tighter">{cca.nickname || cca.name}</h2>
+                    <span className="material-symbols-outlined text-primary fill-1">verified</span>
+                  </div>
+                  <p className="text-sm font-bold opacity-80">{cca.venueName}</p>
+                </div>
               </div>
             </div>
 
@@ -322,7 +402,7 @@ const CCAProfile: React.FC = () => {
                 <button
                   onClick={handleToggleLike}
                   disabled={likeLoading}
-                  className={`px-4 py-2 rounded-2xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${isLiked ? 'bg-pink-500/15 text-pink-500' : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-pink-400'}`}
+                  className={`px-4 py-2 rounded-2xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${isLiked ? 'bg-pink-500/15 text-pink-500' : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-pink-400'} ${likePopped ? 'ft-pop-active' : ''}`}
                 >
                   <span className={`material-symbols-outlined text-2xl ${isLiked ? 'fill-1' : ''}`}>favorite</span>
                   <span className="text-lg font-black">{likeCount}</span>
@@ -480,7 +560,7 @@ const CCAProfile: React.FC = () => {
       </div>
 
       {/* Mobile Sticky Bottom CTA - FIXED: 문구 변경 + 기능 연결 */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-primary/10 px-6 py-4 z-50">
+      <div className="md:hidden fixed bottom-[60px] left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-primary/10 px-6 py-4 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
         <button
           onClick={handleOpenRequestModal}
           className="w-full bg-primary text-[#1b180d] py-5 rounded-2xl font-black text-lg tracking-tight shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 uppercase"
@@ -686,6 +766,58 @@ const CCAProfile: React.FC = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Story Player Modal */}
+      {storyOpen && gallery.length > 0 && (
+        <div className="ft-story-player-overlay" onClick={() => { setStoryOpen(false); setStoryPlaying(false); }}>
+          <div className="ft-story-player-container" onClick={e => e.stopPropagation()}>
+            
+            {/* Progress Bars */}
+            <div className="ft-story-progress-container">
+              {gallery.map((_, idx) => (
+                <div key={idx} className="ft-story-progress-bar">
+                  <div 
+                    className={`ft-story-progress-bar-fill ${idx < activeStoryIdx ? 'completed' : ''}`}
+                    style={{
+                      width: idx === activeStoryIdx ? `${storyProgress}%` : idx < activeStoryIdx ? '100%' : '0%'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Header */}
+            <div className="ft-story-player-header">
+              <img src={cca.image} alt="" className="ft-story-player-avatar" />
+              <span className="ft-story-player-name">{cca.nickname || cca.name}</span>
+              <button className="ft-story-player-close" onClick={() => { setStoryOpen(false); setStoryPlaying(false); }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Media Wrapper */}
+            <div className="ft-story-player-media-wrapper">
+              {gallery[activeStoryIdx].type === 'video' ? (
+                <video src={gallery[activeStoryIdx].url} autoPlay playsInline muted className="ft-story-player-media" />
+              ) : (
+                <img src={gallery[activeStoryIdx].url} alt="" className="ft-story-player-media" />
+              )}
+
+              {/* Navigation click zones */}
+              <div className="ft-story-player-nav prev" onClick={handlePrevStory} />
+              <div className="ft-story-player-nav next" onClick={handleNextStory} />
+            </div>
+
+            {/* Caption */}
+            {gallery[activeStoryIdx].caption && (
+              <div className="ft-story-player-caption">
+                {gallery[activeStoryIdx].caption}
+              </div>
+            )}
+
           </div>
         </div>
       )}

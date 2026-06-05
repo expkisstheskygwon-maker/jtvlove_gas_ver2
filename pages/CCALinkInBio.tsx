@@ -98,6 +98,67 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   const [isWorking, setIsWorking] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
+  // Story highlights states
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [activeStoryIdx, setActiveStoryIdx] = useState(0);
+  const [storyProgress, setStoryProgress] = useState(0);
+  const [storyPlaying, setStoryPlaying] = useState(false);
+  const [heartPopped, setHeartPopped] = useState(false);
+
+  useEffect(() => {
+    if (!storyOpen || !storyPlaying || gallery.length === 0) return;
+    
+    const interval = 30; // ms
+    const step = (interval / 3500) * 100; // 3.5s total slide time
+    
+    const timer = setInterval(() => {
+      setStoryProgress(prev => {
+        if (prev >= 100) {
+          if (activeStoryIdx < gallery.length - 1) {
+            setActiveStoryIdx(curr => curr + 1);
+            return 0;
+          } else {
+            setStoryOpen(false);
+            setStoryPlaying(false);
+            return 0;
+          }
+        }
+        return prev + step;
+      });
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [storyOpen, storyPlaying, activeStoryIdx, gallery.length]);
+
+  const handlePrevStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStoryProgress(0);
+    if (activeStoryIdx > 0) {
+      setActiveStoryIdx(prev => prev - 1);
+    } else {
+      setActiveStoryIdx(0);
+    }
+  };
+
+  const handleNextStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStoryProgress(0);
+    if (activeStoryIdx < gallery.length - 1) {
+      setActiveStoryIdx(prev => prev + 1);
+    } else {
+      setStoryOpen(false);
+      setStoryPlaying(false);
+    }
+  };
+
+  const handleOpenStory = () => {
+    if (gallery.length === 0) return;
+    setActiveStoryIdx(0);
+    setStoryProgress(0);
+    setStoryOpen(true);
+    setStoryPlaying(true);
+  };
+
   // ─── Fetch Data ───
   useEffect(() => {
     const fetchData = async () => {
@@ -189,6 +250,8 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
 
   const handleToggleHeart = async () => {
     if (!cca?.id) return;
+    setHeartPopped(true);
+    setTimeout(() => setHeartPopped(false), 300);
     const visitorId = getVisitorId();
     try {
       const result = await apiService.toggleCCALike(cca.id, visitorId);
@@ -495,13 +558,20 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
           <div className="lib-profile-row">
             {/* Avatar */}
             <div className="lib-profile-avatar-container">
-              <div className="lib-profile-avatar-ring">
+              <div 
+                className={`lib-profile-avatar-ring ${gallery.length > 0 ? 'active' : ''}`}
+                onClick={() => gallery.length > 0 && handleOpenStory()}
+              >
                 <img
                   src={cca.image || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200'}
                   alt={cca.name}
                   className="lib-profile-avatar"
                 />
               </div>
+
+              {/* Online Dot */}
+              {isWorking && <span className="lib-status-online-dot"></span>}
+
               <span className={`lib-profile-avatar-badge ${cca.grade || 'NEW'}`}>
                 {gradeConfig.label}
               </span>
@@ -513,7 +583,11 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                 <span className="lib-profile-stat-value">{gallery.length}</span>
                 <span className="lib-profile-stat-label">Posts</span>
               </div>
-              <button className="lib-profile-stat" onClick={handleToggleHeart} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}>
+              <button 
+                className={`lib-profile-stat ${heartPopped ? 'lib-pop-active' : ''}`} 
+                onClick={handleToggleHeart} 
+                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}
+              >
                 <span className="lib-profile-stat-value" style={isHearted ? { color: '#ef4444' } : {}}>
                   {heartCount.toLocaleString()}
                 </span>
@@ -964,6 +1038,81 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                   {isUploading ? '업로드 중...' : '게시하기'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Sticky CTA Panel */}
+        {!isOwner && (
+          <div className="lib-sticky-cta-mobile md:hidden">
+            <button
+              onClick={handleFollowToggle}
+              className={`lib-sticky-cta-btn ${isFollowing ? 'secondary' : 'primary'}`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                {isFollowing ? 'person_remove' : 'person_add'}
+              </span>
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+            <button
+              onClick={handleOpenRequestModal}
+              className="lib-sticky-cta-btn primary"
+              style={{ background: 'var(--luminary-gold)', color: '#000' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>calendar_month</span>
+              Request
+            </button>
+          </div>
+        )}
+
+        {/* Story Player Modal */}
+        {storyOpen && gallery.length > 0 && (
+          <div className="ft-story-player-overlay" onClick={() => { setStoryOpen(false); setStoryPlaying(false); }}>
+            <div className="ft-story-player-container" onClick={e => e.stopPropagation()}>
+              
+              {/* Progress Bars */}
+              <div className="ft-story-progress-container">
+                {gallery.map((_, idx) => (
+                  <div key={idx} className="ft-story-progress-bar">
+                    <div 
+                      className={`ft-story-progress-bar-fill ${idx < activeStoryIdx ? 'completed' : ''}`}
+                      style={{
+                        width: idx === activeStoryIdx ? `${storyProgress}%` : idx < activeStoryIdx ? '100%' : '0%'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Header */}
+              <div className="ft-story-player-header">
+                <img src={cca.image} alt="" className="ft-story-player-avatar" />
+                <span className="ft-story-player-name">{cca.nickname || cca.name}</span>
+                <button className="ft-story-player-close" onClick={() => { setStoryOpen(false); setStoryPlaying(false); }}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              {/* Media Wrapper */}
+              <div className="ft-story-player-media-wrapper">
+                {gallery[activeStoryIdx].type === 'video' ? (
+                  <video src={gallery[activeStoryIdx].url} autoPlay playsInline muted className="ft-story-player-media" />
+                ) : (
+                  <img src={gallery[activeStoryIdx].url} alt="" className="ft-story-player-media" />
+                )}
+
+                {/* Navigation click zones */}
+                <div className="ft-story-player-nav prev" onClick={handlePrevStory} />
+                <div className="ft-story-player-nav next" onClick={handleNextStory} />
+              </div>
+
+              {/* Caption */}
+              {gallery[activeStoryIdx].caption && (
+                <div className="ft-story-player-caption">
+                  {gallery[activeStoryIdx].caption}
+                </div>
+              )}
+
             </div>
           </div>
         )}

@@ -22,6 +22,66 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
   const [isWorking, setIsWorking] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
+  // Story highlights states
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [activeStoryIdx, setActiveStoryIdx] = useState(0);
+  const [storyProgress, setStoryProgress] = useState(0);
+  const [storyPlaying, setStoryPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!storyOpen || !storyPlaying || gallery.length === 0) return;
+    
+    const interval = 30; // ms
+    const step = (interval / 3500) * 100; // 3.5s total slide time
+    
+    const timer = setInterval(() => {
+      setStoryProgress(prev => {
+        if (prev >= 100) {
+          if (activeStoryIdx < gallery.length - 1) {
+            setActiveStoryIdx(curr => curr + 1);
+            return 0;
+          } else {
+            setStoryOpen(false);
+            setStoryPlaying(false);
+            return 0;
+          }
+        }
+        return prev + step;
+      });
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [storyOpen, storyPlaying, activeStoryIdx, gallery.length]);
+
+  const handlePrevStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStoryProgress(0);
+    if (activeStoryIdx > 0) {
+      setActiveStoryIdx(prev => prev - 1);
+    } else {
+      setActiveStoryIdx(0);
+    }
+  };
+
+  const handleNextStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStoryProgress(0);
+    if (activeStoryIdx < gallery.length - 1) {
+      setActiveStoryIdx(prev => prev + 1);
+    } else {
+      setStoryOpen(false);
+      setStoryPlaying(false);
+    }
+  };
+
+  const handleOpenStory = () => {
+    if (gallery.length === 0) return;
+    setActiveStoryIdx(0);
+    setStoryProgress(0);
+    setStoryOpen(true);
+    setStoryPlaying(true);
+  };
+
   useEffect(() => {
     const currentUsername = forcedUsername || window.location.hash.replace('#/@', '');
     setUsername(currentUsername);
@@ -142,11 +202,38 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
       <div className="ft-profile-card">
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <img
-            src={cca.image}
-            alt={cca.name}
-            style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }}
-          />
+            <div 
+              onClick={handleOpenStory}
+              className="relative" 
+              style={{ 
+                display: 'inline-block', 
+                marginBottom: 16,
+                cursor: gallery.length > 0 ? 'pointer' : 'default'
+              }}
+            >
+              <div 
+                className={gallery.length > 0 ? 'ft-story-ring-active' : ''}
+                style={gallery.length > 0 ? { padding: '3px', borderRadius: '50%' } : {}}
+              >
+                <img
+                  src={cca.image}
+                  alt={cca.name}
+                  style={{ 
+                    width: 120, 
+                    height: 120, 
+                    borderRadius: '50%', 
+                    objectFit: 'cover', 
+                    border: gallery.length > 0 ? '4px solid var(--ft-bg)' : 'none',
+                    display: 'block'
+                  }}
+                />
+              </div>
+              
+              {/* Online Badge */}
+              {(!cca.isGeneralUser || isWorking) && (
+                <span className="ft-status-online-dot" style={{ bottom: '4px', right: '4px' }}></span>
+              )}
+            </div>
           <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>{cca.nickname || cca.name}</h2>
           <div style={{ fontSize: 14, color: 'var(--ft-text-tertiary)', marginBottom: 16 }}>
             @{cca.nickname || 'user'}
@@ -330,6 +417,71 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Mobile Sticky CTA Bar */}
+      {!isOwner && !cca.isGeneralUser && (
+        <div className="ft-sticky-cta-mobile md:hidden">
+          <button
+            onClick={() => navigate(`/secret?ccaId=${cca.id}`)}
+            className="ft-sticky-cta-btn primary"
+          >
+            <span className="material-symbols-outlined">lock</span>
+            비밀대화 시작하기
+          </button>
+        </div>
+      )}
+
+      {/* Story Player Modal */}
+      {storyOpen && gallery.length > 0 && (
+        <div className="ft-story-player-overlay" onClick={() => { setStoryOpen(false); setStoryPlaying(false); }}>
+          <div className="ft-story-player-container" onClick={e => e.stopPropagation()}>
+            
+            {/* Progress Bars */}
+            <div className="ft-story-progress-container">
+              {gallery.map((_, idx) => (
+                <div key={idx} className="ft-story-progress-bar">
+                  <div 
+                    className={`ft-story-progress-bar-fill ${idx < activeStoryIdx ? 'completed' : ''}`}
+                    style={{
+                      width: idx === activeStoryIdx ? `${storyProgress}%` : idx < activeStoryIdx ? '100%' : '0%'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Header */}
+            <div className="ft-story-player-header">
+              <img src={cca.image} alt="" className="ft-story-player-avatar" />
+              <span className="ft-story-player-name">{cca.nickname || cca.name}</span>
+              <button className="ft-story-player-close" onClick={() => { setStoryOpen(false); setStoryPlaying(false); }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Media Wrapper */}
+            <div className="ft-story-player-media-wrapper">
+              {gallery[activeStoryIdx].type === 'video' ? (
+                <video src={gallery[activeStoryIdx].url} autoPlay playsInline muted className="ft-story-player-media" />
+              ) : (
+                <img src={gallery[activeStoryIdx].url} alt="" className="ft-story-player-media" />
+              )}
+
+              {/* Navigation click zones */}
+              <div className="ft-story-player-nav prev" onClick={handlePrevStory} />
+              <div className="ft-story-player-nav next" onClick={handleNextStory} />
+            </div>
+
+            {/* Caption */}
+            {gallery[activeStoryIdx].caption && (
+              <div className="ft-story-player-caption">
+                {gallery[activeStoryIdx].caption}
+              </div>
+            )}
+
+          </div>
         </div>
       )}
     </div>
