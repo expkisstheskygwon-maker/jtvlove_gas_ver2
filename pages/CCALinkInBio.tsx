@@ -62,6 +62,8 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   const [videoUrl, setVideoUrl] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [touchStartX, setTouchStartX] = useState(0);
   const [activeMediaIdx, setActiveMediaIdx] = useState(0);
 
   useEffect(() => {
@@ -93,8 +95,6 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   });
 
   // Lightbox
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [touchStartX, setTouchStartX] = useState(0);
 
   // Gallery tab
   const [galleryTab, setGalleryTab] = useState<'grid' | 'info'>('grid');
