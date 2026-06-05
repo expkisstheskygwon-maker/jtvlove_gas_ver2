@@ -29,14 +29,14 @@
 }
 
 .ft-app.ft-dark {
-  --ft-bg: #0F0F10;
-  --ft-bg-secondary: #000000;
-  --ft-bg-tertiary: #1A1A1F;
-  --ft-sidebar-bg: #0F0F10;
+  --ft-bg: #1A1A1A;
+  --ft-bg-secondary: #121212;
+  --ft-bg-tertiary: #262626;
+  --ft-sidebar-bg: #161616;
   --ft-text: #EDEDF0;
   --ft-text-secondary: #9898A8;
   --ft-text-tertiary: #5E5E70;
-  --ft-border: #1F1F2C;
+  --ft-border: #26262A;
 }
 
 .ft-app {
@@ -144,14 +144,38 @@
 /* ═══ Hide ═══ */
 .ft-tabbar, .ft-topbar { display: none !important; }
 
-@media (max-width: 640px) {
-  .ft-sidebar-pc, .ft-floating-msg { display: none; }
-  .ft-main-container { margin-left: 0; padding: 10px; padding-bottom: 80px; }
+@media (max-width: 768px) {
+  .ft-sidebar-pc, .ft-floating-msg { display: none !important; }
+  .ft-main-container { margin-left: 0 !important; padding: 10px; padding-bottom: 80px; }
   .ft-tabbar {
     position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
     background: var(--ft-bg); border-top: 1px solid var(--ft-border);
     display: flex !important; justify-content: space-around; align-items: center;
+    z-index: 1000;
   }
+}
+
+.ft-tabbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  color: var(--ft-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ft-tabbar-item:active {
+  transform: scale(0.9);
+}
+.ft-tabbar-item.active {
+  color: var(--ft-primary);
+}
+.ft-tabbar-item .material-symbols-outlined {
+  font-size: 26px;
 }
 
 /* ═══ EXPLORE MAGAZINE STYLES ═══ */
@@ -714,7 +738,7 @@
 .ft-notif-desc { font-size: 13px; color: var(--ft-text-secondary); line-height: 1.4; }
 .ft-notif-time { font-size: 11px; color: var(--ft-text-tertiary); margin-top: 4px; }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .ft-notif-dropdown {
     position: fixed; inset: 0; top: 0; width: 100%; height: 100%;
     border-radius: 0; z-index: 3000;

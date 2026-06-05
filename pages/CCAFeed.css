@@ -10,8 +10,8 @@
   --luminary-teal: #0D9488;
   
   /* Layout Colors */
-  --bg-primary: #09090B;
-  --bg-secondary: #18181B;
+  --bg-primary: #121212;
+  --bg-secondary: #161616;
   --bg-card: #1C1C1F;
   --bg-glass: rgba(28, 28, 31, 0.7);
   
@@ -300,7 +300,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .luminary-sidebar {
     display: none;
   }

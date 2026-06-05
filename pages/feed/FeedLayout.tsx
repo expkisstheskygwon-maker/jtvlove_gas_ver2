@@ -400,15 +400,18 @@ const FeedLayout: React.FC = () => {
 
         {/* ═══ Mobile Tabbar ═══ */}
         <nav className="ft-tabbar">
-          {NAV_ITEMS.map(item => (
-            <button
-              key={item.path}
-              className={`ft-tabbar-item ${isActive(item.path) ? 'active' : ''}`}
-              onClick={() => handleNavigate(item.path)}
-            >
-              <span className="material-symbols-outlined">{item.icon}</span>
-            </button>
-          ))}
+          <button
+            className={`ft-tabbar-item ${isActive('/feed') ? 'active' : ''}`}
+            onClick={() => handleNavigate('/feed')}
+          >
+            <span className="material-symbols-outlined">home</span>
+          </button>
+          <button
+            className={`ft-tabbar-item ${isActive('/search') ? 'active' : ''}`}
+            onClick={() => handleNavigate('/search')}
+          >
+            <span className="material-symbols-outlined">search</span>
+          </button>
           <button
             className={`ft-tabbar-item ${location.pathname === '/notifications' ? 'active' : ''}`}
             onClick={handleNotificationButtonClick}
@@ -416,10 +419,22 @@ const FeedLayout: React.FC = () => {
           >
             <span className="material-symbols-outlined">notifications</span>
             {unreadNotifCount > 0 && (
-              <div className="ft-notif-badge" style={{ top: -2, right: -2, left: 'auto' }}>
+              <div className="ft-notif-badge" style={{ top: -2, right: 10, left: 'auto' }}>
                 {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
               </div>
             )}
+          </button>
+          <button
+            className={`ft-tabbar-item ${user && location.pathname === `/@${user.nickname}` ? 'active' : ''}`}
+            onClick={() => {
+              if (user) {
+                handleNavigate(`/@${user.nickname}`);
+              } else {
+                openLoginModal();
+              }
+            }}
+          >
+            <span className="material-symbols-outlined">account_circle</span>
           </button>
         </nav>
 
