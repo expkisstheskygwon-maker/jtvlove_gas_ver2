@@ -114,17 +114,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       const newItems = newItemsRaw.map((item: any, idx: number) => {
         let updatedItem = { ...item };
         
-        // 1. Carousel Mocking: Every 3rd photo post gets 3 images
-        if (item.type === 'photo' && idx % 3 === 0) {
-          const carouselImages = [
-            item.url,
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600',
-            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600'
-          ];
-          updatedItem.url = carouselImages.join(',');
-        }
-        
-        // 2. Paid Lock Mocking: Every 4th post is marked as paid content (200 points)
+        // Paid Lock Mocking: Every 4th post is marked as paid content (200 points)
         if (idx % 4 === 1) {
           updatedItem.isPaid = true;
           updatedItem.pricePoints = 200;
