@@ -60,8 +60,13 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   const [uploadType, setUploadType] = useState<'photo' | 'video'>('photo');
   const [caption, setCaption] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveMediaIdx(0);
+  }, [lightboxIndex]);
 
   // Hearts
   const [heartCount, setHeartCount] = useState(0);
@@ -396,17 +401,28 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileList = Array.from(files);
+      setSelectedFiles(prev => [...prev, ...fileList]);
+      
+      fileList.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrls(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleUpload = async () => {
-    if (uploadType === 'photo' && !selectedFile) {
+    if (uploadType === 'photo' && selectedFiles.length === 0) {
       showToastMsg('사진을 선택해주세요.');
       return;
     }
@@ -418,8 +434,16 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
     setIsUploading(true);
     try {
       let url = '';
-      if (uploadType === 'photo' && selectedFile) {
-        url = await apiService.uploadImage(selectedFile, 'gallery') || '';
+      if (uploadType === 'photo' && selectedFiles.length > 0) {
+        // 병렬 업로드 실행
+        const uploadPromises = selectedFiles.map(file => apiService.uploadImage(file, 'gallery'));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        
+        // 유효한 URL들만 필터링하여 콤마로 결합
+        const validUrls = uploadedUrls.filter(u => !!u);
+        if (validUrls.length === 0) throw new Error("All image uploads failed");
+        
+        url = validUrls.join(',');
       } else {
         url = videoUrl;
       }
@@ -437,8 +461,8 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
         setShowUploadModal(false);
         setCaption('');
         setVideoUrl('');
-        setSelectedFile(null);
-        setPreviewUrl(null);
+        setSelectedFiles([]);
+        setPreviewUrls([]);
         showToastMsg('성공적으로 업로드되었습니다! ✨');
         // Refresh gallery
         const updatedGallery = await apiService.getGallery(cca?.id || '');
@@ -711,30 +735,49 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
         {galleryTab === 'grid' ? (
           gallery.length > 0 ? (
             <div className="lib-gallery-grid">
-              {gallery.map((item, idx) => (
-                <div
-                  key={item.id || idx}
-                  className="lib-gallery-item"
-                  onClick={() => openLightbox(idx)}
-                >
-                  <img src={item.url} alt={item.caption || ''} loading="lazy" />
-                  {item.type === 'video' && (
-                    <div className="lib-gallery-video-badge">
-                      <span className="material-symbols-outlined">play_circle</span>
+              {gallery.map((item, idx) => {
+                const urls = item.url ? item.url.split(',') : [];
+                const displayUrl = urls[0] || '';
+                const isMultiImage = item.type === 'photo' && urls.length > 1;
+
+                return (
+                  <div
+                    key={item.id || idx}
+                    className="lib-gallery-item"
+                    onClick={() => openLightbox(idx)}
+                  >
+                    <img src={displayUrl} alt={item.caption || ''} loading="lazy" />
+                    {item.type === 'video' && (
+                      <div className="lib-gallery-video-badge">
+                        <span className="material-symbols-outlined">play_circle</span>
+                      </div>
+                    )}
+
+                    {/* Multi Image Badge */}
+                    {isMultiImage && (
+                      <div style={{
+                        position: 'absolute', top: 8, right: 8,
+                        backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '50%',
+                        width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', zIndex: 5
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 14, fontVariationSettings: "'FILL' 1" }}>filter_none</span>
+                      </div>
+                    )}
+
+                    <div className="lib-gallery-item-overlay">
+                      <span>
+                        <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                        {item.likes || 0}
+                      </span>
+                      <span>
+                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>chat_bubble</span>
+                        {item.commentsCount || 0}
+                      </span>
                     </div>
-                  )}
-                  <div className="lib-gallery-item-overlay">
-                    <span>
-                      <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>favorite</span>
-                      {item.likes || 0}
-                    </span>
-                    <span>
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>chat_bubble</span>
-                      {item.commentsCount || 0}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="lib-gallery-empty">
@@ -834,9 +877,59 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
             <div className="lib-lightbox-media" onClick={e => e.stopPropagation()}>
               {gallery[lightboxIndex].type === 'video' ? (
                 <video src={gallery[lightboxIndex].url} controls autoPlay />
-              ) : (
-                <img src={gallery[lightboxIndex].url} alt={gallery[lightboxIndex].caption || ''} />
-              )}
+              ) : (() => {
+                const urls = gallery[lightboxIndex].url ? gallery[lightboxIndex].url.split(',') : [];
+                return (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <img src={urls[activeMediaIdx]} alt={gallery[lightboxIndex].caption || ''} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    
+                    {/* Inner image navigation dots and arrows */}
+                    {urls.length > 1 && (
+                      <>
+                        {activeMediaIdx > 0 && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setActiveMediaIdx(prev => prev - 1); }}
+                            style={{
+                              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                              background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%',
+                              width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10
+                            }}
+                          >
+                            <span className="material-symbols-outlined">chevron_left</span>
+                          </button>
+                        )}
+                        {activeMediaIdx < urls.length - 1 && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setActiveMediaIdx(prev => prev + 1); }}
+                            style={{
+                              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                              background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%',
+                              width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10
+                            }}
+                          >
+                            <span className="material-symbols-outlined">chevron_right</span>
+                          </button>
+                        )}
+                        {/* Dots */}
+                        <div style={{
+                          position: 'absolute', bottom: 12, display: 'flex', gap: 6,
+                          background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: 10, zIndex: 10
+                        }}>
+                          {urls.map((_, idx) => (
+                            <div 
+                              key={idx} 
+                              style={{
+                                width: 6, height: 6, borderRadius: '50%',
+                                background: idx === activeMediaIdx ? 'var(--ft-primary, #eebd2b)' : 'rgba(255,255,255,0.4)'
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {gallery[lightboxIndex].caption && (
@@ -989,22 +1082,53 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                 </div>
 
                 {uploadType === 'photo' ? (
-                  <label style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    width: '100%', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)',
-                    borderRadius: 16, border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer',
-                    overflow: 'hidden', marginBottom: 20
-                  }}>
-                    {previewUrl ? (
-                      <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ marginBottom: 20 }}>
+                    {previewUrls.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
+                          {previewUrls.map((url, idx) => (
+                            <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 12, overflow: 'hidden', shrink: 0, border: '1px solid rgba(255,255,255,0.15)', flexShrink: 0 }}>
+                              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile(idx)}
+                                style={{
+                                  position: 'absolute', top: 4, right: 4, width: 20, height: 20,
+                                  background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%',
+                                  color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  cursor: 'pointer', padding: 0
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: 12 }}>close</span>
+                              </button>
+                            </div>
+                          ))}
+                          <label style={{
+                            width: 80, height: 80, background: 'rgba(255,255,255,0.03)',
+                            borderRadius: 12, border: '1px dashed rgba(255,255,255,0.2)', cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            color: 'rgba(255,255,255,0.5)', flexShrink: 0
+                          }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add</span>
+                            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 }}>Add</span>
+                            <input type="file" multiple accept="image/*" onChange={handleFileChange} hidden />
+                          </label>
+                        </div>
+                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', textAlign: 'right', fontWeight: 700, margin: 0 }}>{selectedFiles.length} images selected</p>
+                      </div>
                     ) : (
-                      <>
+                      <label style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        width: '100%', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)',
+                        borderRadius: 16, border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer',
+                        overflow: 'hidden', marginBottom: 20
+                      }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 40, opacity: 0.3 }}>add_a_photo</span>
                         <span style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>사진 선택하기</span>
-                      </>
+                        <input type="file" multiple accept="image/*" onChange={handleFileChange} hidden />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" onChange={handleFileChange} hidden />
-                  </label>
+                  </div>
                 ) : (
                   <div className="lib-form-group" style={{ marginBottom: 20 }}>
                     <label>비디오 링크 (유튜브 등)</label>

@@ -27,6 +27,26 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
   useEffect(() => {
     setActiveMediaIdx(0);
   }, [lightboxMedia]);
+
+  // Upload State
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadType, setUploadType] = useState<'photo' | 'video'>('photo');
+  const [caption, setCaption] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  // Handle auto-open upload modal from query param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1]);
+    if (params.get('upload') === 'true' && user?.ccaId === cca?.id) {
+      setShowUploadModal(true);
+      // Clean up URL to prevent re-opening
+      const newUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [user?.ccaId, cca?.id, username]);
  
   // Story highlights states
   const [storyOpen, setStoryOpen] = useState(false);
@@ -186,6 +206,83 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileList = Array.from(files);
+      setSelectedFiles(prev => [...prev, ...fileList]);
+      
+      fileList.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrls(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    if (uploadType === 'photo' && selectedFiles.length === 0) {
+      alert('사진을 선택해주세요.');
+      return;
+    }
+    if (uploadType === 'video' && !videoUrl) {
+      alert('비디오 링크를 입력해주세요.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      let url = '';
+      if (uploadType === 'photo' && selectedFiles.length > 0) {
+        // 병렬 업로드 실행
+        const uploadPromises = selectedFiles.map(file => apiService.uploadImage(file, 'gallery'));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        
+        // 유효한 URL들만 필터링하여 콤마로 결합
+        const validUrls = uploadedUrls.filter(u => !!u);
+        if (validUrls.length === 0) throw new Error("All image uploads failed");
+        
+        url = validUrls.join(',');
+      } else {
+        url = videoUrl;
+      }
+
+      if (!url) throw new Error("업로드 실패: URL을 생성하지 못했습니다.");
+
+      const result = await apiService.createGalleryItem({
+        ccaId: cca?.id || '',
+        type: uploadType,
+        url,
+        caption
+      });
+
+      if (result.success) {
+        setShowUploadModal(false);
+        setCaption('');
+        setVideoUrl('');
+        setSelectedFiles([]);
+        setPreviewUrls([]);
+        alert('성공적으로 업로드되었습니다! ✨');
+        // Refresh gallery
+        const updatedGallery = await apiService.getGallery(username || '');
+        setGallery(updatedGallery);
+      } else {
+        alert('업로드 실패: ' + result.error);
+      }
+    } catch (err: any) {
+      alert('오류: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const isOwner = user && (user.ccaId === cca?.id || user.nickname === username);
 
   if (loading) {
@@ -294,22 +391,44 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
             )}
 
             {isOwner && !cca.isGeneralUser && (
-              <button
-                onClick={handleAttendanceToggle}
-                disabled={attendanceLoading}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 'var(--ft-radius-md)',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  background: isWorking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
-                  color: isWorking ? '#ef4444' : '#22c55e',
-                  border: `1px solid ${isWorking ? '#ef4444' : '#22c55e'}`
-                }}
-              >
-                {attendanceLoading ? '처리 중...' : (isWorking ? '퇴근하기' : '출근하기')}
-              </button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={handleAttendanceToggle}
+                  disabled={attendanceLoading}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: 'var(--ft-radius-md)',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    background: isWorking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                    color: isWorking ? '#ef4444' : '#22c55e',
+                    border: `1px solid ${isWorking ? '#ef4444' : '#22c55e'}`
+                  }}
+                >
+                  {attendanceLoading ? '처리 중...' : (isWorking ? '퇴근하기' : '출근하기')}
+                </button>
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: 'var(--ft-radius-md)',
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: 14,
+                    background: 'var(--ft-gradient)',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    boxShadow: '0 4px 15px rgba(238, 189, 43, 0.3)'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1" }}>add_circle</span>
+                  업로드
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -620,6 +739,141 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="ft-login-overlay" onClick={() => !isUploading && setShowUploadModal(false)} style={{ zIndex: 99999 }}>
+          <div className="ft-login-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '24px 20px', borderRadius: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>콘텐츠 업로드</h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: 12, color: 'var(--ft-text-tertiary)' }}>나의 새로운 소식을 전해보세요</p>
+              </div>
+              <button onClick={() => setShowUploadModal(false)} style={{ background: 'none', border: 'none', color: 'var(--ft-text-secondary)', cursor: 'pointer' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+              <button 
+                onClick={() => setUploadType('photo')}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 12, border: 'none',
+                  background: uploadType === 'photo' ? 'var(--ft-primary)' : 'var(--ft-bg-tertiary)',
+                  color: uploadType === 'photo' ? '#000' : '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer'
+                }}
+              >사진</button>
+              <button 
+                onClick={() => setUploadType('video')}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 12, border: 'none',
+                  background: uploadType === 'video' ? 'var(--ft-primary)' : 'var(--ft-bg-tertiary)',
+                  color: uploadType === 'video' ? '#000' : '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer'
+                }}
+              >비디오</button>
+            </div>
+
+            {uploadType === 'photo' ? (
+              <div style={{ marginBottom: 20 }}>
+                {previewUrls.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
+                      {previewUrls.map((url, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--ft-border)', flexShrink: 0 }}>
+                          <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(idx)}
+                            style={{
+                              position: 'absolute', top: 4, right: 4, width: 20, height: 20,
+                              background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%',
+                              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', padding: 0
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: 12 }}>close</span>
+                          </button>
+                        </div>
+                      ))}
+                      <label style={{
+                        width: 80, height: 80, background: 'var(--ft-bg-tertiary)',
+                        borderRadius: 12, border: '1px dashed var(--ft-border)', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--ft-text-secondary)', flexShrink: 0
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add</span>
+                        <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 }}>Add</span>
+                        <input type="file" multiple accept="image/*" onChange={handleFileChange} hidden />
+                      </label>
+                    </div>
+                    <p style={{ fontSize: 10, color: 'var(--ft-text-tertiary)', textAlign: 'right', fontWeight: 700, margin: 0 }}>{selectedFiles.length} images selected</p>
+                  </div>
+                ) : (
+                  <label style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    width: '100%', aspectRatio: '1/1', background: 'var(--ft-bg-tertiary)',
+                    borderRadius: 16, border: '2px dashed var(--ft-border)', cursor: 'pointer',
+                    overflow: 'hidden', marginBottom: 20
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 40, opacity: 0.3 }}>add_a_photo</span>
+                    <span style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>사진 선택하기</span>
+                    <input type="file" multiple accept="image/*" onChange={handleFileChange} hidden />
+                  </label>
+                )}
+              </div>
+            ) : (
+              <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ft-text-secondary)' }}>비디오 링크 (유튜브 등)</label>
+                <input 
+                  type="text" 
+                  placeholder="https://youtube.com/watch?v=..." 
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px 16px', borderRadius: 12,
+                    background: 'var(--ft-bg-tertiary)', border: '1px solid var(--ft-border)',
+                    color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 24 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ft-text-secondary)' }}>캡션 (내용)</label>
+              <textarea 
+                rows={4} 
+                placeholder="팬들에게 전할 말을 적어주세요..."
+                value={caption}
+                onChange={e => setCaption(e.target.value)}
+                style={{
+                  width: '100%', padding: '12px 16px', borderRadius: 12,
+                  background: 'var(--ft-bg-tertiary)', border: '1px solid var(--ft-border)',
+                  color: '#fff', fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                disabled={isUploading}
+                className="ft-secondary-btn"
+                style={{ flex: 1, margin: 0 }}
+              >
+                취소
+              </button>
+              <button 
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="ft-primary-btn"
+                style={{ flex: 2, margin: 0 }}
+              >
+                {isUploading ? '업로드 중...' : '게시하기'}
+              </button>
+            </div>
           </div>
         </div>
       )}
