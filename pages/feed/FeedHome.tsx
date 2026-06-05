@@ -45,6 +45,22 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
   const [newComment, setNewComment] = useState('');
   const [expandedCaptions, setExpandedCaptions] = useState<Record<string, boolean>>({});
   const [commentPreviews, setCommentPreviews] = useState<Record<string, any[]>>({});
+  const [unlockedPostIds, setUnlockedPostIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('ft_unlocked_post_ids');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [carouselIndices, setCarouselIndices] = useState<Record<string, number>>({});
+  const [tipModal, setTipModal] = useState<{
+    isOpen: boolean;
+    post: any | null;
+    amount: string;
+    submitting: boolean;
+    success: boolean;
+  }>({ isOpen: false, post: null, amount: '100', submitting: false, success: false });
 
   // Subscription Modal State
   const [subModal, setSubModal] = useState<{
@@ -90,7 +106,29 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
         if (storedHidden) hiddenIds = JSON.parse(storedHidden);
       } catch (e) {}
 
-      const newItems = (data.items || []).filter((item: any) => !hiddenIds.includes(item.id));
+      const newItemsRaw = (data.items || []).filter((item: any) => !hiddenIds.includes(item.id));
+      
+      const newItems = newItemsRaw.map((item: any, idx: number) => {
+        let updatedItem = { ...item };
+        
+        // 1. Carousel Mocking: Every 3rd photo post gets 3 images
+        if (item.type === 'photo' && idx % 3 === 0) {
+          const carouselImages = [
+            item.url,
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600',
+            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600'
+          ];
+          updatedItem.url = carouselImages.join(',');
+        }
+        
+        // 2. Paid Lock Mocking: Every 4th post is marked as paid content (200 points)
+        if (idx % 4 === 1) {
+          updatedItem.isPaid = true;
+          updatedItem.pricePoints = 200;
+        }
+        
+        return updatedItem;
+      });
       
       if (isAppend) {
         setAllFeedItems(prev => [...prev, ...newItems]);
@@ -199,6 +237,82 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       }
     };
   }, [hasMore, loadingMore, loading, handleLoadMore]);
+
+  const handleUnlockPost = async (postId: string, price: number) => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+    const currentPoints = user.points || 0;
+    if (currentPoints < price) {
+      alert(`포인트가 부족합니다. (필요 포인트: ${price}P / 보유 포인트: ${currentPoints}P)`);
+      return;
+    }
+    
+    updateUser({ points: currentPoints - price });
+    const newUnlocked = [...unlockedPostIds, postId];
+    setUnlockedPostIds(newUnlocked);
+    try {
+      localStorage.setItem('ft_unlocked_post_ids', JSON.stringify(newUnlocked));
+    } catch {}
+    alert('콘텐츠가 성공적으로 해제되었습니다!');
+  };
+
+  const handleCarouselScroll = (postId: string, e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const scrollPos = target.scrollLeft;
+    const width = target.clientWidth;
+    if (width > 0) {
+      const activeIdx = Math.round(scrollPos / width);
+      setCarouselIndices(prev => ({ ...prev, [postId]: activeIdx }));
+    }
+  };
+
+  const handleCarouselArrowClick = (postId: string, direction: 'prev' | 'next', totalSlides: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    const track = btn.parentElement?.querySelector('.ft-carousel-track') as HTMLDivElement;
+    if (track) {
+      const width = track.clientWidth;
+      const currentIdx = carouselIndices[postId] || 0;
+      let nextIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+      if (nextIdx < 0) nextIdx = 0;
+      if (nextIdx >= totalSlides) nextIdx = totalSlides - 1;
+      
+      track.scrollTo({
+        left: nextIdx * width,
+        behavior: 'smooth'
+      });
+      setCarouselIndices(prev => ({ ...prev, [postId]: nextIdx }));
+    }
+  };
+
+  const handleSendTip = async () => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+    const amountNum = parseInt(tipModal.amount);
+    if (!amountNum || amountNum <= 0) {
+      alert('올바른 팁 금액을 입력해 주세요.');
+      return;
+    }
+    const currentPoints = user.points || 0;
+    if (currentPoints < amountNum) {
+      alert(`포인트가 부족합니다. (필요 포인트: ${amountNum}P / 보유 포인트: ${currentPoints}P)`);
+      return;
+    }
+    
+    setTipModal(prev => ({ ...prev, submitting: true }));
+    try {
+      updateUser({ points: currentPoints - amountNum });
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setTipModal(prev => ({ ...prev, submitting: false, success: true }));
+    } catch (err) {
+      alert('오류가 발생했습니다.');
+      setTipModal(prev => ({ ...prev, submitting: false }));
+    }
+  };
 
   const onTabChange = (tab: 'all' | 'subscribed' | 'following') => {
     setActiveTab(tab);
@@ -606,61 +720,141 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                 </button>
               </div>
 
-              {item.caption && (
-                <div className="ft-post-body">
-                  <div
-                    className={`ft-post-caption-text ${expandedCaptions[item.id] ? 'expanded' : 'collapsed'}`}
-                  >
-                    {item.caption}
-                  </div>
-                  {shouldShowMoreCaption(item.caption) && (
-                    <button
-                      className="ft-post-caption-more"
-                      onClick={(e) => toggleCaption(e, item.id)}
-                    >
-                      {expandedCaptions[item.id] ? '접기' : '더 보기..'}
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* Media rendering (Carousel or Single, locked or unlocked) */}
+              {item.url && (() => {
+                const urls = item.url ? item.url.split(',') : [];
+                const isLocked = item.isPaid && !unlockedPostIds.includes(item.id) && !subscribedIds.includes(item.ccaId);
+                const unlockPrice = item.pricePoints || 200;
+                
+                if (isLocked) {
+                  return (
+                    <div className="ft-post-media locked" style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px' }}>
+                      <img 
+                        src={urls[0]} 
+                        alt="" 
+                        style={{ filter: 'blur(20px)', width: '100%', aspectRatio: '1/1', objectFit: 'cover', transform: 'scale(1.1)' }}
+                      />
+                      <div className="ft-post-lock-overlay" style={{
+                        position: 'absolute', inset: 0, 
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', color: '#fff', padding: 20, textAlign: 'center'
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#eebd2b', marginBottom: '12px', fontVariationSettings: "'FILL' 1" }}>lock</span>
+                        <h4 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '6px' }}>프리미엄 미디어 콘텐츠</h4>
+                        <p style={{ fontSize: '12px', color: '#ccc', marginBottom: '16px' }}>이 콘텐츠는 잠겨 있습니다. 포인트 또는 구독을 통해 해제해 보세요.</p>
+                        <button 
+                          className="ft-primary-btn" 
+                          style={{ margin: 0, padding: '10px 20px', fontSize: '13px', borderRadius: '10px', boxShadow: 'none' }}
+                          onClick={() => handleUnlockPost(item.id, unlockPrice)}
+                        >
+                          해제하기 - {unlockPrice} 포인트
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
 
-              {item.url && (
-                <div className="ft-post-media" style={{ position: 'relative' }}>
-                  {item.type === 'video' ? (
-                    <video src={item.url} controls preload="metadata" />
-                  ) : (
-                    <img 
-                      src={item.url} 
-                      alt="" 
-                      loading="lazy" 
-                      onClick={() => setExpandedImage(item.url)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  )}
-                  {item.isSubscriberOnly && (
-                    <div className="ft-post-media-badge">구독자 전용</div>
-                  )}
-                  {/* Watermark overlay */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 12,
-                    left: 12,
-                    background: 'rgba(0,0,0,0.4)',
-                    padding: '4px 8px',
-                    borderRadius: 4,
-                    color: 'rgba(255,255,255,0.8)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    pointerEvents: 'none',
-                    letterSpacing: '0.5px',
-                    backdropFilter: 'blur(4px)'
-                  }}>
-                    @{item.ccaNickname || item.ccaName}
-                  </div>
-                </div>
-              )}
+                // Unlocked media
+                if (urls.length > 1) {
+                  const activeIdx = carouselIndices[item.id] || 0;
+                  return (
+                    <div className="ft-carousel-container" style={{ position: 'relative' }}>
+                      <div 
+                        className="ft-carousel-track hide-scrollbar" 
+                        onScroll={(e) => handleCarouselScroll(item.id, e)}
+                        style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', scrollBehavior: 'smooth' }}
+                      >
+                        {urls.map((slideUrl, idx) => (
+                          <div key={idx} className="ft-carousel-slide" style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start' }}>
+                            {item.type === 'video' ? (
+                              <video src={slideUrl} controls preload="metadata" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover' }} />
+                            ) : (
+                              <img 
+                                src={slideUrl} 
+                                alt="" 
+                                loading="lazy" 
+                                onClick={() => setExpandedImage(slideUrl)}
+                                style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', cursor: 'pointer' }}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
 
-              <div className="ft-post-actions ft-feed-actionbar">
+                      {/* Navigation arrows */}
+                      {activeIdx > 0 && (
+                        <button 
+                          className="ft-carousel-arrow prev" 
+                          onClick={(e) => handleCarouselArrowClick(item.id, 'prev', urls.length, e)}
+                          style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_left</span>
+                        </button>
+                      )}
+                      {activeIdx < urls.length - 1 && (
+                        <button 
+                          className="ft-carousel-arrow next" 
+                          onClick={(e) => handleCarouselArrowClick(item.id, 'next', urls.length, e)}
+                          style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_right</span>
+                        </button>
+                      )}
+
+                      {/* Carousel Indicator Dots */}
+                      <div className="ft-carousel-dots" style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', gap: 6, background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: 10 }}>
+                        {urls.map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`ft-carousel-dot ${idx === activeIdx ? 'active' : ''}`} 
+                            style={{ width: 6, height: 6, borderRadius: '50%', background: idx === activeIdx ? 'var(--ft-primary)' : 'rgba(255,255,255,0.4)' }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Single Media
+                return (
+                  <div className="ft-post-media" style={{ position: 'relative' }}>
+                    {item.type === 'video' ? (
+                      <video src={item.url} controls preload="metadata" />
+                    ) : (
+                      <img 
+                        src={item.url} 
+                        alt="" 
+                        loading="lazy" 
+                        onClick={() => setExpandedImage(item.url)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    )}
+                    {item.isSubscriberOnly && (
+                      <div className="ft-post-media-badge">구독자 전용</div>
+                    )}
+                    {/* Watermark overlay */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 12,
+                      left: 12,
+                      background: 'rgba(0,0,0,0.4)',
+                      padding: '4px 8px',
+                      borderRadius: 4,
+                      color: 'rgba(255,255,255,0.8)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      pointerEvents: 'none',
+                      letterSpacing: '0.5px',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      @{item.ccaNickname || item.ccaName}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Action Bar (sit below media, but above caption text) */}
+              <div className="ft-post-actions ft-feed-actionbar" style={{ marginTop: '12px', marginBottom: '8px' }}>
                 <button
                   className={`ft-post-action ft-feed-action ${likedIds.includes(item.id) ? 'liked' : ''}`}
                   onClick={(e) => handleLike(e, item.id)}
@@ -681,12 +875,40 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                   <span className="ft-feed-action-count">{item.commentsCount || 0}</span>
                 </button>
 
-                <button className="ft-post-action ft-feed-action" onClick={(e) => handleShare(e, item)}>
+                {/* Send Tip Button */}
+                <button 
+                  className="ft-post-action ft-feed-action" 
+                  onClick={() => setTipModal({ isOpen: true, post: item, amount: '100', submitting: false, success: false })}
+                >
+                  <span className="material-symbols-outlined" style={{ color: '#eebd2b' }}>paid</span>
+                  <span className="ft-feed-action-count" style={{ color: '#eebd2b', fontWeight: 700 }}>팁 보내기</span>
+                </button>
+
+                <button className="ft-post-action ft-feed-action" style={{ marginLeft: 'auto' }} onClick={(e) => handleShare(e, item)}>
                   <span className="material-symbols-outlined">share</span>
                 </button>
 
                 <div className="ft-post-action-spacer" />
               </div>
+
+              {/* Caption Text (moved directly below actions) */}
+              {item.caption && (
+                <div className="ft-post-body" style={{ marginTop: '0px', paddingTop: '0px', marginBottom: '12px' }}>
+                  <div
+                    className={`ft-post-caption-text ${expandedCaptions[item.id] ? 'expanded' : 'collapsed'}`}
+                  >
+                    {item.caption}
+                  </div>
+                  {shouldShowMoreCaption(item.caption) && (
+                    <button
+                      className="ft-post-caption-more"
+                      onClick={(e) => toggleCaption(e, item.id)}
+                    >
+                      {expandedCaptions[item.id] ? '접기' : '더 보기..'}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {(item.commentsCount || 0) > 0 && (
                 <div className="ft-post-comments-preview">
@@ -1201,6 +1423,103 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Tip Modal */}
+      {tipModal.isOpen && tipModal.post && (
+        <div className="ft-login-overlay" onClick={() => setTipModal(prev => ({ ...prev, isOpen: false }))}>
+          <div className="ft-login-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '360px', padding: '24px 20px', borderRadius: '24px' }}>
+            {tipModal.success ? (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '64px', color: '#4caf50', marginBottom: '16px' }}>check_circle</span>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>팁 전송 완료!</h3>
+                <p style={{ fontSize: '14px', color: 'var(--ft-text-secondary)', marginBottom: '24px' }}>
+                  {tipModal.post.ccaNickname || tipModal.post.ccaName}님에게 {tipModal.amount}P 팁을 전송했습니다.
+                </p>
+                <button 
+                  className="ft-primary-btn" 
+                  style={{ width: '100%', margin: 0 }} 
+                  onClick={() => setTipModal({ isOpen: false, post: null, amount: '100', submitting: false, success: false })}
+                >
+                  확인
+                </button>
+              </div>
+            ) : (
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '4px', textAlign: 'center' }}>팁 보내기</h3>
+                <p style={{ fontSize: '13px', color: 'var(--ft-text-secondary)', textAlign: 'center', marginBottom: '20px' }}>
+                  {tipModal.post.ccaNickname || tipModal.post.ccaName}님에게 감사의 팁을 보내보세요.
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: '16px' }}>
+                  {['100', '200', '500', '1000'].map(val => (
+                    <button 
+                      key={val}
+                      onClick={() => setTipModal(prev => ({ ...prev, amount: val }))}
+                      style={{
+                        flex: '1 0 40%',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: tipModal.amount === val ? '2px solid var(--ft-primary)' : '1px solid var(--ft-border)',
+                        background: tipModal.amount === val ? 'rgba(238, 189, 43, 0.08)' : 'var(--ft-bg-tertiary)',
+                        color: tipModal.amount === val ? 'var(--ft-primary)' : 'var(--ft-text)',
+                        fontWeight: '700',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {val} P
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '12px', color: 'var(--ft-text-tertiary)', fontWeight: '700', display: 'block', marginBottom: '6px' }}>직접 입력</label>
+                  <input 
+                    type="number"
+                    placeholder="보낼 팁 입력 (P)"
+                    value={tipModal.amount}
+                    onChange={(e) => setTipModal(prev => ({ ...prev, amount: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--ft-border)',
+                      background: 'var(--ft-bg-tertiary)',
+                      color: 'var(--ft-text)',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--ft-text-tertiary)', marginTop: '8px', textAlign: 'right' }}>
+                    보유 포인트: <span style={{ fontWeight: '800', color: 'var(--ft-text)' }}>{user?.points || 0} P</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="ft-secondary-btn" 
+                    style={{ flex: 1, margin: 0, padding: '14px', borderRadius: '12px' }}
+                    onClick={() => setTipModal({ isOpen: false, post: null, amount: '100', submitting: false, success: false })}
+                  >
+                    취소
+                  </button>
+                  <button 
+                    className="ft-primary-btn" 
+                    style={{ flex: 2, margin: 0, padding: '14px', borderRadius: '12px' }}
+                    onClick={handleSendTip}
+                    disabled={tipModal.submitting || !tipModal.amount}
+                  >
+                    {tipModal.submitting ? '전송 중...' : '보내기'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
