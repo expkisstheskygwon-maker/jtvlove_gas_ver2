@@ -2037,5 +2037,53 @@ export const apiService = {
       console.error('getNewCCAs error:', error);
       return { success: false, ccas: [], error: error instanceof Error ? error.message : 'Unknown error' };
     }
+  },
+
+  async sendTip(userId: string, ccaId: string, amount: number, description?: string): Promise<{ success: boolean; remainingPoints: number; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/tips`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, ccaId, amount, description }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send tip');
+      }
+      return { success: true, remainingPoints: data.remainingPoints };
+    } catch (error: any) {
+      console.error('sendTip error:', error);
+      return { success: false, remainingPoints: 0, error: error.message };
+    }
+  },
+
+  async unlockGalleryItem(userId: string, galleryId: string, price: number): Promise<{ success: boolean; remainingPoints: number; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, galleryId, price }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to unlock gallery item');
+      }
+      return { success: true, remainingPoints: data.remainingPoints };
+    } catch (error: any) {
+      console.error('unlockGalleryItem error:', error);
+      return { success: false, remainingPoints: 0, error: error.message };
+    }
+  },
+
+  async getUnlockedGalleryItems(userId: string): Promise<string[]> {
+    try {
+      const response = await fetch(`${API_BASE}/gallery-unlock?userId=${encodeURIComponent(userId)}`);
+      if (!response.ok) throw new Error('Failed to fetch unlocked gallery items');
+      const data = await response.json();
+      return data.unlockedIds || [];
+    } catch (error) {
+      console.error('getUnlockedGalleryItems error:', error);
+      return [];
+    }
   }
 };

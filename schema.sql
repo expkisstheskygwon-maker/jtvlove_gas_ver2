@@ -535,3 +535,16 @@ CREATE TABLE IF NOT EXISTS cca_earning_logs (
 -- ALTER TABLE ccas ADD COLUMN subscription_cost INTEGER DEFAULT 0;
 -- ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';
 -- ALTER TABLE ccas ADD COLUMN paid_message_cost INTEGER DEFAULT 0;
+
+-- 29. User Unlocked Contents Table
+CREATE TABLE IF NOT EXISTS user_unlocked_contents (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  content_type TEXT NOT NULL, -- 'gallery'
+  content_id TEXT NOT NULL,
+  points_paid INTEGER NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, content_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+

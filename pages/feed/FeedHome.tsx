@@ -208,6 +208,16 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       } catch (e) {
         console.error('Load bookmarks error:', e);
       }
+      
+      // Load unlocked paid gallery items from server
+      apiService.getUnlockedGalleryItems(user.id).then(ids => {
+        if (Array.isArray(ids)) {
+          setUnlockedPostIds(ids);
+          try {
+            localStorage.setItem('ft_unlocked_post_ids', JSON.stringify(ids));
+          } catch {}
+        }
+      }).catch(err => console.error('Load unlocked posts error:', err));
     }
   }, [user?.id]);
 
@@ -252,13 +262,22 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
       return;
     }
     
-    updateUser({ points: currentPoints - price });
-    const newUnlocked = [...unlockedPostIds, postId];
-    setUnlockedPostIds(newUnlocked);
     try {
-      localStorage.setItem('ft_unlocked_post_ids', JSON.stringify(newUnlocked));
-    } catch {}
-    alert('콘텐츠가 성공적으로 해제되었습니다!');
+      const result = await apiService.unlockGalleryItem(user.id, postId, price);
+      if (result.success) {
+        updateUser({ points: result.remainingPoints });
+        const newUnlocked = [...unlockedPostIds, postId];
+        setUnlockedPostIds(newUnlocked);
+        try {
+          localStorage.setItem('ft_unlocked_post_ids', JSON.stringify(newUnlocked));
+        } catch {}
+        alert('콘텐츠가 성공적으로 해제되었습니다!');
+      } else {
+        alert(result.error || '콘텐츠 해제에 실패했습니다.');
+      }
+    } catch (err: any) {
+      alert(err.message || '오류가 발생했습니다.');
+    }
   };
 
   const handleCarouselScroll = (postId: string, e: React.UIEvent<HTMLDivElement>) => {
@@ -308,11 +327,16 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
     
     setTipModal(prev => ({ ...prev, submitting: true }));
     try {
-      updateUser({ points: currentPoints - amountNum });
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setTipModal(prev => ({ ...prev, submitting: false, success: true }));
-    } catch (err) {
-      alert('오류가 발생했습니다.');
+      const result = await apiService.sendTip(user.id, tipModal.post.ccaId, amountNum);
+      if (result.success) {
+        updateUser({ points: result.remainingPoints });
+        setTipModal(prev => ({ ...prev, submitting: false, success: true }));
+      } else {
+        alert(result.error || '팁 전송에 실패했습니다.');
+        setTipModal(prev => ({ ...prev, submitting: false }));
+      }
+    } catch (err: any) {
+      alert(err.message || '오류가 발생했습니다.');
       setTipModal(prev => ({ ...prev, submitting: false }));
     }
   };
