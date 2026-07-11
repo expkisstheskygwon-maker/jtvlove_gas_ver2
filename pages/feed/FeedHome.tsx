@@ -19,9 +19,10 @@ function timeAgo(dateStr: string): string {
 
 interface FeedHomeProps {
   handleNavigate: (path: string) => void;
+  openLoginModal: () => void;
 }
 
-const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
+const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate, openLoginModal }) => {
   const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'following'>('all');
   const [allFeedItems, setAllFeedItems] = useState<any[]>([]);
@@ -787,7 +788,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
                         onScroll={(e) => handleCarouselScroll(item.id, e)}
                         style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', scrollBehavior: 'smooth' }}
                       >
-                        {urls.map((slideUrl, idx) => (
+                        {urls.map((slideUrl: string, idx: number) => (
                           <div key={idx} className="ft-carousel-slide" style={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start' }}>
                             {item.type === 'video' ? (
                               <video src={slideUrl} controls preload="metadata" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover' }} />
@@ -826,7 +827,7 @@ const FeedHome: React.FC<FeedHomeProps> = ({ handleNavigate }) => {
 
                       {/* Carousel Indicator Dots */}
                       <div className="ft-carousel-dots" style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', gap: 6, background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: 10 }}>
-                        {urls.map((_, idx) => (
+                        {urls.map((_: string, idx: number) => (
                           <div 
                             key={idx} 
                             className={`ft-carousel-dot ${idx === activeIdx ? 'active' : ''}`} 

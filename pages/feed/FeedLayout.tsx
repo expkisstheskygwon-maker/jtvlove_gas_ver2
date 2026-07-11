@@ -35,7 +35,7 @@ function getInitialTheme(): Theme {
   return 'dark';
 }
 
-const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => void, handleNavigate: (path: string) => void) => {
+const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => void, handleNavigate: (path: string) => void, openLoginModal: () => void) => {
   switch (pathname) {
     case '/explore': return <FeedExplore />;
     case '/search': return <FeedSearch />;
@@ -49,7 +49,7 @@ const getPageComponent = (pathname: string, theme: Theme, toggleTheme: () => voi
         const username = pathname.substring(2);
         return <FeedProfile forcedUsername={username} />;
       }
-      return <FeedHome handleNavigate={handleNavigate} />;
+      return <FeedHome handleNavigate={handleNavigate} openLoginModal={openLoginModal} />;
   }
 };
 
@@ -350,7 +350,7 @@ const FeedLayout: React.FC = () => {
           
           {/* Center: Content */}
           <div className="ft-center-col">
-            {getPageComponent(location.pathname, theme, toggleTheme, handleNavigate)}
+            {getPageComponent(location.pathname, theme, toggleTheme, handleNavigate, openLoginModal)}
           </div>
 
           {/* Right: Recommendations */}

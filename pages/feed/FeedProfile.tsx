@@ -642,7 +642,7 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
                             style={{
                               position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
                               background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%',
-                              width: 40, height: 40, display: 'flex', alignItems: 'center', justify_content: 'center', cursor: 'pointer', zIndex: 10
+                              width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10
                             }}
                           >
                             <span className="material-symbols-outlined">chevron_left</span>
@@ -654,7 +654,7 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
                             style={{
                               position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
                               background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', borderRadius: '50%',
-                              width: 40, height: 40, display: 'flex', alignItems: 'center', justify_content: 'center', cursor: 'pointer', zIndex: 10
+                              width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10
                             }}
                           >
                             <span className="material-symbols-outlined">chevron_right</span>
@@ -665,7 +665,7 @@ const FeedProfile: React.FC<FeedProfileProps> = ({ forcedUsername }) => {
                           position: 'absolute', bottom: 20, display: 'flex', gap: 6,
                           background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: 10, zIndex: 10
                         }}>
-                          {urls.map((_, idx) => (
+                          {urls.map((url: string, idx: number) => (
                             <div 
                               key={idx} 
                               style={{

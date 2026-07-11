@@ -1087,7 +1087,7 @@ const CCALinkInBio: React.FC<CCALinkInBioProps> = ({ forcedUsername }) => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
                           {previewUrls.map((url, idx) => (
-                            <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 12, overflow: 'hidden', shrink: 0, border: '1px solid rgba(255,255,255,0.15)', flexShrink: 0 }}>
+                            <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)', flexShrink: 0 }}>
                               <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               <button
                                 type="button"
