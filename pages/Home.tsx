@@ -153,8 +153,12 @@ const Home: React.FC = () => {
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1a1608]/95 via-[#1a1608]/70 to-transparent"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1a1608]/80 via-transparent to-[#1a1608]/30"></div>
+          {/* Desktop Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background-dark/95 via-background-dark/70 to-transparent max-md:hidden"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background-dark/80 via-transparent to-background-dark/30 max-md:hidden"></div>
+          {/* Mobile Overlay: darker overlay for high legibility */}
+          <div className="absolute inset-0 bg-background-dark/65 md:hidden"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/40 to-background-dark/30 md:hidden"></div>
         </div>
 
         {/* Decorative glow */}
@@ -163,7 +167,7 @@ const Home: React.FC = () => {
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-6 md:px-12 flex flex-col md:flex-row items-center gap-8 md:gap-16">
           {/* Left: Text Area */}
-          <div className={`md:w-1/2 space-y-5 md:space-y-7 text-white transition-all duration-700 ${fade ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <div className={`md:w-1/2 space-y-5 md:space-y-7 text-white transition-all duration-700 max-md:bg-background-dark/45 max-md:backdrop-blur-md max-md:p-6 max-md:rounded-3xl max-md:border max-md:border-white/10 max-md:shadow-2xl ${fade ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
             {/* Badges */}
             <div className="flex items-center gap-3 flex-wrap">
               {isCustomHero ? (
@@ -192,13 +196,13 @@ const Home: React.FC = () => {
               {isCustomHero ? (
                 <div dangerouslySetInnerHTML={{ __html: currentHero?.title?.replace(/\\n/g, '<br/>') || '' }} />
               ) : (
-                <>인기 <span className="text-primary">{currentCca?.nickname || currentCca?.name}</span></>
+                <>인기 <span className="bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500 bg-clip-text text-transparent">{currentCca?.nickname || currentCca?.name}</span></>
               )}
             </h2>
 
             {/* Description */}
-            <p className="text-white/60 text-base md:text-lg max-w-lg leading-relaxed font-medium line-clamp-3">
-              "{isCustomHero ? currentHero?.content : currentCca?.description}"
+            <p className="text-white/80 text-sm md:text-base max-w-lg leading-relaxed font-medium line-clamp-3 italic">
+              {isCustomHero ? currentHero?.content : currentCca?.description}
             </p>
 
             {/* Language Tags (CCA only) */}
@@ -293,38 +297,47 @@ const Home: React.FC = () => {
                 </div>
                 <Link to="/ccas" className="text-xs font-bold text-zinc-400 hover:text-white transition-colors">전체보기 &rarr;</Link>
               </div>
-              <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2 snap-x pr-4">
-                 {liveCCAs.map(cca => (
-                   <Link to={`/ccas/${cca.id}`} key={`live-${cca.id}`} className="snap-start flex-shrink-0 w-24 md:w-28 group flex flex-col items-center pt-2">
-                      <div className="relative w-20 h-20 md:w-24 md:h-24 mb-4">
-                         {/* Circle Gradient Border */}
-                         <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-red-600 to-rose-400 opacity-80 group-hover:scale-105 transition-transform duration-300"></div>
-                         
-                         {/* Image Container */}
-                         <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-zinc-950 bg-zinc-950">
-                           <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop'; }}/>
-                           <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+              
+              {/* Fade Container */}
+              <div className="relative">
+                 {/* Left Fade Mask */}
+                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-zinc-950 to-transparent pointer-events-none z-20"></div>
+                 {/* Right Fade Mask */}
+                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-950 to-transparent pointer-events-none z-20"></div>
+
+                 <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2 snap-x px-6">
+                    {liveCCAs.map(cca => (
+                      <Link to={`/ccas/${cca.id}`} key={`live-${cca.id}`} className="snap-start flex-shrink-0 w-24 md:w-28 group flex flex-col items-center pt-2">
+                         <div className="relative w-20 h-20 md:w-24 md:h-24 mb-4">
+                            {/* Circle Gradient Border (Rose-Gold Premium Branding) */}
+                            <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-red-600 via-rose-500 to-amber-400 opacity-85 group-hover:scale-105 transition-transform duration-300"></div>
+                            
+                            {/* Image Container */}
+                            <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-zinc-950 bg-zinc-950">
+                              <img src={cca.image} alt={cca.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                   onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop'; }}/>
+                              <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                            </div>
+                            
+                            {/* Live Badge */}
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-600 px-2.5 py-0.5 rounded-full text-[9px] font-black text-white uppercase tracking-wider shadow-lg shadow-red-500/20 border border-white/20 flex items-center justify-center gap-1.5 whitespace-nowrap z-10">
+                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                               출근중
+                            </div>
                          </div>
                          
-                         {/* Live Badge */}
-                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-600 px-2.5 py-0.5 rounded-full text-[9px] font-black text-white uppercase tracking-wider shadow-lg shadow-red-500/20 border border-white/20 flex items-center justify-center gap-1.5 whitespace-nowrap z-10">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                            출근중
+                         <div className="text-center w-full px-1 flex flex-col items-center">
+                            <div className="flex flex-col md:flex-row items-center gap-1 justify-center max-w-full">
+                              <h4 className="font-extrabold text-sm text-white truncate max-w-full group-hover:text-primary transition-colors">{cca.nickname || cca.name}</h4>
+                              {cca.grade && <span className="flex-shrink-0 text-[7px] px-1.5 py-[0.5px] rounded uppercase font-black bg-primary text-[#1b180d]">{cca.grade}</span>}
+                            </div>
+                            <p className="text-[10px] text-zinc-400 truncate mt-1 font-medium flex items-center justify-center gap-0.5 w-full">
+                               <span className="material-symbols-outlined text-[10px]">location_on</span> <span className="truncate">{cca.venueName}</span>
+                            </p>
                          </div>
-                      </div>
-                      
-                      <div className="text-center w-full px-1 flex flex-col items-center">
-                         <div className="flex items-center gap-1 justify-center max-w-full">
-                           <h4 className="font-extrabold text-sm text-white truncate group-hover:text-primary transition-colors">{cca.nickname || cca.name}</h4>
-                           {cca.grade && <span className="flex-shrink-0 text-[7px] px-1 py-[1px] rounded uppercase font-black bg-primary text-[#1b180d]">{cca.grade}</span>}
-                         </div>
-                         <p className="text-[10px] text-zinc-400 truncate mt-0.5 font-medium flex items-center justify-center gap-0.5 w-full">
-                            <span className="material-symbols-outlined text-[10px]">location_on</span> <span className="truncate">{cca.venueName}</span>
-                         </p>
-                      </div>
-                   </Link>
-                 ))}
+                      </Link>
+                    ))}
+                 </div>
               </div>
            </div>
         </section>
@@ -333,7 +346,7 @@ const Home: React.FC = () => {
       {/* ═══════════════════════════════════════════════ */}
       {/* FEATURED CCAs SECTION                          */}
       {/* ═══════════════════════════════════════════════ */}
-      <section className="py-16 md:py-20 px-4 bg-background-light dark:bg-[#1a1608]">
+      <section className="py-16 md:py-20 px-4 bg-background-light dark:bg-background-dark">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex items-end justify-between mb-10 px-4">
@@ -369,64 +382,68 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Cards */}
-          <div
-            ref={ccaScrollRef}
-            className="flex gap-5 overflow-x-auto hide-scrollbar pb-6 px-4 snap-x scroll-smooth"
-          >
-            {ccas.map(cca => (
-              <Link to={`/ccas/${cca.id}`} key={cca.id} className="snap-start flex-shrink-0 w-56 md:w-64 group">
-                <div className="relative overflow-hidden rounded-2xl aspect-[3/4] mb-3 border border-primary/5 shadow-lg group-hover:shadow-xl group-hover:shadow-primary/10 transition-all">
-                  <img
-                    src={cca.image}
-                    alt={cca.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop';
-                    }}
-                  />
-                  {/* Gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          {/* Cards Wrapper with Fades */}
+          <div className="relative">
+            {/* Left Fade Mask */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background-light dark:from-background-dark to-transparent pointer-events-none z-20"></div>
+            {/* Right Fade Mask */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background-light dark:from-background-dark to-transparent pointer-events-none z-20"></div>
 
-                  {/* Grade Badge */}
-                  {cca.grade && (
-                    <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg ${GRADE_COLORS[cca.grade] || 'bg-zinc-700 text-white'}`}>
-                      {cca.grade}
-                    </div>
-                  )}
+            <div
+              ref={ccaScrollRef}
+              className="flex gap-5 overflow-x-auto hide-scrollbar pb-6 px-6 snap-x scroll-smooth"
+            >
+              {ccas.map(cca => (
+                <Link to={`/ccas/${cca.id}`} key={cca.id} className="snap-start flex-shrink-0 w-56 md:w-64 group">
+                  <div className="relative overflow-hidden rounded-2xl aspect-[3/4] mb-3 border border-primary/5 shadow-lg group-hover:shadow-xl group-hover:shadow-primary/10 transition-all">
+                    <img
+                      src={cca.image}
+                      alt={cca.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=600&fit=crop';
+                      }}
+                    />
+                    {/* Gradient overlay on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                  {/* New Badge */}
-                  {cca.isNew && (
-                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] font-black text-primary border border-primary/20 shadow-lg">
-                      신규
-                    </div>
-                  )}
-
-                  {/* Hover info overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <div className="flex items-center gap-1 mb-1">
-                      <span className="material-symbols-outlined text-primary fill-1 text-sm">star</span>
-                      <span className="text-white text-xs font-bold">{cca.rating}</span>
-                    </div>
-                    {cca.languages && (
-                      <div className="flex flex-wrap gap-1">
-                        {cca.languages.slice(0, 3).map(lang => (
-                          <span key={lang} className="text-[9px] font-bold text-white/80 bg-white/15 px-2 py-0.5 rounded-full backdrop-blur-sm">{lang}</span>
-                        ))}
+                    {/* Grade Badge */}
+                    {cca.grade && (
+                      <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg ${GRADE_COLORS[cca.grade] || 'bg-zinc-700 text-white'}`}>
+                        {cca.grade}
                       </div>
                     )}
+
+                    {/* New Badge */}
+                    {cca.isNew && (
+                      <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] font-black text-primary border border-primary/20 shadow-lg">
+                        신규
+                      </div>
+                    )}
+
+                    {/* Hover info overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <div className="flex items-center gap-1 mb-1">
+                        <span className="material-symbols-outlined text-primary fill-1 text-sm">star</span>
+                        <span className="text-white text-xs font-bold">{cca.rating}</span>
+                      </div>
+                      {cca.languages && (
+                        <div className="flex flex-wrap gap-1">
+                          {cca.languages.slice(0, 3).map(lang => (
+                            <span key={lang} className="text-[9px] font-bold text-white/80 bg-white/15 px-2 py-0.5 rounded-full backdrop-blur-sm">{lang}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <h4 className="font-bold text-base group-hover:text-primary transition-colors">{cca.nickname || cca.name}</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <span className="material-symbols-outlined text-xs text-primary/60">location_on</span>
-                  {cca.venueName}
-                  {cca.grade && (
-                    <> · <span className="text-primary font-bold">{cca.grade}</span></>
-                  )}
-                </p>
-              </Link>
-            ))}
+                  <h4 className="font-bold text-base group-hover:text-primary transition-colors">{cca.nickname || cca.name}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                    <span className="material-symbols-outlined text-xs text-primary/60">location_on</span>
+                    {cca.venueName}
+                  </p>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -455,41 +472,49 @@ const Home: React.FC = () => {
 
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             {/* Left: Venue list */}
-            <div className="lg:w-1/3 space-y-2">
+            <div className="w-full lg:w-1/3 space-y-3">
               {venues.map((venue, index) => (
                 <Link
                   to={`/venues/${venue.id}`}
                   key={venue.id}
-                  className={`block group p-5 rounded-2xl transition-all duration-300 border ${hoveredVenueIndex === index
+                  className={`block group p-4 rounded-2xl transition-all duration-300 border ${hoveredVenueIndex === index
                     ? 'bg-primary/10 border-primary/30 shadow-lg shadow-primary/5'
                     : 'border-white/5 hover:border-primary/20 hover:bg-white/5'
                     }`}
                   onMouseEnter={() => setHoveredVenueIndex(index)}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${hoveredVenueIndex === index ? 'bg-primary text-[#1b180d]' : 'bg-white/5 text-white/50'}`}>
-                      <span className="material-symbols-outlined">apartment</span>
+                    {/* Visual image thumbnail instead of plain icon */}
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 relative bg-zinc-900">
+                      <img
+                        src={venue.image || venue.banner_image || venue.bannerImage}
+                        alt=""
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=200&h=200&fit=crop';
+                        }}
+                      />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`font-bold text-lg mb-1 transition-colors ${hoveredVenueIndex === index ? 'text-primary' : 'group-hover:text-primary'}`}>
+                    <div className="flex-1 min-w-0 self-center">
+                      <h4 className={`font-bold text-base md:text-lg mb-1 transition-colors ${hoveredVenueIndex === index ? 'text-primary' : 'group-hover:text-primary'}`}>
                         {venue.name}
                       </h4>
                       {venue.description && (
-                        <p className="text-slate-400 text-sm leading-relaxed line-clamp-2">{venue.description}</p>
+                        <p className="text-slate-400 text-xs md:text-sm leading-relaxed line-clamp-1 md:line-clamp-2">{venue.description}</p>
                       )}
-                      <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center gap-3 mt-1.5">
                         {venue.region && (
-                          <span className="text-[10px] font-bold text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">{venue.region}</span>
+                          <span className="text-[9px] font-bold text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">{venue.region}</span>
                         )}
                         {venue.rating > 0 && (
-                          <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-primary fill-1 text-xs">star</span>
+                          <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-primary fill-1 text-[10px]">star</span>
                             {venue.rating}
                           </span>
                         )}
                       </div>
                     </div>
-                    <span className={`material-symbols-outlined text-sm transition-all ${hoveredVenueIndex === index ? 'text-primary translate-x-1' : 'text-white/20'}`}>
+                    <span className={`material-symbols-outlined text-sm self-center transition-all ${hoveredVenueIndex === index ? 'text-primary translate-x-1' : 'text-white/20'}`}>
                       arrow_forward
                     </span>
                   </div>
@@ -497,42 +522,47 @@ const Home: React.FC = () => {
               ))}
             </div>
 
-            {/* Right: Featured venue image */}
-            <div className="lg:w-2/3 h-[350px] md:h-[500px] relative">
-              {activeVenue && (
-                <Link to={`/venues/${activeVenue.id}`} className="block w-full h-full group">
-                  <div className="relative w-full h-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+            {/* Right: Featured venue images with layered smooth fade transition (Desktop only) */}
+            <div className="hidden lg:block lg:w-2/3 h-[500px] relative bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+              {venues.map((venue, idx) => (
+                <div
+                  key={`featured-venue-${venue.id}`}
+                  className={`absolute inset-0 transition-all duration-500 ease-in-out ${
+                    hoveredVenueIndex === idx ? 'opacity-100 scale-100 pointer-events-auto z-10' : 'opacity-0 scale-98 pointer-events-none z-0'
+                  }`}
+                >
+                  <Link to={`/venues/${venue.id}`} className="block w-full h-full relative group">
                     <img
-                      src={activeVenue.image || activeVenue.banner_image || activeVenue.bannerImage}
-                      alt={activeVenue.name}
+                      src={venue.image || venue.banner_image || venue.bannerImage}
+                      alt={venue.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&h=800&fit=crop';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
                     <div className="absolute bottom-0 left-0 right-0 p-8">
                       <div className="flex items-end justify-between">
                         <div>
-                          <p className="text-sm text-primary font-bold mb-1 uppercase tracking-wider">{activeVenue.region}</p>
-                          <p className="font-extrabold text-2xl md:text-3xl text-white">{activeVenue.name}</p>
-                          {activeVenue.tags && activeVenue.tags.length > 0 && (
+                          <p className="text-sm text-primary font-bold mb-1 uppercase tracking-wider">{venue.region}</p>
+                          <p className="font-extrabold text-2xl md:text-3xl text-white">{venue.name}</p>
+                          {venue.tags && venue.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-3">
-                              {activeVenue.tags.slice(0, 3).map(tag => (
+                              {venue.tags.slice(0, 3).map(tag => (
                                 <span key={tag} className="text-[10px] font-bold text-white/70 bg-white/10 backdrop-blur px-3 py-1 rounded-full">{tag}</span>
                               ))}
                             </div>
                           )}
                         </div>
-                        <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl group-hover:bg-primary group-hover:text-[#1b180d] transition-all">
+                        <div className="flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-2 rounded-xl group-hover:bg-primary group-hover:text-[#1b180d] transition-all">
                           <span className="text-sm font-bold">자세히 보기</span>
                           <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              )}
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -541,7 +571,7 @@ const Home: React.FC = () => {
       {/* ═══════════════════════════════════════════════ */}
       {/* QUICK ACTION BANNER                            */}
       {/* ═══════════════════════════════════════════════ */}
-      <section className="py-16 md:py-20 px-4 bg-gradient-to-br from-primary/5 via-background-light to-primary/10 dark:from-primary/5 dark:via-[#1a1608] dark:to-primary/10 relative overflow-hidden">
+      <section className="py-16 md:py-20 px-4 bg-gradient-to-br from-primary/5 via-background-light to-primary/10 dark:from-primary/5 dark:via-background-dark dark:to-primary/10 relative overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-primary/15 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -562,23 +592,28 @@ const Home: React.FC = () => {
             )}
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
+            {/* Emerald Glassmorphic Guidebook Button */}
             <Link
               to="/guide"
-              className="inline-flex px-8 md:px-10 py-4 bg-emerald-500 text-white rounded-2xl font-black hover:bg-emerald-400 hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 transition-all items-center justify-center gap-3 group text-sm md:text-base shadow-xl border border-emerald-400/50"
+              className="inline-flex px-8 md:px-10 py-4 bg-emerald-950/60 dark:bg-emerald-950/45 text-emerald-400 dark:text-emerald-300 rounded-2xl font-black border border-emerald-500/30 hover:bg-emerald-500 hover:text-[#1b180d] dark:hover:text-[#1b180d] hover:shadow-2xl hover:shadow-emerald-500/20 hover:scale-105 transition-all items-center justify-center gap-3 group text-sm md:text-base shadow-xl backdrop-blur-sm"
             >
               초보자 가이드북 펼치기
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">menu_book</span>
             </Link>
+            
+            {/* Gold Primary Button */}
             <Link
               to="/ccas"
-              className="inline-flex px-8 md:px-10 py-4 bg-primary text-[#1b180d] rounded-2xl font-black hover:shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all items-center justify-center gap-3 group text-sm md:text-base shadow-xl"
+              className="inline-flex px-8 md:px-10 py-4 bg-primary text-[#1b180d] rounded-2xl font-black hover:bg-yellow-400 hover:shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all items-center justify-center gap-3 group text-sm md:text-base shadow-xl"
             >
               {settings?.ui_texts?.home_btn_cca || 'CCA 둘러보기'}
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </Link>
+
+            {/* Dark Glassmorphic Venue Button */}
             <Link
               to="/venues"
-              className="inline-flex px-8 md:px-10 py-4 bg-white dark:bg-white/10 text-zinc-900 dark:text-white rounded-2xl font-black hover:shadow-xl hover:scale-105 transition-all items-center justify-center gap-3 group text-sm md:text-base border border-zinc-200 dark:border-white/10"
+              className="inline-flex px-8 md:px-10 py-4 bg-white/40 dark:bg-white/5 text-zinc-900 dark:text-white rounded-2xl font-black border border-zinc-300/80 dark:border-white/10 hover:bg-zinc-900 hover:text-white dark:hover:bg-white/15 hover:shadow-xl hover:scale-105 transition-all items-center justify-center gap-3 group text-sm md:text-base backdrop-blur-sm"
             >
               {settings?.ui_texts?.home_btn_venue || '업소 정보 찾기'}
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">apartment</span>
