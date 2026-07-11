@@ -470,106 +470,77 @@ const Home: React.FC = () => {
             </Link>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-            {/* Left: Venue list */}
-            <div className="w-full lg:w-1/3 space-y-3">
-              {venues.map((venue, index) => {
-                // Sanitize description: replace newlines/carriage returns with space to keep a single line
-                const cleanDesc = venue.description 
-                  ? venue.description.replace(/\r?\n|\r/g, ' ') 
-                  : '';
-                return (
-                  <Link
-                    to={`/venues/${venue.id}`}
-                    key={venue.id}
-                    className={`block group p-4 rounded-2xl transition-all duration-300 border ${hoveredVenueIndex === index
-                      ? 'bg-primary/10 border-primary/30 shadow-lg shadow-primary/5'
-                      : 'border-white/5 hover:border-primary/20 hover:bg-white/5'
-                      }`}
-                    onMouseEnter={() => setHoveredVenueIndex(index)}
-                  >
-                    <div className="flex items-center gap-4">
-                      {/* Visual image thumbnail instead of plain icon */}
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 relative bg-zinc-900">
-                        <img
-                          src={venue.image || venue.banner_image || venue.bannerImage}
-                          alt=""
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=200&h=200&fit=crop';
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className={`font-bold text-base md:text-lg mb-1 transition-colors ${hoveredVenueIndex === index ? 'text-primary' : 'group-hover:text-primary'}`}>
-                          {venue.name}
-                        </h4>
-                        {cleanDesc && (
-                          <p className="text-slate-400 text-xs leading-relaxed line-clamp-1">{cleanDesc}</p>
-                        )}
-                        <div className="flex items-center gap-3 mt-1.5">
-                          {venue.region && (
-                            <span className="text-[9px] font-bold text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">{venue.region}</span>
-                          )}
-                          {venue.rating > 0 && (
-                            <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-primary fill-1 text-[10px]">star</span>
-                              {venue.rating}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className={`material-symbols-outlined text-sm transition-all ${hoveredVenueIndex === index ? 'text-primary translate-x-1' : 'text-white/20'}`}>
-                        arrow_forward
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Right: Featured venue images with layered smooth fade transition (Desktop only) */}
-            <div className="hidden lg:block lg:w-2/3 h-[500px] sticky top-24 bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-              {venues.map((venue, idx) => (
-                <div
-                  key={`featured-venue-${venue.id}`}
-                  className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-                    hoveredVenueIndex === idx ? 'opacity-100 scale-100 pointer-events-auto z-10' : 'opacity-0 scale-98 pointer-events-none z-0'
-                  }`}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {venues.map((venue) => {
+              // Sanitize description: replace newlines/carriage returns with space to keep a single line
+              const cleanDesc = venue.description 
+                ? venue.description.replace(/\r?\n|\r/g, ' ') 
+                : '';
+              return (
+                <Link
+                  to={`/venues/${venue.id}`}
+                  key={venue.id}
+                  className="group relative bg-[#18181b]/30 dark:bg-zinc-900/40 backdrop-blur-sm rounded-3xl overflow-hidden border border-white/5 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10 flex flex-col"
                 >
-                  <Link to={`/venues/${venue.id}`} className="block w-full h-full relative group">
+                  {/* Image wrapper */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-950 border-b border-white/5">
                     <img
                       src={venue.image || venue.banner_image || venue.bannerImage}
                       alt={venue.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&h=800&fit=crop';
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600&h=400&fit=crop';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-8">
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <p className="text-sm text-primary font-bold mb-1 uppercase tracking-wider">{venue.region}</p>
-                          <p className="font-extrabold text-2xl md:text-3xl text-white">{venue.name}</p>
-                          {venue.tags && venue.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-3">
-                              {venue.tags.slice(0, 3).map(tag => (
-                                <span key={tag} className="text-[10px] font-bold text-white/70 bg-white/10 backdrop-blur px-3 py-1 rounded-full">{tag}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-2 rounded-xl group-hover:bg-primary group-hover:text-[#1b180d] transition-all">
-                          <span className="text-sm font-bold">자세히 보기</span>
-                          <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                        </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent"></div>
+                    
+                    {/* Region Badge */}
+                    {venue.region && (
+                      <div className="absolute top-4 left-4 bg-primary text-[#1b180d] text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-lg shadow-lg">
+                        {venue.region}
                       </div>
+                    )}
+                    
+                    {/* Rating Badge */}
+                    {venue.rating > 0 && (
+                      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                        <span className="material-symbols-outlined text-primary fill-1 text-xs">star</span>
+                        {venue.rating}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-extrabold text-lg text-white mb-2 group-hover:text-primary transition-colors">
+                        {venue.name}
+                      </h4>
+                      {cleanDesc && (
+                        <p className="text-slate-400 text-xs leading-relaxed line-clamp-2 mb-4">
+                          {cleanDesc}
+                        </p>
+                      )}
                     </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
+                    
+                    {/* Footer tags and link */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-auto">
+                      <div className="flex flex-wrap gap-1">
+                        {venue.tags && venue.tags.slice(0, 2).map(tag => (
+                          <span key={tag} className="text-[9px] font-bold text-white/50 bg-white/5 px-2 py-0.5 rounded">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-xs font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        자세히 보기
+                        <span className="material-symbols-outlined text-sm font-black">arrow_forward</span>
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
