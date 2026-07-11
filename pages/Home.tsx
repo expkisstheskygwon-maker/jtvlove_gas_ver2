@@ -451,7 +451,7 @@ const Home: React.FC = () => {
       {/* ═══════════════════════════════════════════════ */}
       {/* BEST VENUES / LOUNGES SECTION                  */}
       {/* ═══════════════════════════════════════════════ */}
-      <section className="py-16 md:py-24 px-4 bg-background-dark text-white overflow-hidden">
+      <section className="py-16 md:py-24 px-4 bg-background-dark text-white">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex items-end justify-between mb-12">
@@ -470,7 +470,7 @@ const Home: React.FC = () => {
             </Link>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
             {/* Left: Venue list */}
             <div className="w-full lg:w-1/3 space-y-3">
               {venues.map((venue, index) => (
@@ -523,7 +523,7 @@ const Home: React.FC = () => {
             </div>
 
             {/* Right: Featured venue images with layered smooth fade transition (Desktop only) */}
-            <div className="hidden lg:block lg:w-2/3 h-[500px] relative bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+            <div className="hidden lg:block lg:w-2/3 h-[500px] sticky top-24 bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
               {venues.map((venue, idx) => (
                 <div
                   key={`featured-venue-${venue.id}`}
