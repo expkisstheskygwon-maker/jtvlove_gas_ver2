@@ -473,53 +473,59 @@ const Home: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
             {/* Left: Venue list */}
             <div className="w-full lg:w-1/3 space-y-3">
-              {venues.map((venue, index) => (
-                <Link
-                  to={`/venues/${venue.id}`}
-                  key={venue.id}
-                  className={`block group p-4 rounded-2xl transition-all duration-300 border ${hoveredVenueIndex === index
-                    ? 'bg-primary/10 border-primary/30 shadow-lg shadow-primary/5'
-                    : 'border-white/5 hover:border-primary/20 hover:bg-white/5'
-                    }`}
-                  onMouseEnter={() => setHoveredVenueIndex(index)}
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Visual image thumbnail instead of plain icon */}
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 relative bg-zinc-900">
-                      <img
-                        src={venue.image || venue.banner_image || venue.bannerImage}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=200&h=200&fit=crop';
-                        }}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0 self-center">
-                      <h4 className={`font-bold text-base md:text-lg mb-1 transition-colors ${hoveredVenueIndex === index ? 'text-primary' : 'group-hover:text-primary'}`}>
-                        {venue.name}
-                      </h4>
-                      {venue.description && (
-                        <p className="text-slate-400 text-xs md:text-sm leading-relaxed line-clamp-1 md:line-clamp-2">{venue.description}</p>
-                      )}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        {venue.region && (
-                          <span className="text-[9px] font-bold text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">{venue.region}</span>
-                        )}
-                        {venue.rating > 0 && (
-                          <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-primary fill-1 text-[10px]">star</span>
-                            {venue.rating}
-                          </span>
-                        )}
+              {venues.map((venue, index) => {
+                // Sanitize description: replace newlines/carriage returns with space to keep a single line
+                const cleanDesc = venue.description 
+                  ? venue.description.replace(/\r?\n|\r/g, ' ') 
+                  : '';
+                return (
+                  <Link
+                    to={`/venues/${venue.id}`}
+                    key={venue.id}
+                    className={`block group p-4 rounded-2xl transition-all duration-300 border ${hoveredVenueIndex === index
+                      ? 'bg-primary/10 border-primary/30 shadow-lg shadow-primary/5'
+                      : 'border-white/5 hover:border-primary/20 hover:bg-white/5'
+                      }`}
+                    onMouseEnter={() => setHoveredVenueIndex(index)}
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Visual image thumbnail instead of plain icon */}
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 relative bg-zinc-900">
+                        <img
+                          src={venue.image || venue.banner_image || venue.bannerImage}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=200&h=200&fit=crop';
+                          }}
+                        />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-bold text-base md:text-lg mb-1 transition-colors ${hoveredVenueIndex === index ? 'text-primary' : 'group-hover:text-primary'}`}>
+                          {venue.name}
+                        </h4>
+                        {cleanDesc && (
+                          <p className="text-slate-400 text-xs leading-relaxed line-clamp-1">{cleanDesc}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {venue.region && (
+                            <span className="text-[9px] font-bold text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">{venue.region}</span>
+                          )}
+                          {venue.rating > 0 && (
+                            <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-primary fill-1 text-[10px]">star</span>
+                              {venue.rating}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`material-symbols-outlined text-sm transition-all ${hoveredVenueIndex === index ? 'text-primary translate-x-1' : 'text-white/20'}`}>
+                        arrow_forward
+                      </span>
                     </div>
-                    <span className={`material-symbols-outlined text-sm self-center transition-all ${hoveredVenueIndex === index ? 'text-primary translate-x-1' : 'text-white/20'}`}>
-                      arrow_forward
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Right: Featured venue images with layered smooth fade transition (Desktop only) */}
